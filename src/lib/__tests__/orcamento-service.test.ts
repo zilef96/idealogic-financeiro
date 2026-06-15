@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { normalizarOrcado, distribuirPorMes } from "@/lib/services/orcamento-service"
+import { normalizarOrcado, distribuirPorMes, somasPorClassificacao } from "@/lib/services/orcamento-service"
 
 describe("normalizarOrcado", () => {
   it("mensal: mensal=valor, anual=valor*12", () => {
@@ -24,5 +24,16 @@ describe("distribuirPorMes", () => {
     const r = distribuirPorMes({ periodicidade: "A", valorOrcadoMensal: 100, mesInicio: null, mesFim: null })
     expect(r.reduce((a,b)=>a+b,0)).toBeCloseTo(1200)
     expect(r.every((v) => v === 100)).toBe(true)
+  })
+})
+
+describe("somasPorClassificacao", () => {
+  const itens = [
+    { valorOrcado: 100, classificacao: "C" as const },
+    { valorOrcado: 50,  classificacao: "P" as const },
+    { valorOrcado: 30,  classificacao: "C" as const },
+  ]
+  it("soma por classificação", () => {
+    expect(somasPorClassificacao(itens)).toEqual({ C: 130, P: 50, E: 0, S: 0 })
   })
 })
