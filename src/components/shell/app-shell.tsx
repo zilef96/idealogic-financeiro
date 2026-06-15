@@ -1,8 +1,17 @@
 "use client"
 import { useState } from "react"
 import { ThemeToggle } from "@/components/theme/theme-toggle"
+import { UserMenu } from "@/components/shell/user-menu"
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+type UsuarioShell = { nome: string; email: string; perfil: "socio" | "admin" }
+
+export function AppShell({
+  children,
+  usuario,
+}: {
+  children: React.ReactNode
+  usuario: UsuarioShell | null
+}) {
   const [aberto, setAberto] = useState(false)
   return (
     <div className="min-h-screen md:grid md:grid-cols-[16rem_1fr]">
@@ -27,7 +36,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             aria-label="Abrir menu" onClick={() => setAberto(true)}
           >☰</button>
           <span className="font-semibold">Dashboard Financeiro</span>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            {usuario && <UserMenu usuario={usuario} />}
+          </div>
         </header>
         <main className="flex-1 p-4">{children}</main>
       </div>
