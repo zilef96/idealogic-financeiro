@@ -1,0 +1,36 @@
+import { NextResponse } from "next/server"
+import { z } from "zod"
+
+export const anoSchema = z.coerce.number().int().min(2000).max(2100)
+export const mesSchema = z.coerce.number().int().min(1).max(12)
+export const idPositivoSchema = z.coerce.number().int().positive()
+export const valorNaoNegativoSchema = z.coerce.number().min(0)
+
+export function mapErroPostgres(e: { code?: string }) {
+  if (e?.code === "FC001") {
+    return { status: 409, error: "Competência fechada; reabra o mês para editar." }
+  }
+  return null
+}
+
+export function handleApiError(e: unknown, msgPadrao: string) {
+  const pg = mapErroPostgres(e as { code?: string })
+  if (pg) return NextResponse.json({ error: pg.error }, { status: pg.status })
+  console.error(e)
+  return NextResponse.json({ error: msgPadrao }, { status: 500 })
+}
+
+export function parseQuery<T extends z.ZodTypeAny>(params: URLSearchParams, schema: T) {
+  const obj = Object.fromEntries(params.entries())
+  const r = schema.safeParse(obj)
+  if (!r.success) return { ok: false as const, response: NextResponse.json({ error: z.flattenError(r.error) }, { status: 422 }) }
+  return { ok: true as const, data: r.data as z.infer<T> }
+}
+
+export async function parseBody<T extends z.ZodTypeAny>(req: Request, schema: T) {
+  let json: unknown
+  try { json = await req.json() } catch { return { ok: false as const, response: NextResponse.json({ error: "JSON inválido." }, { status: 400 }) } }
+  const r = schema.safeParse(json)
+  if (!r.success) return { ok: false as const, response: NextResponse.json({ error: z.flattenError(r.error) }, { status: 422 }) }
+  return { ok: true as const, data: r.data as z.infer<T> }
+}
