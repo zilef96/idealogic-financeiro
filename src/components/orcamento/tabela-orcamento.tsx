@@ -2,6 +2,7 @@
 import { useState, type ReactNode } from "react"
 import type { LinhaOrcamento, GrupoOrcamento, Classificacao } from "@/lib/types"
 import { rollupGrupo, ehEssencial } from "@/lib/services/orcamento-service"
+import { NovoItem } from "@/components/orcamento/novo-item"
 
 const brl = (n: number) => (n === 0 ? "—" : n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
 const brlK = (n: number) => "R$ " + Math.round(n).toLocaleString("pt-BR")
@@ -140,10 +141,13 @@ export function TabelaOrcamento({ linhas, grupos }: { linhas: LinhaOrcamento[]; 
 
       <div className="mb-3 flex items-end justify-between">
         <h2 className="font-display text-[15px] font-semibold">Plano de contas</h2>
-        <button type="button" onClick={toggleTudo}
-          className="rounded-full border border-border px-4 py-1.5 text-[13px] font-medium hover:bg-faint">
-          {tudo ? "Recolher tudo" : "Expandir tudo"}
-        </button>
+        <div className="flex items-center gap-2">
+          <NovoItem grupos={grupos} />
+          <button type="button" onClick={toggleTudo}
+            className="rounded-full border border-border px-4 py-1.5 text-[13px] font-medium hover:bg-faint">
+            {tudo ? "Recolher tudo" : "Expandir tudo"}
+          </button>
+        </div>
       </div>
 
       {/* legenda de colunas (cabeçalho da planilha) */}
