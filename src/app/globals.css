@@ -3,34 +3,86 @@
 /* Dark mode por classe (.dark), controlado pelo next-themes */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Tokens de tema — claro (padrão) e escuro */
+/* Tokens de tema — claro (padrão). Valores em RGB separados por espaço. */
 :root {
-  --background: 255 255 255;
-  --foreground: 17 24 39;
-  --muted: 107 114 128;
-  --border: 229 231 235;
-  --danger: 220 38 38;
+  --background: 250 249 246;
+  --card: 255 255 255;
+  --foreground: 26 26 28;
+  --muted: 118 116 110;
+  --faint: 243 241 236;
+  --border: 230 227 219;
+  --ink: 24 28 36;
+  --pos: 17 124 96;
+  --pos-soft: 224 240 233;
+  --neg: 192 60 50;
+  --neg-soft: 247 230 227;
+  --amber: 196 122 24;
+  --amber-soft: 247 238 220;
+  --info: 46 99 168;
+  --info-soft: 226 235 248;
+  --rose: 188 58 96;
+  --rose-soft: 250 230 237;
+  --rail: 222 219 211;
+  --danger: 192 60 50;
 }
 .dark {
-  --background: 17 24 39;
-  --foreground: 243 244 246;
-  --muted: 156 163 175;
-  --border: 55 65 81;
-  --danger: 248 113 113;
+  --background: 18 19 22;
+  --card: 25 27 31;
+  --foreground: 232 230 226;
+  --muted: 150 148 142;
+  --faint: 31 33 38;
+  --border: 42 45 52;
+  --ink: 232 230 226;
+  --pos: 64 200 158;
+  --pos-soft: 19 43 37;
+  --neg: 244 116 106;
+  --neg-soft: 45 27 26;
+  --amber: 224 168 78;
+  --amber-soft: 46 38 22;
+  --info: 122 168 240;
+  --info-soft: 22 32 50;
+  --rose: 230 130 168;
+  --rose-soft: 46 24 33;
+  --rail: 52 55 62;
+  --danger: 244 116 106;
 }
 
 /* Expõe os tokens como cores do Tailwind (bg-background, text-foreground, etc.).
    inline mantém a referência à CSS var, então a troca de tema é instantânea. */
 @theme inline {
   --color-background: rgb(var(--background));
+  --color-card: rgb(var(--card));
   --color-foreground: rgb(var(--foreground));
   --color-muted: rgb(var(--muted));
+  --color-faint: rgb(var(--faint));
   --color-border: rgb(var(--border));
+  --color-pos: rgb(var(--pos));
+  --color-neg: rgb(var(--neg));
+  --color-amber: rgb(var(--amber));
+  --color-info: rgb(var(--info));
+  --color-rose: rgb(var(--rose));
   --color-danger: rgb(var(--danger));
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-hanken), system-ui, sans-serif;
+  --font-display: var(--font-bricolage), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 }
 
 body {
   @apply bg-background text-foreground font-sans;
 }
+
+/* Tipografia de display e números tabulares */
+.font-display { font-family: var(--font-display); letter-spacing: -0.02em; }
+.num { font-family: var(--font-mono); font-feature-settings: "tnum" 1; letter-spacing: -0.03em; }
+
+/* Grade única partilhada por banda/grupos/subgrupos/itens — garante que as colunas "batem" */
+.orc-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 116px 116px 116px 116px minmax(150px, 210px);
+  align-items: center;
+}
+@media (max-width: 900px) {
+  .orc-row { grid-template-columns: minmax(160px, 1fr) 96px 96px 96px 96px; }
+  .orc-col-com { display: none; }
+}
+.orc-tot { text-align: right; padding-right: 14px; }

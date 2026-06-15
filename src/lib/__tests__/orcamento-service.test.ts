@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest"
-import { normalizarOrcado, distribuirPorMes, somasPorClassificacao } from "@/lib/services/orcamento-service"
+import { normalizarOrcado, distribuirPorMes, somasPorClassificacao, rollupGrupo } from "@/lib/services/orcamento-service"
+import type { GrupoOrcamento, LinhaOrcamento } from "@/lib/types"
 
 describe("normalizarOrcado", () => {
   it("mensal: mensal=valor, anual=valor*12", () => {
@@ -35,5 +36,28 @@ describe("somasPorClassificacao", () => {
   ]
   it("soma por classificação", () => {
     expect(somasPorClassificacao(itens)).toEqual({ C: 130, P: 50, E: 0, S: 0 })
+  })
+})
+
+describe("rollupGrupo", () => {
+  // raiz 100 -> filho 110 (com 2 itens) + 1 item direto na raiz
+  const grupos: GrupoOrcamento[] = [
+    { id: 1, codigo: "100", codigoPai: null,  tipo: "R", nome: "Raiz" },
+    { id: 2, codigo: "110", codigoPai: "100", tipo: "R", nome: "Filho" },
+  ]
+  const linha = (grupoCodigo: string, valorOrcado: number, valorOrcadoMensal: number, classificacao: LinhaOrcamento["classificacao"]): LinhaOrcamento => ({
+    id: Math.random(), grupoId: 0, grupoCodigo, codigo: "x", nome: "i", periodicidade: "M",
+    classificacao, mesInicio: null, mesFim: null, valorOrcado, valorOrcadoMensal, orcadoPorMes: [], comentarios: null,
+  })
+  const linhas: LinhaOrcamento[] = [
+    linha("110", 1000, 100, "C"), // essencial (C)
+    linha("110", 500, 50, "P"),   // condicionado (P)
+    linha("100", 200, 20, "C"),   // item direto na raiz, essencial
+  ]
+  it("soma recursivamente todos os descendentes", () => {
+    expect(rollupGrupo("100", grupos, linhas)).toEqual({ total: 1700, mensal: 170, ess: 1200, cond: 500 })
+  })
+  it("grupo folha soma só seus itens diretos", () => {
+    expect(rollupGrupo("110", grupos, linhas)).toEqual({ total: 1500, mensal: 150, ess: 1000, cond: 500 })
   })
 })
