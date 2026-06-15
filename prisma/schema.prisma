@@ -6,3 +6,146 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model conta_grupo {
+  id                BigInt        @id @default(autoincrement())
+  exercicio_id      BigInt
+  codigo            Decimal       @db.Decimal(8, 0)
+  grupo_pai_id      BigInt?
+  tipo_conta_id     Int           @db.SmallInt
+  nome              String        @db.VarChar(150)
+  created_at        DateTime      @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime      @default(now()) @db.Timestamptz(6)
+  exercicio         exercicio     @relation(fields: [exercicio_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  conta_grupo       conta_grupo?  @relation("conta_grupoToconta_grupo", fields: [grupo_pai_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_conta_grupo conta_grupo[] @relation("conta_grupoToconta_grupo")
+  tipo_conta        tipo_conta    @relation(fields: [tipo_conta_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  conta_item        conta_item[]
+
+  @@unique([exercicio_id, codigo], map: "conta_grupo_codigo_uq")
+  @@index([exercicio_id, tipo_conta_id], map: "ix_conta_grupo_ex_tipo")
+  @@index([grupo_pai_id], map: "ix_conta_grupo_pai")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model conta_item {
+  id                   BigInt                 @id @default(autoincrement())
+  grupo_id             BigInt
+  codigo               Decimal                @db.Decimal(8, 0)
+  nome                 String                 @db.VarChar(150)
+  periodicidade        String                 @db.Char(1)
+  valor_orcado         Decimal                @db.Decimal(18, 2)
+  valor_orcado_mensal  Decimal                @db.Decimal(18, 2)
+  classificacao        String?                @db.Char(1)
+  is_fixo              Boolean                @default(false)
+  comentarios          String?
+  mes_inicio           Int?                   @db.SmallInt
+  mes_fim              Int?                   @db.SmallInt
+  created_at           DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime               @default(now()) @db.Timestamptz(6)
+  conta_grupo          conta_grupo            @relation(fields: [grupo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  lancamento_realizado lancamento_realizado[]
+
+  @@unique([grupo_id, codigo], map: "conta_item_codigo_uq")
+  @@index([classificacao], map: "ix_conta_item_class")
+  @@index([grupo_id], map: "ix_conta_item_grupo")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model evento_tesouraria {
+  id           BigInt    @id @default(autoincrement())
+  exercicio_id BigInt
+  competencia  DateTime  @db.Date
+  tipo         String    @db.VarChar(20)
+  valor        Decimal   @db.Decimal(18, 2)
+  descricao    String?   @db.VarChar(150)
+  exercicio    exercicio @relation(fields: [exercicio_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([exercicio_id, competencia], map: "ix_evento_tesouraria")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model exercicio {
+  id                   BigInt                 @id @default(autoincrement())
+  ano                  Int                    @unique @db.SmallInt
+  descricao            String?                @db.VarChar(60)
+  created_at           DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime               @default(now()) @db.Timestamptz(6)
+  conta_grupo          conta_grupo[]
+  evento_tesouraria    evento_tesouraria[]
+  fechamento_mensal    fechamento_mensal[]
+  lancamento_realizado lancamento_realizado[]
+  parametro_mensal     parametro_mensal[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model fechamento_mensal {
+  id            BigInt    @id @default(autoincrement())
+  exercicio_id  BigInt
+  competencia   DateTime  @db.Date
+  status        String    @default("aberto") @db.VarChar(12)
+  concluido_por String?   @db.VarChar(120)
+  concluido_em  DateTime? @db.Timestamptz(6)
+  observacao    String?
+  created_at    DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime  @default(now()) @db.Timestamptz(6)
+  exercicio     exercicio @relation(fields: [exercicio_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([exercicio_id, competencia], map: "fechamento_mensal_uq")
+  @@index([status], map: "ix_fechamento_status")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model lancamento_realizado {
+  id              BigInt     @id @default(autoincrement())
+  conta_item_id   BigInt
+  exercicio_id    BigInt
+  competencia     DateTime   @db.Date
+  data_lancamento DateTime?  @db.Date
+  valor_realizado Decimal?   @db.Decimal(18, 2)
+  valor_orcado    Decimal?   @db.Decimal(18, 2)
+  descricao       String?    @db.VarChar(200)
+  created_at      DateTime   @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime   @default(now()) @db.Timestamptz(6)
+  conta_item      conta_item @relation(fields: [conta_item_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  exercicio       exercicio  @relation(fields: [exercicio_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([conta_item_id, competencia], map: "lancamento_realizado_item_comp_uq")
+  @@index([competencia], map: "ix_lanc_comp")
+  @@index([exercicio_id, competencia], map: "ix_lanc_exercicio")
+  @@index([conta_item_id, competencia], map: "ix_lanc_item_comp")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model parametro_mensal {
+  id           BigInt    @id @default(autoincrement())
+  exercicio_id BigInt
+  competencia  DateTime  @db.Date
+  chave        String    @db.VarChar(40)
+  valor        Decimal   @db.Decimal(18, 4)
+  exercicio    exercicio @relation(fields: [exercicio_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([exercicio_id, competencia, chave], map: "parametro_mensal_uq")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model tipo_conta {
+  id          Int           @id @default(autoincrement()) @db.SmallInt
+  sigla       String        @unique @db.Char(1)
+  nome        String        @db.VarChar(40)
+  conta_grupo conta_grupo[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model usuario {
+  id         BigInt   @id @default(autoincrement())
+  nome       String   @db.VarChar(120)
+  email      String   @unique(map: "usuario_email_uq") @db.VarChar(120)
+  perfil     String   @db.VarChar(10)
+  senha_hash String   @db.VarChar(60)
+  is_ativo   Boolean  @default(true)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+}
