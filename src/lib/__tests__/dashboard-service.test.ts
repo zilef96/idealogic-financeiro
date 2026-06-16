@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest"
 import {
   construirTotais, competenciaRef, serieOrcadoRealizado, serieSuperavit, serieMargem,
   serieCustoHora, serieCaixa, serieTributos, arvoreCategorias, topDespesas, paretoClientes,
-  montarKpis, montarAlertas, montarDashboard,
+  montarKpis, montarAlertas, montarDashboard, totaisAcumulados, desvioPorCategoria,
   type LinhaDash,
 } from "@/lib/services/dashboard-service"
 
@@ -233,5 +233,49 @@ describe("montarDashboard", () => {
     expect(p.kpis.length).toBe(6)
     expect(p.orcadoRealizado).toHaveLength(12)
     expect(p.concentracaoClientes[0].nome).toBe("A")
+  })
+})
+
+describe("totaisAcumulados (YTD)", () => {
+  const ls = [
+    ...linhas(1, { "10000": { o: 80, r: 100 }, "10100": { o: 0, r: 0 }, "10200": { o: 0, r: 0 } }),
+    ...linhas(2, { "10000": { o: 80, r: 60 }, "10100": { o: 0, r: 0 }, "10200": { o: 0, r: 0 } }),
+  ]
+  it("soma os totais de janeiro até o mês informado", () => {
+    const t = totaisAcumulados(ls, "realizado", 2)
+    expect(t.faturamento).toBe(160) // 100 + 60
+    const tOrc = totaisAcumulados(ls, "orcado", 2)
+    expect(tOrc.faturamento).toBe(160) // 80 + 80
+  })
+})
+
+describe("montarKpis (YTD)", () => {
+  const ls = [
+    ...linhas(1, { "10000": { o: 80, r: 100 }, "10100": { o: 0, r: 0 }, "10200": { o: 0, r: 0 },
+      "20000": { o: 0, r: 30 }, "30000": { o: 0, r: 20 }, "40000": { o: 0, r: 0 } }),
+    ...linhas(2, { "10000": { o: 80, r: 60 }, "10100": { o: 0, r: 0 }, "10200": { o: 0, r: 0 },
+      "20000": { o: 0, r: 10 }, "30000": { o: 0, r: 10 }, "40000": { o: 0, r: 0 } }),
+  ]
+  const caixa = { pontos: [{ mes: 1, saldo: 1000, projetado: false }, { mes: 2, saldo: 1100, projetado: false }], caixaMinimo: 500 } as never
+  it("acumula faturamento do ano até a competência de referência", () => {
+    const kpis = montarKpis(ls, 2, caixa)
+    const fat = kpis.find((k) => k.id === "faturamento")!
+    expect(fat.valor).toBe(160) // 100 + 60 YTD
+    const dOrc = fat.deltas.find((d) => d.rotulo.includes("orçado"))!
+    expect(dOrc.valor).toBeCloseTo(0) // 160 vs orçado 160 → 0%
+  })
+})
+
+describe("desvioPorCategoria", () => {
+  const ls = linhas(1, {
+    "30000": { o: 0, r: 0, pai: "" },
+    "31000": { o: 100, r: 120, pai: "30000" },
+    "32000": { o: 50, r: 40, pai: "30000" },
+  })
+  it("compara orçado×realizado YTD por grupo, com desvio % com sinal", () => {
+    const d = desvioPorCategoria(ls)
+    expect(d.map((x) => x.codigo).sort()).toEqual(["31000", "32000"])
+    expect(d.find((x) => x.codigo === "31000")!.desvioPercentual).toBeCloseTo(20)
+    expect(d.find((x) => x.codigo === "32000")!.desvioPercentual).toBeCloseTo(-20)
   })
 })

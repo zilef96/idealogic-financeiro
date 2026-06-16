@@ -1,5 +1,5 @@
 "use client"
-import { ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, CartesianGrid } from "recharts"
+import { ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, ReferenceArea, CartesianGrid } from "recharts"
 import type { PontoCaixa } from "@/lib/services/dashboard-service"
 import { NOMES_MES, fmtMoedaTip } from "../formatos"
 
@@ -24,6 +24,7 @@ export function CaixaChart({ dados, caixaMinimo }: { dados: PontoCaixa[]; caixaM
           <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--border))" />
           <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
           <YAxis tick={{ fontSize: 12 }} />
+          <ReferenceArea y1={0} y2={caixaMinimo} fill="#d97706" fillOpacity={0.08} />
           <ReferenceLine y={caixaMinimo} stroke="#dc2626" strokeDasharray="4 4"
             label={{ value: "Caixa mínimo", fontSize: 11, fill: "#dc2626", position: "insideTopRight" }} />
           <Tooltip formatter={(v) => fmtMoedaTip(v)} />

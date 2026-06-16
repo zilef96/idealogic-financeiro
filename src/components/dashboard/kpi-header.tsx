@@ -3,12 +3,12 @@ import { fmtValor, fmtDelta, corDelta } from "./formatos"
 
 // Explicação em linguagem de sócio (não-contábil) para cada KPI.
 const AJUDA: Record<string, string> = {
-  faturamento: "Quanto entrou de serviços no mês",
-  superavit: "O que sobrou após custos e despesas",
-  margem: "De cada R$ faturado, quanto sobra",
+  faturamento: "Receita de serviços acumulada no ano",
+  superavit: "O que sobrou no ano após custos e despesas",
+  margem: "De cada R$ faturado, quanto sobra (ano)",
   caixa: "Dinheiro disponível hoje",
-  tributos: "Quanto do faturamento vira imposto",
-  aderencia: "Quanto ficou dentro do orçamento",
+  tributos: "Quanto do faturamento virou imposto (ano)",
+  aderencia: "Itens dentro do orçado no ano",
 }
 
 export function KpiHeader({ kpis }: { kpis: Kpi[] }) {

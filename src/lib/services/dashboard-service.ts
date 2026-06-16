@@ -206,43 +206,63 @@ type SerieCaixaResult = { pontos: PontoCaixa[]; caixaMinimo: number }
 const pct = (novo: number, base: number): number | null => (base === 0 ? null : ((novo - base) / Math.abs(base)) * 100)
 const TOLERANCIA = 5
 
+// Soma os TotaisMes de janeiro até `ateMes` (leitura YTD). As funções puras
+// (faturamentoServicos, superavitMensal) são lineares, então valem sobre a soma.
+export function totaisAcumulados(linhas: LinhaDash[], campo: Campo, ateMes: number): TotaisMes {
+  const acc: TotaisMes = {
+    faturamento: 0, cotas: 0, tributosFat: 0, tributacaoLucro: 0,
+    custos: 0, despesas: 0, dividendos: 0, custosOperacionais: 0, despAdmFinComl: 0,
+  }
+  for (let mes = 1; mes <= ateMes; mes++) {
+    const t = construirTotais(linhas, campo, mes)
+    acc.faturamento += t.faturamento; acc.cotas += t.cotas; acc.tributosFat += t.tributosFat
+    acc.tributacaoLucro += t.tributacaoLucro; acc.custos += t.custos; acc.despesas += t.despesas
+    acc.dividendos += t.dividendos; acc.custosOperacionais += t.custosOperacionais; acc.despAdmFinComl += t.despAdmFinComl
+  }
+  return acc
+}
+
+// KPIs do header em base YTD (acumulado de janeiro até a competência de referência).
 export function montarKpis(linhas: LinhaDash[], ref: number, caixa: SerieCaixaResult): Kpi[] {
   const pend = ref === 0
-  const tReal = construirTotais(linhas, "realizado", ref)
-  const tOrc = construirTotais(linhas, "orcado", ref)
+  const tReal = totaisAcumulados(linhas, "realizado", ref)
+  const tOrc = totaisAcumulados(linhas, "orcado", ref)
   const fatReal = faturamentoServicos(tReal), fatOrc = faturamentoServicos(tOrc)
-  const fatAnt = ref > 1 ? faturamentoServicos(construirTotais(linhas, "realizado", ref - 1)) : 0
   const supReal = superavitMensal(tReal), supOrc = superavitMensal(tOrc)
   const margemReal = margemContribuicao(supReal, fatReal)
-  const cargaTrib = serieTributos(linhas)[ref - 1]
-  const cargaAnt = ref > 1 ? serieTributos(linhas)[ref - 2]?.cargaPercentual ?? null : null
   const saldoRef = caixa.pontos[ref - 1]?.saldo ?? 0
 
-  // aderência: % de itens-folha do mês ref dentro da tolerância de desvio
-  const itensRef = linhas.filter((l) => !l.isGrupo && l.mes === ref && l.realizado != null)
-  const dentro = itensRef.filter((l) => {
+  // carga tributária YTD: soma de PIS/COFINS/ISSQN realizados ÷ faturamento de serviços YTD
+  const trib = serieTributos(linhas)
+  let pisYtd = 0, cofinsYtd = 0, issqnYtd = 0
+  for (let mes = 1; mes <= ref; mes++) {
+    const t = trib[mes - 1]
+    if (t && !t.pendente) { pisYtd += t.pis ?? 0; cofinsYtd += t.cofins ?? 0; issqnYtd += t.issqn ?? 0 }
+  }
+  const cargaYtd = fatReal === 0 ? null : ((pisYtd + cofinsYtd + issqnYtd) / fatReal) * 100
+
+  // aderência YTD: % de itens-folha de jan..ref dentro da tolerância de desvio
+  const itensYtd = linhas.filter((l) => !l.isGrupo && l.mes <= ref && l.realizado != null)
+  const dentro = itensYtd.filter((l) => {
     const { desvioPercentual } = calcDesvio(l.realizado ?? 0, l.orcado)
     return desvioPercentual == null || Math.abs(desvioPercentual) <= TOLERANCIA
   }).length
-  const fora = itensRef.length - dentro
-  const aderencia = itensRef.length === 0 ? null : (dentro / itensRef.length) * 100
+  const fora = itensYtd.length - dentro
+  const aderencia = itensYtd.length === 0 ? null : (dentro / itensYtd.length) * 100
 
   const m = (v: number | null): number | null => (pend ? null : v)
   return [
-    { id: "faturamento", rotulo: "Faturamento", valor: m(fatReal), formato: "moeda", pendente: pend, deltas: [
-      { rotulo: "vs mês ant.", valor: m(pct(fatReal, fatAnt)), formato: "percent", inverted: false },
+    { id: "faturamento", rotulo: "Faturamento (ano)", valor: m(fatReal), formato: "moeda", pendente: pend, deltas: [
       { rotulo: "vs orçado", valor: m(pct(fatReal, fatOrc)), formato: "percent", inverted: false },
     ] },
-    { id: "superavit", rotulo: "Superávit/Déficit", valor: m(supReal), formato: "moeda", pendente: pend, deltas: [
+    { id: "superavit", rotulo: "Superávit/Déficit (ano)", valor: m(supReal), formato: "moeda", pendente: pend, deltas: [
       { rotulo: "vs orçado", valor: m(pct(supReal, supOrc)), formato: "percent", inverted: false },
     ] },
     { id: "margem", rotulo: "Margem de contribuição", valor: m(margemReal), formato: "percent", pendente: pend, deltas: [] },
     { id: "caixa", rotulo: "Caixa atual", valor: saldoRef, formato: "moeda", pendente: false, deltas: [
       { rotulo: "folga vs mínimo", valor: saldoRef - caixa.caixaMinimo, formato: "moeda", inverted: false },
     ] },
-    { id: "tributos", rotulo: "Carga tributária", valor: m(cargaTrib?.cargaPercentual ?? null), formato: "percent", pendente: pend, deltas: [
-      { rotulo: "vs mês ant.", valor: m(cargaAnt == null ? null : (cargaTrib?.cargaPercentual ?? 0) - cargaAnt), formato: "pontos", inverted: true },
-    ] },
+    { id: "tributos", rotulo: "Carga tributária (ano)", valor: m(cargaYtd), formato: "percent", pendente: pend, deltas: [] },
     { id: "aderencia", rotulo: "Aderência ao orçamento", valor: m(aderencia), formato: "percent", pendente: pend, deltas: [
       { rotulo: "itens fora", valor: m(fora), formato: "numero", inverted: true },
     ] },
@@ -261,11 +281,34 @@ export function montarAlertas(linhas: LinhaDash[], caixa: SerieCaixaResult, marg
   return alertas
 }
 
+export interface DesvioCategoria { codigo: string; nome: string; orcado: number; realizado: number; desvioPercentual: number | null }
+
+// Desvio orçamentário YTD por grupo de custo/despesa (filhos dos blocos 20000 e 30000).
+// Soma só os meses com realizado lançado, para que orçado e realizado sejam comparáveis.
+// desvioPercentual > 0 = estouro (gastou mais que o orçado).
+export function desvioPorCategoria(linhas: LinhaDash[]): DesvioCategoria[] {
+  const PAIS = new Set(["20000", "30000"])
+  const acc = new Map<string, { nome: string; orcado: number; realizado: number }>()
+  for (const l of linhas) {
+    if (!l.isGrupo || !PAIS.has(l.codigoPai)) continue
+    if (!temRealizadoNoMes(linhas, l.mes)) continue
+    const e = acc.get(l.codigo) ?? { nome: l.nome, orcado: 0, realizado: 0 }
+    e.orcado += l.orcado
+    e.realizado += l.realizado ?? 0
+    acc.set(l.codigo, e)
+  }
+  return [...acc.entries()]
+    .map(([codigo, e]) => ({ codigo, nome: e.nome, orcado: e.orcado, realizado: e.realizado, desvioPercentual: calcDesvio(e.realizado, e.orcado).desvioPercentual }))
+    .filter((d) => d.orcado !== 0 || d.realizado !== 0)
+    .sort((a, b) => Math.abs(b.desvioPercentual ?? 0) - Math.abs(a.desvioPercentual ?? 0))
+}
+
 export interface DashboardPayload {
   ano: number
   competenciaRef: number
   kpis: Kpi[]
   alertas: Alerta[]
+  desvioCategorias: DesvioCategoria[]
   orcadoRealizado: PontoOrcadoRealizado[]
   superavit: PontoSuperavit[]
   caixa: PontoCaixa[]
@@ -297,6 +340,7 @@ export function montarDashboard(input: {
     competenciaRef: ref,
     kpis: montarKpis(linhas, ref, caixa),
     alertas: montarAlertas(linhas, caixa, margem),
+    desvioCategorias: desvioPorCategoria(linhas),
     orcadoRealizado: serieOrcadoRealizado(linhas),
     superavit: serieSuperavit(linhas),
     caixa: caixa.pontos,
