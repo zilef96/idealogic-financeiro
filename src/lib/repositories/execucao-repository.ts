@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma"
 import { calcDesvio } from "@/lib/services/execucao-service"
 
 export interface LinhaExecucao {
+  itemId: number | null     // id do conta_item (null em grupos) — usado no PATCH
   codigoPai: string
   codigo: string
   nome: string
@@ -16,12 +17,12 @@ export interface LinhaExecucao {
 
 interface Row {
   codigo_pai: string; codigo: string; nome: string; mes: number
-  orcado: unknown; orcado_projetado: unknown; realizado: unknown | null; is_grupo: boolean
+  orcado: unknown; orcado_projetado: unknown; realizado: unknown | null; is_grupo: boolean; item_id: bigint | null
 }
 
 export async function getExecucao(ano: number): Promise<LinhaExecucao[]> {
   const rows = await prisma.$queryRaw<Row[]>`
-    SELECT codigo_pai, codigo, nome, mes, orcado, orcado_projetado, realizado, is_grupo
+    SELECT codigo_pai, codigo, nome, mes, orcado, orcado_projetado, realizado, is_grupo, item_id
     FROM vw_execucao_mensal WHERE ano = ${ano}
     ORDER BY codigo::numeric, mes
   `
@@ -30,6 +31,7 @@ export async function getExecucao(ano: number): Promise<LinhaExecucao[]> {
     const realizado = r.realizado === null ? null : Number(r.realizado)
     const { desvio, desvioPercentual } = calcDesvio(realizado ?? 0, orcado)
     return {
+      itemId: r.item_id === null ? null : Number(r.item_id),
       codigoPai: r.codigo_pai, codigo: r.codigo, nome: r.nome,
       isGrupo: r.is_grupo,
       mes: r.mes, orcadoProjetado: Number(r.orcado_projetado), orcado, realizado, desvio, desvioPercentual,

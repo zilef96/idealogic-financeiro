@@ -61,7 +61,8 @@ SELECT
   gr.realizado                  AS realizado,
   ex.ano                        AS ano,
   COALESCE(go.orcado_projetado, 0) AS orcado_projetado,
-  true                          AS is_grupo
+  true                          AS is_grupo,
+  NULL::bigint                  AS item_id
 FROM conta_grupo cg
 JOIN exercicio ex ON ex.id = cg.exercicio_id
 JOIN grupo_orc_anual goa ON goa.grupo_id = cg.id
@@ -83,7 +84,8 @@ SELECT
      WHERE lr.conta_item_id = ci.id AND EXTRACT(MONTH FROM lr.competencia)::int = io.mes) AS realizado,
   ex.ano                 AS ano,
   io.orcado_projetado    AS orcado_projetado,
-  false                  AS is_grupo
+  false                  AS is_grupo,
+  ci.id                  AS item_id
 FROM conta_item ci
 JOIN conta_grupo cg ON cg.id = ci.grupo_id
 JOIN exercicio ex ON ex.id = cg.exercicio_id
