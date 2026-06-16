@@ -16,6 +16,7 @@ export function CategoriasChart({ raizes }: { raizes: CategoriaNode[] }) {
     <div>
       <div className="mb-2 flex items-center gap-2 text-sm">
         <h3 className="font-semibold">Despesas e Receitas por Categoria</h3>
+        <span className="text-xs" style={{ color: "rgb(var(--muted))" }}>— clique num bloco para detalhar</span>
         <button type="button" className="text-xs underline" onClick={() => setCaminho([])} disabled={caminho.length === 0}>
           início
         </button>

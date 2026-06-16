@@ -7,7 +7,8 @@ export function CustoHoraChart({ dados }: { dados: PontoCustoHora[] }) {
   const data = dados.map((p) => ({ mes: NOMES_MES[p.mes - 1], custoHora: p.custoHora, horas: p.horas }))
   return (
     <div>
-      <h3 className="mb-2 text-sm font-semibold">Custo Hora Idealogic</h3>
+      <h3 className="text-sm font-semibold">Custo Hora Idealogic</h3>
+      <p className="mb-2 text-xs" style={{ color: "rgb(var(--muted))" }}>Quanto custa cada hora de trabalho da empresa. A barra ao fundo são as horas faturáveis do mês.</p>
       <ResponsiveContainer width="100%" height={260}>
         <ComposedChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--border))" />

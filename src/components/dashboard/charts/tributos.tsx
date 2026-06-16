@@ -7,7 +7,8 @@ export function TributosChart({ dados }: { dados: PontoTributo[] }) {
   const data = dados.map((p) => ({ mes: NOMES_MES[p.mes - 1], pis: p.pis, cofins: p.cofins, issqn: p.issqn, carga: p.cargaPercentual }))
   return (
     <div>
-      <h3 className="mb-2 text-sm font-semibold">Carga Tributária (PIS · COFINS · ISSQN)</h3>
+      <h3 className="text-sm font-semibold">Carga Tributária (PIS · COFINS · ISSQN)</h3>
+      <p className="text-xs" style={{ color: "rgb(var(--muted))" }}>Quanto do faturamento vira imposto por mês. A linha é o peso total em % sobre o faturamento.</p>
       <p className="mb-2 text-xs" style={{ color: "rgb(var(--muted))" }}>CSLL/IRPJ: a definir (sem alíquota cadastrada).</p>
       <ResponsiveContainer width="100%" height={280}>
         <ComposedChart data={data}>

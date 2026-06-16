@@ -7,7 +7,8 @@ export function ConcentracaoClientesChart({ dados }: { dados: ClientePareto[] })
   const data = dados.map((c) => ({ nome: c.nome, receita: c.receita, acumulado: c.acumulado }))
   return (
     <div>
-      <h3 className="mb-2 text-sm font-semibold">Concentração por Cliente (Pareto)</h3>
+      <h3 className="text-sm font-semibold">Concentração por Cliente (Pareto)</h3>
+      <p className="mb-2 text-xs" style={{ color: "rgb(var(--muted))" }}>Quanto cada cliente representa da receita. A linha soma o acumulado: se poucos clientes passam de 80%, há risco de dependência.</p>
       <ResponsiveContainer width="100%" height={320}>
         <ComposedChart data={data} margin={{ bottom: 60 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--border))" />

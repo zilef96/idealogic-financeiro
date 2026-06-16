@@ -9,7 +9,7 @@ import { getReceitaPorCliente } from "@/lib/repositories/dashboard-repository"
 import { montarDashboard, valorVigente, type LinhaDash } from "@/lib/services/dashboard-service"
 
 export async function GET(req: Request) {
-  const auth = await requirePerfil(["admin"]); if (!auth.ok) return auth.response
+  const auth = await requirePerfil(["admin", "socio"]); if (!auth.ok) return auth.response
   const parsed = parseQuery(new URL(req.url).searchParams, z.object({ ano: anoSchema }))
   if (!parsed.ok) return parsed.response
   const ano = parsed.data.ano

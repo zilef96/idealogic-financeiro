@@ -7,7 +7,8 @@ export function MargemChart({ dados }: { dados: PontoMargem[] }) {
   const data = dados.map((p) => ({ mes: NOMES_MES[p.mes - 1], margem: p.margem }))
   return (
     <div>
-      <h3 className="mb-2 text-sm font-semibold">Margem de Contribuição (%)</h3>
+      <h3 className="text-sm font-semibold">Margem de Contribuição (%)</h3>
+      <p className="mb-2 text-xs" style={{ color: "rgb(var(--muted))" }}>De cada R$ faturado, quanto sobra depois dos custos diretos. Quanto mais alto, mais saudável o negócio.</p>
       <ResponsiveContainer width="100%" height={260}>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--border))" />

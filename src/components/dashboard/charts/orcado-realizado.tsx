@@ -7,7 +7,8 @@ export function OrcadoRealizadoChart({ dados }: { dados: PontoOrcadoRealizado[] 
   const data = dados.map((p) => ({ mes: NOMES_MES[p.mes - 1], orcado: p.orcado, realizado: p.realizado, desvio: p.desvioPercentual }))
   return (
     <div>
-      <h3 className="mb-2 text-sm font-semibold">Orçado × Realizado (faturamento de serviços)</h3>
+      <h3 className="text-sm font-semibold">Orçado × Realizado (faturamento de serviços)</h3>
+      <p className="mb-2 text-xs" style={{ color: "rgb(var(--muted))" }}>O que planejamos receber (barra clara) versus o que de fato entrou (barra forte). A linha mostra a diferença em %.</p>
       <ResponsiveContainer width="100%" height={280}>
         <ComposedChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--border))" />

@@ -17,7 +17,8 @@ export function CaixaChart({ dados, caixaMinimo }: { dados: PontoCaixa[]; caixaM
   }
   return (
     <div>
-      <h3 className="mb-2 text-sm font-semibold">Evolução do Caixa</h3>
+      <h3 className="text-sm font-semibold">Evolução do Caixa</h3>
+      <p className="mb-2 text-xs" style={{ color: "rgb(var(--muted))" }}>Quanto dinheiro a empresa tem em caixa mês a mês. O trecho tracejado é projeção; a linha vermelha é o mínimo de segurança.</p>
       <ResponsiveContainer width="100%" height={280}>
         <ComposedChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--border))" />

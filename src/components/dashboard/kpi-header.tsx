@@ -1,14 +1,25 @@
 import type { Kpi } from "@/lib/services/dashboard-service"
 import { fmtValor, fmtDelta, corDelta } from "./formatos"
 
+// Explicação em linguagem de sócio (não-contábil) para cada KPI.
+const AJUDA: Record<string, string> = {
+  faturamento: "Quanto entrou de serviços no mês",
+  superavit: "O que sobrou após custos e despesas",
+  margem: "De cada R$ faturado, quanto sobra",
+  caixa: "Dinheiro disponível hoje",
+  tributos: "Quanto do faturamento vira imposto",
+  aderencia: "Quanto ficou dentro do orçamento",
+}
+
 export function KpiHeader({ kpis }: { kpis: Kpi[] }) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
       {kpis.map((k) => (
-        <div key={k.id} className="rounded-xl border border-border bg-card p-3">
+        <div key={k.id} className="rounded-xl border border-border bg-card p-3" title={AJUDA[k.id]}>
           <div className="text-[11px] uppercase tracking-wider" style={{ color: "rgb(var(--muted))" }}>{k.rotulo}</div>
           <div className="num font-display mt-1 text-lg font-semibold"
             style={k.pendente ? { color: "rgb(var(--muted) / 0.6)" } : undefined}>{fmtValor(k.valor, k.formato)}</div>
+          {AJUDA[k.id] && <div className="mt-0.5 text-[10px] leading-tight" style={{ color: "rgb(var(--muted))" }}>{AJUDA[k.id]}</div>}
           <div className="mt-1 flex flex-wrap gap-x-2 text-[11px]">
             {k.deltas.map((d) => (
               <span key={d.rotulo} style={{ color: corDelta(d.valor, d.inverted) }}>

@@ -7,7 +7,7 @@ import { montarDashboard, valorVigente, type LinhaDash } from "@/lib/services/da
 import { DashboardView } from "@/components/dashboard/dashboard-view"
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ ano?: string }> }) {
-  await exigirPerfilPagina(["admin"])
+  await exigirPerfilPagina(["admin", "socio"])
   const { ano } = await searchParams
   const anoNum = Number(ano) || new Date().getFullYear()
 
