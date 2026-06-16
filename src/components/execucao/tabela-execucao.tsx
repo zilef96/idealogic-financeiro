@@ -1,5 +1,5 @@
 "use client"
-import { useState, type ReactNode } from "react"
+import { Fragment, useState, type ReactNode } from "react"
 import type { LinhaExecucao } from "@/lib/repositories/execucao-repository"
 
 const brl = (n: number | null) => (n == null ? "—" : n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
@@ -147,14 +147,22 @@ export function TabelaExecucao({
 
   return (
     <div className="space-y-2">
-      <p className="text-[12px]" style={{ color: "rgb(var(--muted))" }}>Realizado por mês · vermelho = desvio negativo · clique nas categorias para expandir</p>
+      <p className="text-[12px]" style={{ color: "rgb(var(--muted))" }}>Orçado e realizado por mês · realizado em vermelho = desvio negativo · clique nas categorias para expandir</p>
       <div className="overflow-x-auto rounded-xl border border-border">
         <table className="w-full text-sm">
           <thead>
             <tr style={{ color: "rgb(var(--muted))" }}>
-              <th className="sticky left-0 z-10 bg-card px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider">Conta</th>
+              <th rowSpan={2} className="sticky left-0 z-10 bg-card px-3 py-2 text-left align-bottom text-[11px] font-semibold uppercase tracking-wider">Conta</th>
               {meses.map((m) => (
-                <th key={m} className="num border-l border-border px-2 py-2 text-right text-[11px] font-semibold">{MESES[m - 1]}</th>
+                <th key={m} colSpan={2} className="border-l border-border px-2 py-1.5 text-center text-[11px] font-semibold">{MESES[m - 1]}</th>
+              ))}
+            </tr>
+            <tr className="text-[10px]" style={{ color: "rgb(var(--muted))" }}>
+              {meses.map((m) => (
+                <Fragment key={m}>
+                  <th className="border-l border-border px-2 pb-1.5 text-right font-medium">Orçado</th>
+                  <th className="px-2 pb-1.5 text-right font-medium">Realiz.</th>
+                </Fragment>
               ))}
             </tr>
           </thead>
@@ -162,9 +170,10 @@ export function TabelaExecucao({
             {visiveis.map(({ e, nivel }) => {
               const filhos = filhosDe(e.codigo)
               const expansivel = filhos.length > 0
+              const fundo = e.codigoPai === "" ? tintRgb(e.codigo) : "rgb(var(--card))"
               return (
                 <tr key={e.codigo} className="border-t border-border hover:bg-faint" style={e.codigoPai === "" ? { background: tintRgb(e.codigo) } : undefined}>
-                  <td className="sticky left-0 z-10 px-3 py-1.5 whitespace-nowrap" style={{ background: e.codigoPai === "" ? tintRgb(e.codigo) : "rgb(var(--card))", paddingLeft: 12 + nivel * 16 }}>
+                  <td className="sticky left-0 z-10 px-3 py-1.5 whitespace-nowrap" style={{ background: fundo, paddingLeft: 12 + nivel * 16 }}>
                     <button type="button" onClick={() => expansivel && toggle(e.codigo)} className="flex items-center gap-2 text-left">
                       {expansivel ? <Chevron aberto={aberto(e.codigo)} /> : <span className="inline-block h-3.5 w-3.5 shrink-0" />}
                       <span className="num text-[10px]" style={{ color: "rgb(var(--muted) / 0.8)" }}>{e.codigo}</span>
@@ -175,10 +184,14 @@ export function TabelaExecucao({
                     const c = e.porMes.get(m)
                     const realizado = c?.realizado ?? null
                     return (
-                      <td key={m} className="num border-l border-border px-2 py-1.5 text-right whitespace-nowrap"
-                        style={{ color: corDesvio(realizado, c?.desvio ?? 0) }}>
-                        {realizado == null ? "—" : brl(realizado)}
-                      </td>
+                      <Fragment key={m}>
+                        <td className="num border-l border-border px-2 py-1.5 text-right whitespace-nowrap" style={{ color: "rgb(var(--muted))" }}>
+                          {brl(c?.orcado ?? 0)}
+                        </td>
+                        <td className="num px-2 py-1.5 text-right whitespace-nowrap" style={{ color: corDesvio(realizado, c?.desvio ?? 0) }}>
+                          {realizado == null ? "—" : brl(realizado)}
+                        </td>
+                      </Fragment>
                     )
                   })}
                 </tr>
