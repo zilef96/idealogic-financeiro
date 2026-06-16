@@ -1,6 +1,7 @@
 "use client"
 import { Fragment, useState, type ReactNode } from "react"
 import type { LinhaExecucao } from "@/lib/repositories/execucao-repository"
+import { CampoRealizado } from "./campo-realizado"
 
 const brl = (n: number | null) => (n == null ? "—" : n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
@@ -57,19 +58,7 @@ export function TabelaExecucao({
     </button>
   )
 
-  const [salvando, setSalvando] = useState<string | null>(null)
-  const [aviso, setAviso] = useState("")
   const [mostrarOrcado, setMostrarOrcado] = useState(true)
-  async function salvarRealizado(itemId: number, mes: number, valor: number) {
-    setSalvando(`${itemId}-${mes}`); setAviso("")
-    const r = await fetch("/api/execucao/realizado", {
-      method: "PATCH", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ano, mes, contaItemId: itemId, valor }),
-    })
-    setSalvando(null)
-    if (r.status === 409) setAviso("Competência fechada; reabra o mês para editar.")
-    else if (!r.ok) setAviso("Falha ao gravar realizado.")
-  }
 
   const umMes = meses.length === 1
 
@@ -96,12 +85,7 @@ export function TabelaExecucao({
           <div className={`orc-tot num text-[13px] ${e.isGrupo ? "font-semibold" : ""}`} style={e.isGrupo ? { color: accRgb(e.codigo) } : undefined}>{brl(c?.orcado ?? 0)}</div>
           <div className="orc-tot num text-[13px] px-2">
             {editavel && !e.isGrupo && e.itemId != null ? (
-              <input
-                className="w-28 rounded border border-border bg-background p-1 text-right num"
-                type="number" step="0.01" defaultValue={realizado ?? undefined} placeholder="pendente"
-                disabled={salvando === `${e.itemId}-${mes}`}
-                onBlur={(ev) => ev.target.value !== "" && salvarRealizado(e.itemId as number, mes, Number(ev.target.value))}
-              />
+              <CampoRealizado ano={ano} mes={mes} itemId={e.itemId} valorInicial={realizado} />
             ) : (
               <span style={{ color: realizado == null ? "rgb(var(--muted) / 0.6)" : undefined }}>{realizado == null ? "pendente" : brl(realizado)}</span>
             )}
@@ -118,7 +102,6 @@ export function TabelaExecucao({
   if (umMes) {
     return (
       <div className="space-y-2">
-        {aviso && <p className="text-sm" style={{ color: "rgb(var(--danger))" }}>{aviso}</p>}
         <div className="flex justify-end">{btnTudo}</div>
         <div className="exec-row rounded-t-xl border border-border bg-card px-3 py-2 text-[10px] font-semibold uppercase tracking-wider" style={{ color: "rgb(var(--muted))" }}>
           <div>Conta</div>
@@ -221,8 +204,10 @@ export function TabelaExecucao({
                             {brl(c?.orcado ?? 0)}
                           </td>
                         )}
-                        <td className={`num px-2 py-1.5 text-right whitespace-nowrap ${mostrarOrcado ? "" : "border-l border-border"}`} style={{ color: corDesvio(realizado, c?.desvio ?? 0) }}>
-                          {realizado == null ? "—" : brl(realizado)}
+                        <td className={`num px-2 py-1.5 text-right whitespace-nowrap ${mostrarOrcado ? "" : "border-l border-border"}`} style={editavel && !e.isGrupo && e.itemId != null ? undefined : { color: corDesvio(realizado, c?.desvio ?? 0) }}>
+                          {editavel && !e.isGrupo && e.itemId != null
+                            ? <CampoRealizado ano={ano} mes={m} itemId={e.itemId} valorInicial={realizado} />
+                            : realizado == null ? "—" : brl(realizado)}
                         </td>
                       </Fragment>
                     )

@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Bricolage_Grotesque, Hanken_Grotesk, JetBrains_Mono } from "next/font/google"
 import { ThemeProvider } from "@/components/theme/theme-provider"
 import { AppShell } from "@/components/shell/app-shell"
+import { ToastProvider } from "@/components/ui/toast"
 import { getUsuario } from "@/lib/auth-server"
 
 const bricolage = Bricolage_Grotesque({ variable: "--font-bricolage", subsets: ["latin"] })
@@ -24,7 +25,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     >
       <body>
         <ThemeProvider>
-          <AppShell usuario={usuario}>{children}</AppShell>
+          <ToastProvider>
+            <AppShell usuario={usuario}>{children}</AppShell>
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>
