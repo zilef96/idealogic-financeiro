@@ -199,5 +199,116 @@ export function paretoClientes(clientes: ReceitaCliente[]): ClientePareto[] {
   })
 }
 
+export interface KpiDelta { rotulo: string; valor: number | null; formato: "percent" | "pontos" | "moeda" | "numero"; inverted: boolean }
+export interface Kpi { id: string; rotulo: string; valor: number | null; formato: FormatoIndicador; deltas: KpiDelta[]; pendente: boolean }
+
+type SerieCaixaResult = { pontos: PontoCaixa[]; caixaMinimo: number }
+const pct = (novo: number, base: number): number | null => (base === 0 ? null : ((novo - base) / Math.abs(base)) * 100)
+const TOLERANCIA = 5
+
+export function montarKpis(linhas: LinhaDash[], ref: number, caixa: SerieCaixaResult): Kpi[] {
+  const pend = ref === 0
+  const tReal = construirTotais(linhas, "realizado", ref)
+  const tOrc = construirTotais(linhas, "orcado", ref)
+  const fatReal = faturamentoServicos(tReal), fatOrc = faturamentoServicos(tOrc)
+  const fatAnt = ref > 1 ? faturamentoServicos(construirTotais(linhas, "realizado", ref - 1)) : 0
+  const supReal = superavitMensal(tReal), supOrc = superavitMensal(tOrc)
+  const margemReal = margemContribuicao(supReal, fatReal)
+  const cargaTrib = serieTributos(linhas)[ref - 1]
+  const cargaAnt = ref > 1 ? serieTributos(linhas)[ref - 2]?.cargaPercentual ?? null : null
+  const saldoRef = caixa.pontos[ref - 1]?.saldo ?? 0
+
+  // aderência: % de itens-folha do mês ref dentro da tolerância de desvio
+  const itensRef = linhas.filter((l) => !l.isGrupo && l.mes === ref && l.realizado != null)
+  const dentro = itensRef.filter((l) => {
+    const { desvioPercentual } = calcDesvio(l.realizado ?? 0, l.orcado)
+    return desvioPercentual == null || Math.abs(desvioPercentual) <= TOLERANCIA
+  }).length
+  const fora = itensRef.length - dentro
+  const aderencia = itensRef.length === 0 ? null : (dentro / itensRef.length) * 100
+
+  const m = (v: number | null): number | null => (pend ? null : v)
+  return [
+    { id: "faturamento", rotulo: "Faturamento", valor: m(fatReal), formato: "moeda", pendente: pend, deltas: [
+      { rotulo: "vs mês ant.", valor: m(pct(fatReal, fatAnt)), formato: "percent", inverted: false },
+      { rotulo: "vs orçado", valor: m(pct(fatReal, fatOrc)), formato: "percent", inverted: false },
+    ] },
+    { id: "superavit", rotulo: "Superávit/Déficit", valor: m(supReal), formato: "moeda", pendente: pend, deltas: [
+      { rotulo: "vs orçado", valor: m(pct(supReal, supOrc)), formato: "percent", inverted: false },
+    ] },
+    { id: "margem", rotulo: "Margem de contribuição", valor: m(margemReal), formato: "percent", pendente: pend, deltas: [] },
+    { id: "caixa", rotulo: "Caixa atual", valor: saldoRef, formato: "moeda", pendente: false, deltas: [
+      { rotulo: "folga vs mínimo", valor: saldoRef - caixa.caixaMinimo, formato: "moeda", inverted: false },
+    ] },
+    { id: "tributos", rotulo: "Carga tributária", valor: m(cargaTrib?.cargaPercentual ?? null), formato: "percent", pendente: pend, deltas: [
+      { rotulo: "vs mês ant.", valor: m(cargaAnt == null ? null : (cargaTrib?.cargaPercentual ?? 0) - cargaAnt), formato: "pontos", inverted: true },
+    ] },
+    { id: "aderencia", rotulo: "Aderência ao orçamento", valor: m(aderencia), formato: "percent", pendente: pend, deltas: [
+      { rotulo: "itens fora", valor: m(fora), formato: "numero", inverted: true },
+    ] },
+  ]
+}
+
+export interface Alerta { tipo: "caixa" | "margem" | "desvio"; mensagem: string; accordion: number }
+const NOMES_MES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
+
+export function montarAlertas(linhas: LinhaDash[], caixa: SerieCaixaResult, margem: PontoMargem[]): Alerta[] {
+  const alertas: Alerta[] = []
+  const rompe = caixa.pontos.find((p) => p.saldo < caixa.caixaMinimo)
+  if (rompe) alertas.push({ tipo: "caixa", mensagem: `Caixa abaixo do mínimo em ${NOMES_MES[rompe.mes - 1]}`, accordion: 2 })
+  const margNeg = margem.find((p) => p.margem != null && p.margem < 0)
+  if (margNeg) alertas.push({ tipo: "margem", mensagem: `Margem negativa em ${NOMES_MES[margNeg.mes - 1]}`, accordion: 3 })
+  return alertas
+}
+
+export interface DashboardPayload {
+  ano: number
+  competenciaRef: number
+  kpis: Kpi[]
+  alertas: Alerta[]
+  orcadoRealizado: PontoOrcadoRealizado[]
+  superavit: PontoSuperavit[]
+  caixa: PontoCaixa[]
+  caixaMinimo: number
+  margem: PontoMargem[]
+  custoHora: PontoCustoHora[]
+  categorias: CategoriaNode[]
+  topDespesas: { nome: string; valor: number }[]
+  tributos: PontoTributo[]
+  concentracaoClientes: ClientePareto[]
+}
+
+export function montarDashboard(input: {
+  ano: number
+  linhas: LinhaDash[]
+  series: SeriesParametros
+  tesouraria: EventoTesourariaDash[]
+  receitaClientes: ReceitaCliente[]
+  saldoInicial: number
+  caixaMinimo: number
+  horasPadrao: number
+}): DashboardPayload {
+  const { ano, linhas, series, tesouraria, receitaClientes, saldoInicial, caixaMinimo, horasPadrao } = input
+  const caixa = serieCaixa(linhas, tesouraria, saldoInicial, caixaMinimo)
+  const margem = serieMargem(linhas)
+  const ref = competenciaRef(linhas)
+  return {
+    ano,
+    competenciaRef: ref,
+    kpis: montarKpis(linhas, ref, caixa),
+    alertas: montarAlertas(linhas, caixa, margem),
+    orcadoRealizado: serieOrcadoRealizado(linhas),
+    superavit: serieSuperavit(linhas),
+    caixa: caixa.pontos,
+    caixaMinimo: caixa.caixaMinimo,
+    margem,
+    custoHora: serieCustoHora(linhas, series, horasPadrao),
+    categorias: arvoreCategorias(linhas),
+    topDespesas: topDespesas(linhas, 5),
+    tributos: serieTributos(linhas),
+    concentracaoClientes: paretoClientes(receitaClientes),
+  }
+}
+
 export { MESES, faturamentoServicos, superavitMensal, margemContribuicao, custoHora, calcDesvio, projecaoCaixa, valorVigente }
 export type { TotaisMes, FormatoIndicador }

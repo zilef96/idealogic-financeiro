@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest"
 import {
   construirTotais, competenciaRef, serieOrcadoRealizado, serieSuperavit, serieMargem,
   serieCustoHora, serieCaixa, serieTributos, arvoreCategorias, topDespesas, paretoClientes,
+  montarKpis, montarAlertas, montarDashboard,
   type LinhaDash,
 } from "@/lib/services/dashboard-service"
 
@@ -194,5 +195,43 @@ describe("paretoClientes", () => {
   it("lida com total zero sem dividir por zero", () => {
     const p = paretoClientes([{ codigo: "a", nome: "A", realizado: 0, orcado: 0 }])
     expect(p[0]).toMatchObject({ percentual: 0, acumulado: 0 })
+  })
+})
+
+describe("montarKpis", () => {
+  // ref = mês 1 (tem realizado). fatServ real=100, orçado=80 → delta vs orçado +25%
+  const ls = linhas(1, { "10000": { o: 80, r: 100 }, "10100": { o: 0, r: 0 }, "10200": { o: 0, r: 0 },
+    "20000": { o: 0, r: 30 }, "30000": { o: 0, r: 20 }, "40000": { o: 0, r: 0 } })
+  it("gera o KPI de faturamento com delta vs orçado", () => {
+    const kpis = montarKpis(ls, 1, { pontos: [{ mes: 1, saldo: 1000, projetado: false }], caixaMinimo: 500 } as never)
+    const fat = kpis.find((k) => k.id === "faturamento")!
+    expect(fat.valor).toBe(100)
+    const dOrc = fat.deltas.find((d) => d.rotulo.includes("orçado"))!
+    expect(dOrc.valor).toBeCloseTo(25)
+  })
+})
+
+describe("montarAlertas", () => {
+  it("emite alerta quando o caixa fica abaixo do mínimo", () => {
+    const caixa = { pontos: [{ mes: 1, saldo: 100, projetado: false }, { mes: 2, saldo: 400, projetado: true }], caixaMinimo: 500 } as never
+    const a = montarAlertas([], caixa, [])
+    expect(a.some((x) => x.tipo === "caixa")).toBe(true)
+  })
+})
+
+describe("montarDashboard", () => {
+  const ls = linhas(1, { "10000": { o: 80, r: 100 }, "10100": { o: 0, r: 0 }, "10200": { o: 0, r: 0 },
+    "20000": { o: 0, r: 30 }, "30000": { o: 0, r: 20 }, "40000": { o: 0, r: 0 } })
+  it("monta o payload completo com a competência de referência", () => {
+    const p = montarDashboard({
+      ano: 2026, linhas: ls, series: {}, tesouraria: [],
+      receitaClientes: [{ codigo: "a", nome: "A", realizado: 100, orcado: 80 }],
+      saldoInicial: 1000, caixaMinimo: 500, horasPadrao: 3200,
+    })
+    expect(p.ano).toBe(2026)
+    expect(p.competenciaRef).toBe(1)
+    expect(p.kpis.length).toBe(6)
+    expect(p.orcadoRealizado).toHaveLength(12)
+    expect(p.concentracaoClientes[0].nome).toBe("A")
   })
 })
