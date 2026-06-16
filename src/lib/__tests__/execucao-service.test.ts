@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { calcDesvio, margemContribuicao, custoHora, tributosSobreFaturamento, projecaoCaixa, valorVigente } from "@/lib/services/execucao-service"
+import { calcDesvio, margemContribuicao, custoHora, tributosSobreFaturamento, projecaoCaixa, valorVigente, superavitMensal, calcularIndicadoresMes, type TotaisMes } from "@/lib/services/execucao-service"
 
 describe("calcDesvio", () => {
   it("desvio e percentual", () => {
@@ -61,5 +61,53 @@ describe("valorVigente", () => {
   })
   it("série vazia → default", () => {
     expect(valorVigente([], 6, 3200)).toBe(3200)
+  })
+})
+
+const baseTotais: TotaisMes = {
+  faturamento: 100000, tributosFat: 10000, custos: 30000, despesas: 20000,
+  dividendos: 5000, custosOperacionais: 8000, despAdmFinComl: 16000,
+}
+
+describe("superavitMensal", () => {
+  it("(faturamento - tributos) - custos - despesas - dividendos", () => {
+    expect(superavitMensal(baseTotais)).toBe(35000)
+  })
+})
+
+const baseInput = {
+  totais: baseTotais,
+  parametros: { pis: 0.0165, cofins: 0.076, issqn: 0.025, horasFaturaveis: 3200, fatorReajuste: 1.05 },
+  tesouraria: { aplicacoes: 0, resgates: 43618.55 },
+  caixaDoMes: 150000,
+  temRealizado: true,
+}
+const val = (lista: { rotulo: string; valor: number | null }[], rotulo: string) =>
+  lista.find((i) => i.rotulo === rotulo)?.valor ?? null
+
+describe("calcularIndicadoresMes", () => {
+  it("calcula os indicadores principais", () => {
+    const r = calcularIndicadoresMes(baseInput)
+    expect(val(r, "Superávit/Déficit")).toBe(35000)
+    expect(val(r, "Margem de contribuição")).toBe(35)
+    expect(val(r, "Tributos s/ faturamento")).toBeCloseTo(10575)
+    expect(val(r, "Custo hora Idealogic")).toBeCloseTo(5)
+    expect(val(r, "Custos operacionais")).toBe(8000)
+    expect(val(r, "Horas faturáveis")).toBe(3200)
+    expect(val(r, "Reajuste salarial")).toBe(1.05)
+    expect(val(r, "Caixa")).toBe(150000)
+    expect(val(r, "Resgates")).toBe(43618.55)
+  })
+  it("marca os indicadores de P-04 como pendentes", () => {
+    const r = calcularIndicadoresMes(baseInput)
+    const p = r.find((i) => i.rotulo === "Tributação sobre lucro")
+    expect(p?.valor).toBeNull()
+    expect(p?.pendente).toBe(true)
+  })
+  it("mês sem realizado → indicadores monetários pendentes, parâmetros mantidos", () => {
+    const r = calcularIndicadoresMes({ ...baseInput, temRealizado: false })
+    expect(val(r, "Superávit/Déficit")).toBeNull()
+    expect(r.find((i) => i.rotulo === "Superávit/Déficit")?.pendente).toBe(true)
+    expect(val(r, "Horas faturáveis")).toBe(3200)
   })
 })
