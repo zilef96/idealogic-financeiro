@@ -2,6 +2,7 @@
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import type { GrupoOrcamento, Periodicidade, Classificacao } from "@/lib/types"
+import { useToast } from "@/components/ui/toast"
 
 const CLASSIFS: { v: Classificacao; nome: string }[] = [
   { v: "C", nome: "Contratado" },
@@ -14,6 +15,7 @@ const inputCls = "mt-1 w-full rounded border border-border bg-background p-2 tex
 
 export function NovoItem({ grupos }: { grupos: GrupoOrcamento[] }) {
   const router = useRouter()
+  const { toast } = useToast()
   const [aberto, setAberto] = useState(false)
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState("")
@@ -53,7 +55,7 @@ export function NovoItem({ grupos }: { grupos: GrupoOrcamento[] }) {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
     })
     setSalvando(false)
-    if (r.ok) { fechar(); router.refresh() }
+    if (r.ok) { fechar(); router.refresh(); toast({ tipo: "sucesso", texto: "Item criado." }) }
     else if (r.status === 401 || r.status === 403) setErro("Sem permissão para criar itens.")
     else setErro("Não foi possível salvar o item.")
   }

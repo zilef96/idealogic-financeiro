@@ -2,18 +2,21 @@
 import { useState } from "react"
 import type { LinhaExecucao } from "@/lib/repositories/execucao-repository"
 import type { Indicador } from "@/lib/services/execucao-service"
+import type { StatusFechamento } from "@/lib/repositories/fechamento-repository"
 import { TabelaExecucao } from "./tabela-execucao"
 import { CardsIndicadores } from "./cards-indicadores"
 import { TabelaIndicadores } from "./tabela-indicadores"
+import { AcaoFechamento } from "./acao-fechamento"
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
 
 export function AbasExecucao({
-  ano, mesAtual, linhas, indicadoresMes, indicadoresOrcadoPorMes, indicadoresRealizadoPorMes,
+  ano, mesAtual, linhas, statusMesAtual, indicadoresMes, indicadoresOrcadoPorMes, indicadoresRealizadoPorMes,
 }: {
   ano: number
   mesAtual: number
   linhas: LinhaExecucao[]
+  statusMesAtual: StatusFechamento
   indicadoresMes: Indicador[]
   indicadoresOrcadoPorMes: Indicador[][]
   indicadoresRealizadoPorMes: Indicador[][]
@@ -33,6 +36,7 @@ export function AbasExecucao({
       </div>
       {aba === "mes" ? (
         <div className="space-y-4">
+          <AcaoFechamento ano={ano} mes={mesAtual} status={statusMesAtual} />
           <CardsIndicadores indicadores={indicadoresMes} />
           <TabelaExecucao ano={ano} linhas={linhas.filter((l) => l.mes === mesAtual)} meses={[mesAtual]} editavel />
         </div>
