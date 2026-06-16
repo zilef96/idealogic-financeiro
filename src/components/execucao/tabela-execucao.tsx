@@ -42,8 +42,20 @@ export function TabelaExecucao({
   const filhosDe = (cod: string) => todos.filter((e) => e.codigoPai === cod).sort((a, b) => Number(a.codigo) - Number(b.codigo))
 
   const [abertos, setAbertos] = useState<Set<string>>(() => new Set(raizes.map((r) => r.codigo)))
+  const [tudo, setTudo] = useState(false)
   const aberto = (cod: string) => abertos.has(cod)
   const toggle = (cod: string) => setAbertos((s) => { const n = new Set(s); if (n.has(cod)) n.delete(cod); else n.add(cod); return n })
+  const codigosGrupos = todos.filter((e) => filhosDe(e.codigo).length > 0).map((e) => e.codigo)
+  const toggleTudo = () => {
+    if (tudo) { setAbertos(new Set()); setTudo(false) }
+    else { setAbertos(new Set(codigosGrupos)); setTudo(true) }
+  }
+  const btnTudo = (
+    <button type="button" onClick={toggleTudo}
+      className="rounded-full border border-border bg-card px-3 py-1 text-[12px] font-medium hover:bg-faint">
+      {tudo ? "Recolher tudo" : "Expandir tudo"}
+    </button>
+  )
 
   const [salvando, setSalvando] = useState<string | null>(null)
   const [aviso, setAviso] = useState("")
@@ -105,6 +117,7 @@ export function TabelaExecucao({
     return (
       <div className="space-y-2">
         {aviso && <p className="text-sm" style={{ color: "rgb(var(--danger))" }}>{aviso}</p>}
+        <div className="flex justify-end">{btnTudo}</div>
         <div className="exec-row rounded-t-xl border border-border bg-card px-3 py-2 text-[10px] font-semibold uppercase tracking-wider" style={{ color: "rgb(var(--muted))" }}>
           <div>Conta</div>
           <div className="orc-tot exec-hide-sm">Referência</div>
@@ -149,11 +162,14 @@ export function TabelaExecucao({
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-[12px]" style={{ color: "rgb(var(--muted))" }}>{mostrarOrcado ? "Orçado e realizado" : "Realizado"} por mês · realizado em vermelho = desvio negativo · clique nas categorias para expandir</p>
-        <button type="button" onClick={() => setMostrarOrcado((v) => !v)}
-          className="rounded-full border border-border bg-card px-3 py-1 text-[12px] font-medium hover:bg-faint">
-          {mostrarOrcado ? "Ocultar orçado" : "Mostrar orçado"}
-        </button>
+        <p className="text-[12px]" style={{ color: "rgb(var(--muted))" }}>{mostrarOrcado ? "Orçado e realizado" : "Realizado"} por mês · realizado em vermelho = desvio negativo</p>
+        <div className="flex items-center gap-2">
+          {btnTudo}
+          <button type="button" onClick={() => setMostrarOrcado((v) => !v)}
+            className="rounded-full border border-border bg-card px-3 py-1 text-[12px] font-medium hover:bg-faint">
+            {mostrarOrcado ? "Ocultar orçado" : "Mostrar orçado"}
+          </button>
+        </div>
       </div>
       <div className="overflow-x-auto rounded-xl border border-border">
         <table className="w-full text-sm">
