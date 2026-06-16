@@ -46,7 +46,7 @@ function Cel({ v, cor }: { v: number; cor: string }) {
 
 export function TabelaOrcamento({ linhas, grupos }: { linhas: LinhaOrcamento[]; grupos: GrupoOrcamento[] }) {
   const raizes = grupos.filter((g) => g.codigoPai === null)
-  const [abertos, setAbertos] = useState<Set<string>>(() => new Set(raizes[0] ? [raizes[0].codigo] : []))
+  const [abertos, setAbertos] = useState<Set<string>>(() => new Set<string>())
   const [tudo, setTudo] = useState(false)
 
   const aberto = (cod: string) => abertos.has(cod)
@@ -86,8 +86,8 @@ export function TabelaOrcamento({ linhas, grupos }: { linhas: LinhaOrcamento[]; 
     return (
       <div key={g.codigo} className="border-t" style={{ borderColor: "rgb(var(--border))" }}>
         <button type="button" onClick={() => expansivel && toggle(g.codigo)}
-          className="orc-row w-full text-left transition-colors hover:bg-faint">
-          <span className="flex items-center gap-2 py-2.5 pr-3 text-[13px] font-medium" style={{ paddingLeft: pad }}>
+          className="orc-row w-full bg-faint text-left transition-colors">
+          <span className="flex items-center gap-2 py-2.5 pr-3 text-[13px] font-semibold" style={{ paddingLeft: pad }}>
             {expansivel
               ? <Chevron aberto={aberto(g.codigo)} cor="rgb(var(--muted))" />
               : <span className="inline-block h-3.5 w-3.5 shrink-0" />}

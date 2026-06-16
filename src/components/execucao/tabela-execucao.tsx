@@ -41,7 +41,7 @@ export function TabelaExecucao({
   const raizes = todos.filter((e) => e.codigoPai === "").sort((a, b) => Number(a.codigo) - Number(b.codigo))
   const filhosDe = (cod: string) => todos.filter((e) => e.codigoPai === cod).sort((a, b) => Number(a.codigo) - Number(b.codigo))
 
-  const [abertos, setAbertos] = useState<Set<string>>(() => new Set(raizes.map((r) => r.codigo)))
+  const [abertos, setAbertos] = useState<Set<string>>(() => new Set<string>())
   const [tudo, setTudo] = useState(false)
   const aberto = (cod: string) => abertos.has(cod)
   const toggle = (cod: string) => setAbertos((s) => { const n = new Set(s); if (n.has(cod)) n.delete(cod); else n.add(cod); return n })

@@ -6,7 +6,7 @@ const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "O
 
 // orcado[mes][i] e realizado[mes][i] — mesma ordem de indicadores em todos os meses.
 export function TabelaIndicadores({ orcado, realizado }: { orcado: Indicador[][]; realizado: Indicador[][] }) {
-  const [aberto, setAberto] = useState(true)
+  const [aberto, setAberto] = useState(false)
   const modelo = realizado[0] ?? []
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card">
