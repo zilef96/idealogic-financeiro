@@ -96,8 +96,8 @@ export function TabelaOrcamento({ linhas, grupos }: { linhas: LinhaOrcamento[]; 
           </span>
           <div className="orc-tot" />
           <div className="orc-tot num text-[13px] font-semibold" style={{ color: accRgb(g.tipo) }}>{brl(r.mensal)}</div>
-          <Cel v={r.ess} cor="rgb(var(--pos))" />
-          <Cel v={r.cond} cor="rgb(var(--amber))" />
+          <Cel v={r.essMensal} cor="rgb(var(--pos))" />
+          <Cel v={r.condMensal} cor="rgb(var(--amber))" />
           <div className="orc-col-com" />
         </button>
         {aberto(g.codigo) && (
@@ -114,8 +114,8 @@ export function TabelaOrcamento({ linhas, grupos }: { linhas: LinhaOrcamento[]; 
                   </span>
                   <div className="orc-tot num">{brl(it.valorOrcado)}</div>
                   <div className="orc-tot num" style={{ color: "rgb(var(--muted))" }}>{brl(it.valorOrcadoMensal)}</div>
-                  <Cel v={ess ? it.valorOrcado : 0} cor="rgb(var(--pos))" />
-                  <Cel v={ess ? 0 : it.valorOrcado} cor="rgb(var(--amber))" />
+                  <Cel v={ess ? it.valorOrcadoMensal : 0} cor="rgb(var(--pos))" />
+                  <Cel v={ess ? 0 : it.valorOrcadoMensal} cor="rgb(var(--amber))" />
                   <div className="orc-col-com truncate pl-2 text-[12px] italic" style={{ color: "rgb(var(--muted))" }}>{it.comentarios ?? ""}</div>
                 </div>
               )
@@ -181,8 +181,8 @@ export function TabelaOrcamento({ linhas, grupos }: { linhas: LinhaOrcamento[]; 
                 </span>
                 <div className="orc-tot" />
                 <div className="orc-tot num font-display text-[17px] font-semibold" style={{ color: accRgb(b.tipo) }}>{brl(r.mensal)}</div>
-                <div className="orc-tot num text-[13px] font-semibold" style={{ color: "rgb(var(--pos))" }}>{brl(r.ess)}</div>
-                <div className="orc-tot num text-[13px] font-semibold" style={{ color: "rgb(var(--amber))" }}>{brl(r.cond)}</div>
+                <div className="orc-tot num text-[13px] font-semibold" style={{ color: "rgb(var(--pos))" }}>{brl(r.essMensal)}</div>
+                <div className="orc-tot num text-[13px] font-semibold" style={{ color: "rgb(var(--amber))" }}>{brl(r.condMensal)}</div>
                 <div className="orc-col-com" />
               </button>
               {aberto(b.codigo) && <div>{filhos.map((f) => renderGrupo(f, 0))}</div>}

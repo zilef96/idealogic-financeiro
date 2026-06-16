@@ -55,9 +55,13 @@ describe("rollupGrupo", () => {
     linha("100", 200, 20, "C"),   // item direto na raiz, essencial
   ]
   it("soma recursivamente todos os descendentes", () => {
-    expect(rollupGrupo("100", grupos, linhas)).toEqual({ total: 1700, mensal: 170, ess: 1200, cond: 500 })
+    expect(rollupGrupo("100", grupos, linhas)).toEqual({ total: 1700, mensal: 170, ess: 1200, cond: 500, essMensal: 120, condMensal: 50 })
   })
   it("grupo folha soma só seus itens diretos", () => {
-    expect(rollupGrupo("110", grupos, linhas)).toEqual({ total: 1500, mensal: 150, ess: 1000, cond: 500 })
+    expect(rollupGrupo("110", grupos, linhas)).toEqual({ total: 1500, mensal: 150, ess: 1000, cond: 500, essMensal: 100, condMensal: 50 })
+  })
+  it("orçado mensal = essencial mensal + condicionado mensal", () => {
+    const r = rollupGrupo("100", grupos, linhas)
+    expect(r.essMensal + r.condMensal).toBe(r.mensal)
   })
 })
