@@ -65,7 +65,7 @@ SELECT
   NULL::bigint                  AS item_id
 FROM conta_grupo cg
 JOIN exercicio ex ON ex.id = cg.exercicio_id
-JOIN grupo_orc_anual goa ON goa.grupo_id = cg.id
+LEFT JOIN grupo_orc_anual goa ON goa.grupo_id = cg.id   -- LEFT: grupos sem itens aparecem zerados
 CROSS JOIN generate_series(1,12) AS g(mes)
 LEFT JOIN grupo_orc  go ON go.grupo_id = cg.id AND go.mes = g.mes
 LEFT JOIN grupo_real gr ON gr.grupo_id = cg.id AND gr.mes = g.mes
