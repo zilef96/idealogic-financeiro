@@ -1,27 +1,18 @@
 "use client"
 import { useState } from "react"
 import type { LinhaExecucao } from "@/lib/repositories/execucao-repository"
+import type { Indicador } from "@/lib/services/execucao-service"
 import { TabelaExecucao } from "./tabela-execucao"
 import { CardsIndicadores } from "./cards-indicadores"
-import { margemContribuicao } from "@/lib/services/execucao-service"
+import { ProjecaoCaixa } from "./projecao-caixa"
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
 
-// Indicadores do mês a partir dos totais (realizado) dos blocos raiz.
-function indicadoresDoMes(linhas: LinhaExecucao[], mes: number) {
-  const bloco = (cod: string) => linhas.find((l) => l.codigo === cod && l.mes === mes && l.isGrupo)?.realizado ?? 0
-  const receita = bloco("10000"), custos = bloco("20000"), despesas = bloco("30000")
-  const superavit = receita - custos - despesas
-  return [
-    { rotulo: "Receita realizada", valor: receita },
-    { rotulo: "Custos", valor: custos },
-    { rotulo: "Despesas", valor: despesas },
-    { rotulo: "Superávit", valor: superavit },
-    { rotulo: "Margem", valor: margemContribuicao(superavit, receita), pct: true },
-  ]
-}
-
-export function AbasExecucao({ ano, mesAtual, linhas }: { ano: number; mesAtual: number; linhas: LinhaExecucao[] }) {
+export function AbasExecucao({
+  ano, mesAtual, linhas, indicadores, projecao,
+}: {
+  ano: number; mesAtual: number; linhas: LinhaExecucao[]; indicadores: Indicador[]; projecao: number[]
+}) {
   const [aba, setAba] = useState<"mes" | "periodo">("mes")
   return (
     <div className="space-y-4">
@@ -37,11 +28,14 @@ export function AbasExecucao({ ano, mesAtual, linhas }: { ano: number; mesAtual:
       </div>
       {aba === "mes" ? (
         <div className="space-y-4">
-          <CardsIndicadores indicadores={indicadoresDoMes(linhas, mesAtual)} />
+          <CardsIndicadores indicadores={indicadores} />
           <TabelaExecucao ano={ano} linhas={linhas.filter((l) => l.mes === mesAtual)} meses={[mesAtual]} editavel />
         </div>
       ) : (
-        <TabelaExecucao ano={ano} linhas={linhas} meses={Array.from({ length: 12 }, (_, i) => i + 1)} editavel={false} />
+        <div className="space-y-4">
+          <TabelaExecucao ano={ano} linhas={linhas} meses={Array.from({ length: 12 }, (_, i) => i + 1)} editavel={false} />
+          <ProjecaoCaixa saldos={projecao} />
+        </div>
       )}
     </div>
   )
