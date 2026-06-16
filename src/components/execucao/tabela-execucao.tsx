@@ -47,6 +47,7 @@ export function TabelaExecucao({
 
   const [salvando, setSalvando] = useState<string | null>(null)
   const [aviso, setAviso] = useState("")
+  const [mostrarOrcado, setMostrarOrcado] = useState(true)
   async function salvarRealizado(itemId: number, mes: number, valor: number) {
     setSalvando(`${itemId}-${mes}`); setAviso("")
     const r = await fetch("/api/execucao/realizado", {
@@ -147,7 +148,13 @@ export function TabelaExecucao({
 
   return (
     <div className="space-y-2">
-      <p className="text-[12px]" style={{ color: "rgb(var(--muted))" }}>Orçado e realizado por mês · realizado em vermelho = desvio negativo · clique nas categorias para expandir</p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-[12px]" style={{ color: "rgb(var(--muted))" }}>{mostrarOrcado ? "Orçado e realizado" : "Realizado"} por mês · realizado em vermelho = desvio negativo · clique nas categorias para expandir</p>
+        <button type="button" onClick={() => setMostrarOrcado((v) => !v)}
+          className="rounded-full border border-border bg-card px-3 py-1 text-[12px] font-medium hover:bg-faint">
+          {mostrarOrcado ? "Ocultar orçado" : "Mostrar orçado"}
+        </button>
+      </div>
       <div className="overflow-x-auto rounded-xl border border-border">
         <table className="w-full text-sm">
           <thead>
@@ -155,14 +162,14 @@ export function TabelaExecucao({
               <th rowSpan={2} className="sticky left-0 z-10 bg-card px-3 py-2 text-left align-bottom text-[11px] font-semibold uppercase tracking-wider">Conta</th>
               <th rowSpan={2} className="border-l border-border px-2 py-2 text-right align-bottom text-[11px] font-semibold uppercase tracking-wider">Referência</th>
               {meses.map((m) => (
-                <th key={m} colSpan={2} className="border-l border-border px-2 py-1.5 text-center text-[11px] font-semibold">{MESES[m - 1]}</th>
+                <th key={m} colSpan={mostrarOrcado ? 2 : 1} className="border-l border-border px-2 py-1.5 text-center text-[11px] font-semibold">{MESES[m - 1]}</th>
               ))}
             </tr>
             <tr className="text-[10px]" style={{ color: "rgb(var(--muted))" }}>
               {meses.map((m) => (
                 <Fragment key={m}>
-                  <th className="border-l border-border px-2 pb-1.5 text-right font-medium">Orçado</th>
-                  <th className="px-2 pb-1.5 text-right font-medium">Realiz.</th>
+                  {mostrarOrcado && <th className="border-l border-border px-2 pb-1.5 text-right font-medium">Orçado</th>}
+                  <th className={`px-2 pb-1.5 text-right font-medium ${mostrarOrcado ? "" : "border-l border-border"}`}>Realiz.</th>
                 </Fragment>
               ))}
             </tr>
@@ -188,10 +195,12 @@ export function TabelaExecucao({
                     const realizado = c?.realizado ?? null
                     return (
                       <Fragment key={m}>
-                        <td className="num border-l border-border px-2 py-1.5 text-right whitespace-nowrap" style={{ color: "rgb(var(--muted))" }}>
-                          {brl(c?.orcado ?? 0)}
-                        </td>
-                        <td className="num px-2 py-1.5 text-right whitespace-nowrap" style={{ color: corDesvio(realizado, c?.desvio ?? 0) }}>
+                        {mostrarOrcado && (
+                          <td className="num border-l border-border px-2 py-1.5 text-right whitespace-nowrap" style={{ color: "rgb(var(--muted))" }}>
+                            {brl(c?.orcado ?? 0)}
+                          </td>
+                        )}
+                        <td className={`num px-2 py-1.5 text-right whitespace-nowrap ${mostrarOrcado ? "" : "border-l border-border"}`} style={{ color: corDesvio(realizado, c?.desvio ?? 0) }}>
                           {realizado == null ? "—" : brl(realizado)}
                         </td>
                       </Fragment>
