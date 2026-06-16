@@ -43,5 +43,98 @@ export function competenciaRef(linhas: LinhaDash[]): number {
 }
 
 const MESES = Array.from({ length: 12 }, (_, i) => i + 1)
+
+export interface PontoOrcadoRealizado {
+  mes: number; orcado: number; realizado: number | null
+  desvioPercentual: number | null; pendente: boolean
+}
+
+export function serieOrcadoRealizado(linhas: LinhaDash[]): PontoOrcadoRealizado[] {
+  return MESES.map((mes) => {
+    const pend = !temRealizadoNoMes(linhas, mes)
+    const orcado = faturamentoServicos(construirTotais(linhas, "orcado", mes))
+    const realizado = pend ? null : faturamentoServicos(construirTotais(linhas, "realizado", mes))
+    const { desvioPercentual } = calcDesvio(realizado ?? 0, orcado)
+    return { mes, orcado, realizado, desvioPercentual: pend ? null : desvioPercentual, pendente: pend }
+  })
+}
+
+export interface PontoSuperavit {
+  mes: number; superavit: number | null; acumulado: number | null; pendente: boolean
+}
+
+export function serieSuperavit(linhas: LinhaDash[]): PontoSuperavit[] {
+  let acc = 0
+  return MESES.map((mes) => {
+    const pend = !temRealizadoNoMes(linhas, mes)
+    if (pend) return { mes, superavit: null, acumulado: null, pendente: true }
+    const superavit = superavitMensal(construirTotais(linhas, "realizado", mes))
+    acc += superavit
+    return { mes, superavit, acumulado: acc, pendente: false }
+  })
+}
+
+export interface PontoMargem { mes: number; margem: number | null; pendente: boolean }
+
+export function serieMargem(linhas: LinhaDash[]): PontoMargem[] {
+  return MESES.map((mes) => {
+    const pend = !temRealizadoNoMes(linhas, mes)
+    if (pend) return { mes, margem: null, pendente: true }
+    const t = construirTotais(linhas, "realizado", mes)
+    return { mes, margem: margemContribuicao(superavitMensal(t), faturamentoServicos(t)), pendente: false }
+  })
+}
+
+export type SeriesParametros = Record<string, { mes: number; valor: number }[]>
+
+export interface PontoCustoHora { mes: number; custoHora: number | null; horas: number; pendente: boolean }
+
+export function serieCustoHora(linhas: LinhaDash[], series: SeriesParametros, horasPadrao: number): PontoCustoHora[] {
+  return MESES.map((mes) => {
+    const horas = valorVigente(series["horas_faturaveis"] ?? [], mes, horasPadrao)
+    const pend = !temRealizadoNoMes(linhas, mes)
+    if (pend) return { mes, custoHora: null, horas, pendente: true }
+    const t = construirTotais(linhas, "realizado", mes)
+    return { mes, custoHora: custoHora(t.custosOperacionais, t.despAdmFinComl, horas), horas, pendente: false }
+  })
+}
+
+export interface EventoTesourariaDash { mes: number; tipo: "aplicacao" | "resgate"; valor: number }
+export interface PontoCaixa { mes: number; saldo: number; projetado: boolean }
+
+export function serieCaixa(
+  linhas: LinhaDash[], tesouraria: EventoTesourariaDash[], saldoInicial: number, caixaMinimo: number,
+): { pontos: PontoCaixa[]; caixaMinimo: number } {
+  const soma = (mes: number, tipo: "aplicacao" | "resgate") =>
+    tesouraria.filter((e) => e.mes === mes && e.tipo === tipo).reduce((s, e) => s + e.valor, 0)
+  const projetadoPorMes = MESES.map((m) => !temRealizadoNoMes(linhas, m))
+  const superavitPorMes = MESES.map((m) =>
+    superavitMensal(construirTotais(linhas, projetadoPorMes[m - 1] ? "orcado" : "realizado", m)))
+  const saldos = projecaoCaixa({
+    saldoInicial,
+    superavitPorMes,
+    aplicacoesPorMes: MESES.map((m) => soma(m, "aplicacao")),
+    resgatesPorMes: MESES.map((m) => soma(m, "resgate")),
+  })
+  return { pontos: MESES.map((m) => ({ mes: m, saldo: saldos[m - 1], projetado: projetadoPorMes[m - 1] })), caixaMinimo }
+}
+
+export interface PontoTributo {
+  mes: number; pis: number | null; cofins: number | null; issqn: number | null
+  cargaPercentual: number | null; pendente: boolean
+}
+
+export function serieTributos(linhas: LinhaDash[]): PontoTributo[] {
+  const itemReal = (cod: string, mes: number) =>
+    linhas.find((l) => l.codigo === cod && l.mes === mes && !l.isGrupo)?.realizado ?? 0
+  return MESES.map((mes) => {
+    const pend = !temRealizadoNoMes(linhas, mes)
+    if (pend) return { mes, pis: null, cofins: null, issqn: null, cargaPercentual: null, pendente: true }
+    const pis = itemReal("10201", mes), cofins = itemReal("10202", mes), issqn = itemReal("10203", mes)
+    const fat = faturamentoServicos(construirTotais(linhas, "realizado", mes))
+    const carga = fat === 0 ? null : ((pis + cofins + issqn) / fat) * 100
+    return { mes, pis, cofins, issqn, cargaPercentual: carga, pendente: false }
+  })
+}
 export { MESES, faturamentoServicos, superavitMensal, margemContribuicao, custoHora, calcDesvio, projecaoCaixa, valorVigente }
 export type { TotaisMes, FormatoIndicador }
