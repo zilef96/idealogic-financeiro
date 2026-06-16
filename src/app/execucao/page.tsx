@@ -35,25 +35,24 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
     resgatesPorMes: meses.map(resg),
   })
 
-  const temRealizado = linhas.some((l) => l.mes === mesAtual && l.realizado != null)
-  const indicadores = calcularIndicadoresMes({
-    totais: totaisMes(mesAtual),
+  const indicadoresPorMes = meses.map((mes) => calcularIndicadoresMes({
+    totais: totaisMes(mes),
     parametros: {
-      pis: valorVigente(series["aliquota_pis"] ?? [], mesAtual, 0),
-      cofins: valorVigente(series["aliquota_cofins"] ?? [], mesAtual, 0),
-      issqn: valorVigente(series["aliquota_issqn"] ?? [], mesAtual, 0),
-      horasFaturaveis: valorVigente(series["horas_faturaveis"] ?? [], mesAtual, 3200),
-      fatorReajuste: valorVigente(series["fator_reajuste"] ?? [], mesAtual, 1),
+      pis: valorVigente(series["aliquota_pis"] ?? [], mes, 0),
+      cofins: valorVigente(series["aliquota_cofins"] ?? [], mes, 0),
+      issqn: valorVigente(series["aliquota_issqn"] ?? [], mes, 0),
+      horasFaturaveis: valorVigente(series["horas_faturaveis"] ?? [], mes, 3200),
+      fatorReajuste: valorVigente(series["fator_reajuste"] ?? [], mes, 1),
     },
-    tesouraria: { aplicacoes: aplic(mesAtual), resgates: resg(mesAtual) },
-    caixaDoMes: projecao[mesAtual - 1],
-    temRealizado,
-  })
+    tesouraria: { aplicacoes: aplic(mes), resgates: resg(mes) },
+    caixaDoMes: projecao[mes - 1],
+    temRealizado: linhas.some((l) => l.mes === mes && l.realizado != null),
+  }))
 
   return (
     <div className="space-y-4">
       <h1 className="font-display text-xl font-semibold">Execução Orçamentária {anoNum}</h1>
-      <AbasExecucao ano={anoNum} mesAtual={mesAtual} linhas={linhas} indicadores={indicadores} projecao={projecao} />
+      <AbasExecucao ano={anoNum} mesAtual={mesAtual} linhas={linhas} indicadoresPorMes={indicadoresPorMes} projecao={projecao} />
     </div>
   )
 }

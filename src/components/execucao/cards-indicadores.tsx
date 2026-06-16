@@ -1,14 +1,4 @@
-import type { Indicador } from "@/lib/services/execucao-service"
-
-function fmt(i: Indicador): string {
-  if (i.pendente || i.valor == null) return "—"
-  switch (i.formato) {
-    case "percent": return `${i.valor.toFixed(1)}%`
-    case "numero": return i.valor.toLocaleString("pt-BR")
-    case "fator": return i.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    default: return i.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-  }
-}
+import { formatarIndicador as fmt, type Indicador } from "@/lib/services/execucao-service"
 
 export function CardsIndicadores({ indicadores }: { indicadores: Indicador[] }) {
   return (

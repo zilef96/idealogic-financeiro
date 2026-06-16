@@ -101,3 +101,13 @@ export function calcularIndicadoresMes(input: {
     { rotulo: "Superávit antes da tributação", valor: null, formato: "moeda", pendente: true },
   ]
 }
+
+export function formatarIndicador(i: Indicador): string {
+  if (i.pendente || i.valor == null) return "—"
+  switch (i.formato) {
+    case "percent": return `${i.valor.toFixed(1)}%`
+    case "numero": return i.valor.toLocaleString("pt-BR")
+    case "fator": return i.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    default: return i.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+  }
+}
