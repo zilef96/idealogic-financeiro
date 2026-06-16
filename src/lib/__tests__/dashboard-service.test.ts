@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest"
 import {
   construirTotais, competenciaRef, serieOrcadoRealizado, serieSuperavit, serieMargem,
-  serieCustoHora, serieCaixa, serieTributos, type LinhaDash,
+  serieCustoHora, serieCaixa, serieTributos, arvoreCategorias, topDespesas, paretoClientes,
+  type LinhaDash,
 } from "@/lib/services/dashboard-service"
 
 // Helper: cria linhas para um único mês. `vals` mapeia codigo→{orcado,realizado}.
@@ -146,5 +147,52 @@ describe("serieTributos", () => {
   })
   it("zera/nula quando pendente", () => {
     expect(serieTributos(linhas(2, { "10000": { o: 1, r: null } }))[1]).toMatchObject({ pis: null, cargaPercentual: null, pendente: true })
+  })
+})
+
+describe("arvoreCategorias", () => {
+  const ls = [
+    ...linhas(1, {
+      "30000": { o: 0, r: 0, pai: "" }, "31000": { o: 0, r: 0, pai: "30000" },
+      "31100": { o: 0, r: 30, grupo: false, pai: "31000" }, "31200": { o: 0, r: 20, grupo: false, pai: "31000" },
+    }),
+    ...linhas(2, { "31100": { o: 0, r: 10, grupo: false, pai: "31000" } }),
+  ]
+  it("acumula realizado no ano e aninha por codigoPai com tipo derivado", () => {
+    const arv = arvoreCategorias(ls)
+    const bloco = arv.find((n) => n.codigo === "30000")!
+    expect(bloco.tipo).toBe("D")
+    expect(bloco.valor).toBe(60) // 30+20+10
+    const grupo = bloco.filhos.find((n) => n.codigo === "31000")!
+    expect(grupo.filhos.map((f) => f.codigo).sort()).toEqual(["31100", "31200"])
+    expect(grupo.filhos.find((f) => f.codigo === "31100")!.valor).toBe(40)
+  })
+})
+
+describe("topDespesas", () => {
+  const ls = linhas(1, {
+    "31100": { o: 0, r: 30, grupo: false, pai: "31000" }, "31200": { o: 0, r: 50, grupo: false, pai: "31000" },
+    "21100": { o: 0, r: 90, grupo: false, pai: "21000" },
+  })
+  it("retorna só folhas de despesa (bloco 3), ordenadas desc, limitadas a n", () => {
+    const top = topDespesas(ls, 1)
+    expect(top).toEqual([{ nome: "31200", valor: 50 }])
+  })
+})
+
+describe("paretoClientes", () => {
+  it("calcula percentual individual e acumulado, ordenado desc", () => {
+    const p = paretoClientes([
+      { codigo: "a", nome: "A", realizado: 60, orcado: 0 },
+      { codigo: "b", nome: "B", realizado: 30, orcado: 0 },
+      { codigo: "c", nome: "C", realizado: 10, orcado: 0 },
+    ])
+    expect(p[0]).toMatchObject({ nome: "A", receita: 60, percentual: 60, acumulado: 60 })
+    expect(p[1].acumulado).toBe(90)
+    expect(p[2].acumulado).toBe(100)
+  })
+  it("lida com total zero sem dividir por zero", () => {
+    const p = paretoClientes([{ codigo: "a", nome: "A", realizado: 0, orcado: 0 }])
+    expect(p[0]).toMatchObject({ percentual: 0, acumulado: 0 })
   })
 })

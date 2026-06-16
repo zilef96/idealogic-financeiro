@@ -2,6 +2,7 @@ import {
   type TotaisMes, faturamentoServicos, superavitMensal, margemContribuicao,
   custoHora, calcDesvio, projecaoCaixa, valorVigente, type FormatoIndicador,
 } from "@/lib/services/execucao-service"
+import type { ReceitaCliente } from "@/lib/repositories/dashboard-repository"
 
 // Subconjunto de LinhaExecucao que o dashboard consome (type-only; sem I/O).
 export interface LinhaDash {
@@ -136,5 +137,67 @@ export function serieTributos(linhas: LinhaDash[]): PontoTributo[] {
     return { mes, pis, cofins, issqn, cargaPercentual: carga, pendente: false }
   })
 }
+
+export interface CategoriaNode {
+  codigo: string; nome: string; tipo: "R" | "C" | "D" | "E" | "?"; valor: number; filhos: CategoriaNode[]
+}
+
+function tipoPorCodigo(codigo: string): CategoriaNode["tipo"] {
+  switch (codigo[0]) { case "1": return "R"; case "2": return "C"; case "3": return "D"; case "4": return "E"; default: return "?" }
+}
+
+export function arvoreCategorias(linhas: LinhaDash[]): CategoriaNode[] {
+  // Acumula realizado no ano por código (mantém nome/pai/isGrupo do primeiro encontro).
+  const acc = new Map<string, { nome: string; pai: string; isGrupo: boolean; valor: number }>()
+  for (const l of linhas) {
+    const e = acc.get(l.codigo) ?? { nome: l.nome, pai: l.codigoPai, isGrupo: l.isGrupo, valor: 0 }
+    e.valor += l.realizado ?? 0
+    acc.set(l.codigo, e)
+  }
+  const nodes = new Map<string, CategoriaNode>()
+  for (const [codigo, e] of acc) nodes.set(codigo, { codigo, nome: e.nome, tipo: tipoPorCodigo(codigo), valor: e.valor, filhos: [] })
+  const raizes: CategoriaNode[] = []
+  for (const [codigo, e] of acc) {
+    const node = nodes.get(codigo)!
+    const pai = e.pai && nodes.get(e.pai)
+    if (pai) pai.filhos.push(node)
+    else raizes.push(node)
+  }
+  // Rollup: o valor de um grupo é a soma das folhas descendentes (evita dupla contagem
+  // com o total já pré-agregado das linhas de grupo na vw_execucao_mensal).
+  const rollup = (n: CategoriaNode): number => {
+    if (n.filhos.length === 0) return n.valor
+    n.valor = n.filhos.reduce((s, f) => s + rollup(f), 0)
+    return n.valor
+  }
+  raizes.forEach(rollup)
+  const ordena = (ns: CategoriaNode[]) => { ns.sort((a, b) => a.codigo.localeCompare(b.codigo)); ns.forEach((n) => ordena(n.filhos)) }
+  ordena(raizes)
+  return raizes
+}
+
+export function topDespesas(linhas: LinhaDash[], n: number): { nome: string; valor: number }[] {
+  const acc = new Map<string, number>()
+  for (const l of linhas) {
+    if (l.isGrupo || l.codigo[0] !== "3") continue
+    acc.set(l.nome, (acc.get(l.nome) ?? 0) + (l.realizado ?? 0))
+  }
+  return [...acc.entries()].map(([nome, valor]) => ({ nome, valor }))
+    .filter((d) => d.valor > 0).sort((a, b) => b.valor - a.valor).slice(0, n)
+}
+
+export interface ClientePareto { codigo: string; nome: string; receita: number; percentual: number; acumulado: number }
+
+export function paretoClientes(clientes: ReceitaCliente[]): ClientePareto[] {
+  const ordenado = [...clientes].sort((a, b) => b.realizado - a.realizado)
+  const total = ordenado.reduce((s, c) => s + c.realizado, 0)
+  let acc = 0
+  return ordenado.map((c) => {
+    const percentual = total === 0 ? 0 : (c.realizado / total) * 100
+    acc += percentual
+    return { codigo: c.codigo, nome: c.nome, receita: c.realizado, percentual, acumulado: total === 0 ? 0 : acc }
+  })
+}
+
 export { MESES, faturamentoServicos, superavitMensal, margemContribuicao, custoHora, calcDesvio, projecaoCaixa, valorVigente }
 export type { TotaisMes, FormatoIndicador }
