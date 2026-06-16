@@ -19,7 +19,7 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
   const tot = (cod: string, mes: number) =>
     linhas.find((l) => l.codigo === cod && l.mes === mes && l.isGrupo)?.realizado ?? 0
   const totaisMes = (mes: number): TotaisMes => ({
-    faturamento: tot("10000", mes), tributosFat: tot("10900", mes),
+    faturamento: tot("10000", mes), tributosFat: tot("10200", mes),
     custos: tot("20000", mes), despesas: tot("30000", mes), dividendos: tot("40000", mes),
     custosOperacionais: tot("33000", mes),
     despAdmFinComl: tot("31000", mes) + tot("32000", mes) + tot("33000", mes) + tot("34000", mes),

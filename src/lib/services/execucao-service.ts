@@ -50,7 +50,7 @@ export function projecaoCaixa(d: {
 
 export interface TotaisMes {
   faturamento: number        // bloco 10000 (realizado)
-  tributosFat: number        // grupo 10900 (realizado)
+  tributosFat: number        // grupo 10200 "Tributos sobre Faturamento" (realizado)
   custos: number             // bloco 20000
   despesas: number           // bloco 30000
   dividendos: number         // bloco 40000
