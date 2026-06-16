@@ -6,15 +6,21 @@ export const mesSchema = z.coerce.number().int().min(1).max(12)
 export const idPositivoSchema = z.coerce.number().int().positive()
 export const valorNaoNegativoSchema = z.coerce.number().min(0)
 
-export function mapErroPostgres(e: { code?: string }) {
-  if (e?.code === "FC001") {
+export function mapErroPostgres(e: { code?: string; meta?: { code?: string }; message?: string }) {
+  // Postgres direto traz code "FC001"; o Prisma encapsula em P2010 com
+  // meta.code = "FC001" (e o marcador também aparece na mensagem).
+  const ehFC001 =
+    e?.code === "FC001" ||
+    e?.meta?.code === "FC001" ||
+    (typeof e?.message === "string" && e.message.includes("FC001"))
+  if (ehFC001) {
     return { status: 409, error: "Competência fechada; reabra o mês para editar." }
   }
   return null
 }
 
 export function handleApiError(e: unknown, msgPadrao: string) {
-  const pg = mapErroPostgres(e as { code?: string })
+  const pg = mapErroPostgres(e as { code?: string; meta?: { code?: string }; message?: string })
   if (pg) return NextResponse.json({ error: pg.error }, { status: pg.status })
   console.error(e)
   return NextResponse.json({ error: msgPadrao }, { status: 500 })

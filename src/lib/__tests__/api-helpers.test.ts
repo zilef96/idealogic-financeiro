@@ -6,6 +6,10 @@ describe("mapErroPostgres", () => {
     const r = mapErroPostgres({ code: "FC001" })
     expect(r).toEqual({ status: 409, error: "Competência fechada; reabra o mês para editar." })
   })
+  it("mapeia FC001 encapsulado pelo Prisma (P2010 + meta.code) para 409", () => {
+    const r = mapErroPostgres({ code: "P2010", meta: { code: "FC001" } })
+    expect(r).toEqual({ status: 409, error: "Competência fechada; reabra o mês para editar." })
+  })
   it("retorna null para erro desconhecido", () => {
     expect(mapErroPostgres({ code: "XX999" })).toBeNull()
   })
