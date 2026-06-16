@@ -24,6 +24,7 @@ export function AppShell({
         <nav className="space-y-1 text-sm" aria-label="Navegação principal">
           <a className="block rounded px-2 py-1 hover:bg-muted/10" href="/orcamento">Orçamentação</a>
           <a className="block rounded px-2 py-1 hover:bg-muted/10" href="/execucao">Execução</a>
+          <a className="block rounded px-2 py-1 hover:bg-muted/10" href="/dashboard">Dashboard</a>
         </nav>
       </aside>
       {aberto && (
