@@ -49,8 +49,10 @@ export function projecaoCaixa(d: {
 }
 
 export interface TotaisMes {
-  faturamento: number        // bloco 10000 (realizado)
-  tributosFat: number        // grupo 10200 "Tributos sobre Faturamento" (realizado)
+  faturamento: number        // bloco 10000 (inclui Cotas 10100 e Tributos 10200 no nosso seed)
+  cotas: number              // grupo 10100 "Cotas sócios"
+  tributosFat: number        // grupo 10200 "Tributos sobre Faturamento" (inclui CSLL/IRPJ)
+  tributacaoLucro: number    // item 10204 "CSLL e IRPJ"
   custos: number             // bloco 20000
   despesas: number           // bloco 30000
   dividendos: number         // bloco 40000
@@ -58,9 +60,14 @@ export interface TotaisMes {
   despAdmFinComl: number     // 31000+32000+33000+34000
 }
 
-// RN-EX-04 adaptado à hierarquia (receita líquida de tributos).
+// Faturamento de serviços = 10000 sem Cotas (10100) e Tributos (10200), que no
+// nosso seed são filhos de 10000. Espelha a planilha (RN-EX-04):
+// FatServiços + Cotas − Tributos − Custos − Despesas − Distribuição.
+export function faturamentoServicos(t: TotaisMes): number {
+  return t.faturamento - t.cotas - t.tributosFat
+}
 export function superavitMensal(t: TotaisMes): number {
-  return (t.faturamento - t.tributosFat) - t.custos - t.despesas - t.dividendos
+  return faturamentoServicos(t) + t.cotas - t.tributosFat - t.custos - t.despesas - t.dividendos
 }
 
 export type FormatoIndicador = "moeda" | "percent" | "numero" | "fator"
@@ -77,15 +84,16 @@ export function calcularIndicadoresMes(input: {
 }): Indicador[] {
   const { totais: t, parametros: p, tesouraria: tes, caixaDoMes, temRealizado } = input
   const superavit = superavitMensal(t)
-  const margem = margemContribuicao(superavit, t.faturamento)
-  // custo hora = (31000+32000+33000+34000) / horas; 33000 já está no conjunto
-  const custoH = custoHora(t.despAdmFinComl, 0, p.horasFaturaveis)
+  const margem = margemContribuicao(superavit, faturamentoServicos(t))
+  // custo hora = (Custos operacionais 33000 + Despesas Adm/Financ/Coml) / horas.
+  // A planilha soma o 33000 também dentro de DespAdm, então ele entra duas vezes.
+  const custoH = custoHora(t.custosOperacionais, t.despAdmFinComl, p.horasFaturaveis)
   const pend = !temRealizado
   const m = (valor: number | null): number | null => (temRealizado ? valor : null)
   return [
     { rotulo: "Superávit/Déficit do mês", valor: m(superavit), formato: "moeda", pendente: pend },
-    { rotulo: "Tributação sobre lucro", valor: null, formato: "moeda", pendente: true },
-    { rotulo: "Superávit/Déficit antes da tributação", valor: null, formato: "moeda", pendente: true },
+    { rotulo: "Tributação sobre lucro", valor: m(t.tributacaoLucro), formato: "moeda", pendente: pend },
+    { rotulo: "Superávit/Déficit antes da tributação", valor: m(superavit + t.tributacaoLucro), formato: "moeda", pendente: pend },
     { rotulo: "Margem de contribuição", valor: m(margem), formato: "percent", pendente: pend },
     { rotulo: "Caixa", valor: caixaDoMes, formato: "moeda" },
     { rotulo: "Aplicações", valor: tes.aplicacoes, formato: "moeda" },

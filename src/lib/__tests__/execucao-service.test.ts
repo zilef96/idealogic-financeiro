@@ -64,14 +64,16 @@ describe("valorVigente", () => {
   })
 })
 
+// faturamento 120000 inclui cotas 10000 e tributos 10000 → fat. serviços = 100000
 const baseTotais: TotaisMes = {
-  faturamento: 100000, tributosFat: 10000, custos: 30000, despesas: 20000,
-  dividendos: 5000, custosOperacionais: 8000, despAdmFinComl: 16000,
+  faturamento: 120000, cotas: 10000, tributosFat: 10000, tributacaoLucro: 3000,
+  custos: 30000, despesas: 20000, dividendos: 5000, custosOperacionais: 8000, despAdmFinComl: 16000,
 }
 
 describe("superavitMensal", () => {
-  it("(faturamento - tributos) - custos - despesas - dividendos", () => {
-    expect(superavitMensal(baseTotais)).toBe(35000)
+  it("fatServiços + cotas − tributos − custos − despesas − distribuição", () => {
+    // (120000-10000-10000) + 10000 - 10000 - 30000 - 20000 - 5000 = 45000
+    expect(superavitMensal(baseTotais)).toBe(45000)
   })
 })
 
@@ -88,20 +90,16 @@ const val = (lista: { rotulo: string; valor: number | null }[], rotulo: string) 
 describe("calcularIndicadoresMes", () => {
   it("calcula os indicadores principais", () => {
     const r = calcularIndicadoresMes(baseInput)
-    expect(val(r, "Superávit/Déficit do mês")).toBe(35000)
-    expect(val(r, "Margem de contribuição")).toBe(35)
-    expect(val(r, "Custo hora Idealogic")).toBeCloseTo(5)
+    expect(val(r, "Superávit/Déficit do mês")).toBe(45000)
+    expect(val(r, "Tributação sobre lucro")).toBe(3000)
+    expect(val(r, "Superávit/Déficit antes da tributação")).toBe(48000)
+    expect(val(r, "Margem de contribuição")).toBe(45)            // 45000 / 100000
+    expect(val(r, "Custo hora Idealogic")).toBeCloseTo(7.5)      // (8000+16000)/3200
     expect(val(r, "Custos operacionais (33000)")).toBe(8000)
     expect(val(r, "Horas faturáveis")).toBe(3200)
     expect(val(r, "Reajuste salarial")).toBe(1.05)
     expect(val(r, "Caixa")).toBe(150000)
     expect(val(r, "Resgate aplicação")).toBe(43618.55)
-  })
-  it("marca os indicadores de P-04 como pendentes", () => {
-    const r = calcularIndicadoresMes(baseInput)
-    const p = r.find((i) => i.rotulo === "Tributação sobre lucro")
-    expect(p?.valor).toBeNull()
-    expect(p?.pendente).toBe(true)
   })
   it("mês sem realizado → indicadores monetários pendentes, parâmetros mantidos", () => {
     const r = calcularIndicadoresMes({ ...baseInput, temRealizado: false })
