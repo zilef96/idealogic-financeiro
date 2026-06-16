@@ -5,14 +5,18 @@ import type { Indicador } from "@/lib/services/execucao-service"
 import { TabelaExecucao } from "./tabela-execucao"
 import { CardsIndicadores } from "./cards-indicadores"
 import { TabelaIndicadores } from "./tabela-indicadores"
-import { ProjecaoCaixa } from "./projecao-caixa"
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
 
 export function AbasExecucao({
-  ano, mesAtual, linhas, indicadoresPorMes, projecao,
+  ano, mesAtual, linhas, indicadoresMes, indicadoresOrcadoPorMes, indicadoresRealizadoPorMes,
 }: {
-  ano: number; mesAtual: number; linhas: LinhaExecucao[]; indicadoresPorMes: Indicador[][]; projecao: number[]
+  ano: number
+  mesAtual: number
+  linhas: LinhaExecucao[]
+  indicadoresMes: Indicador[]
+  indicadoresOrcadoPorMes: Indicador[][]
+  indicadoresRealizadoPorMes: Indicador[][]
 }) {
   const [aba, setAba] = useState<"mes" | "periodo">("mes")
   return (
@@ -29,14 +33,13 @@ export function AbasExecucao({
       </div>
       {aba === "mes" ? (
         <div className="space-y-4">
-          <CardsIndicadores indicadores={indicadoresPorMes[mesAtual - 1] ?? []} />
+          <CardsIndicadores indicadores={indicadoresMes} />
           <TabelaExecucao ano={ano} linhas={linhas.filter((l) => l.mes === mesAtual)} meses={[mesAtual]} editavel />
         </div>
       ) : (
         <div className="space-y-4">
           <TabelaExecucao ano={ano} linhas={linhas} meses={Array.from({ length: 12 }, (_, i) => i + 1)} editavel={false} />
-          <TabelaIndicadores indicadoresPorMes={indicadoresPorMes} />
-          <ProjecaoCaixa saldos={projecao} />
+          <TabelaIndicadores orcado={indicadoresOrcadoPorMes} realizado={indicadoresRealizadoPorMes} />
         </div>
       )}
     </div>
