@@ -29,7 +29,7 @@ export function AppShell({
       {aberto && (
         <div className="fixed inset-0 z-30 bg-black/40 md:hidden" onClick={() => setAberto(false)} />
       )}
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-screen min-w-0 flex-col">
         <header className="flex items-center justify-between border-b border-border p-3">
           <button
             type="button" className="md:hidden rounded-md border border-border px-2 py-1"
@@ -41,7 +41,7 @@ export function AppShell({
             {usuario && <UserMenu usuario={usuario} />}
           </div>
         </header>
-        <main className="flex-1 p-4">{children}</main>
+        <main className="min-w-0 flex-1 p-4">{children}</main>
       </div>
     </div>
   )
