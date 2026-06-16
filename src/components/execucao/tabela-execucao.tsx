@@ -83,15 +83,17 @@ export function TabelaExecucao({
     const realizado = c?.realizado ?? null
     return (
       <div key={e.codigo} className="border-t border-border">
-        <div className="exec-row hover:bg-faint">
+        <div className={`exec-row ${e.isGrupo ? "bg-faint" : "hover:bg-faint"}`}>
           <button type="button" onClick={() => expansivel && toggle(e.codigo)}
             className="flex items-center gap-2 py-2 pr-3 text-left text-[13px]" style={{ paddingLeft: pad }}>
-            {expansivel ? <Chevron aberto={aberto(e.codigo)} /> : <span className="inline-block h-3.5 w-3.5 shrink-0" />}
+            {expansivel
+              ? <Chevron aberto={aberto(e.codigo)} />
+              : <span className="grid h-3.5 w-3.5 shrink-0 place-items-center"><span className="h-1 w-1 rounded-full" style={{ background: "rgb(var(--muted) / 0.55)" }} /></span>}
             <span className="num text-[11px]" style={{ color: "rgb(var(--muted) / 0.8)" }}>{e.codigo}</span>
-            <span className={`truncate ${e.isGrupo ? "font-medium" : ""}`}>{e.nome}</span>
+            <span className={`truncate ${e.isGrupo ? "font-semibold" : ""}`}>{e.nome}</span>
           </button>
           <div className="orc-tot num text-[13px] exec-hide-sm" style={{ color: "rgb(var(--muted))" }}>{brl(c?.orcadoProjetado ?? 0)}</div>
-          <div className="orc-tot num text-[13px]">{brl(c?.orcado ?? 0)}</div>
+          <div className={`orc-tot num text-[13px] ${e.isGrupo ? "font-semibold" : ""}`} style={e.isGrupo ? { color: accRgb(e.codigo) } : undefined}>{brl(c?.orcado ?? 0)}</div>
           <div className="orc-tot num text-[13px] px-2">
             {editavel && !e.isGrupo && e.itemId != null ? (
               <input
@@ -194,15 +196,18 @@ export function TabelaExecucao({
             {visiveis.map(({ e, nivel }) => {
               const filhos = filhosDe(e.codigo)
               const expansivel = filhos.length > 0
-              const fundo = e.codigoPai === "" ? tintRgb(e.codigo) : "rgb(var(--card))"
+              const fundo = e.codigoPai === "" ? tintRgb(e.codigo) : e.isGrupo ? "rgb(var(--faint))" : "rgb(var(--card))"
+              const fundoLinha = e.codigoPai === "" ? tintRgb(e.codigo) : e.isGrupo ? "rgb(var(--faint))" : undefined
               const referencia = Math.max(0, ...meses.map((m) => e.porMes.get(m)?.orcadoProjetado ?? 0))
               return (
-                <tr key={e.codigo} className="border-t border-border hover:bg-faint" style={e.codigoPai === "" ? { background: tintRgb(e.codigo) } : undefined}>
+                <tr key={e.codigo} className={`border-t border-border ${e.isGrupo ? "" : "hover:bg-faint"}`} style={fundoLinha ? { background: fundoLinha } : undefined}>
                   <td className="sticky left-0 z-10 px-3 py-1.5 whitespace-nowrap" style={{ background: fundo, paddingLeft: 12 + nivel * 16 }}>
                     <button type="button" onClick={() => expansivel && toggle(e.codigo)} className="flex items-center gap-2 text-left">
-                      {expansivel ? <Chevron aberto={aberto(e.codigo)} /> : <span className="inline-block h-3.5 w-3.5 shrink-0" />}
+                      {expansivel
+                        ? <Chevron aberto={aberto(e.codigo)} />
+                        : <span className="grid h-3.5 w-3.5 shrink-0 place-items-center"><span className="h-1 w-1 rounded-full" style={{ background: "rgb(var(--muted) / 0.55)" }} /></span>}
                       <span className="num text-[10px]" style={{ color: "rgb(var(--muted) / 0.8)" }}>{e.codigo}</span>
-                      <span className={`truncate ${e.isGrupo ? "font-medium" : ""}`}>{e.nome}</span>
+                      <span className={`truncate ${e.isGrupo ? "font-semibold" : ""}`}>{e.nome}</span>
                     </button>
                   </td>
                   <td className="num border-l border-border px-2 py-1.5 text-right whitespace-nowrap" style={{ color: "rgb(var(--muted))" }}>{brl(referencia)}</td>
