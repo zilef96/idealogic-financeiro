@@ -19,3 +19,18 @@ export function tributosSobreFaturamento(
 ): number {
   return receitaRealizada * (aliquotas.pis + aliquotas.cofins + aliquotas.issqn)
 }
+
+export function projecaoCaixa(d: {
+  saldoInicial: number
+  superavitPorMes: number[]   // 12
+  aplicacoesPorMes: number[]  // 12 (saída de caixa)
+  resgatesPorMes: number[]    // 12 (entrada de caixa)
+}): number[] {
+  const saldo: number[] = []
+  let acc = d.saldoInicial
+  for (let m = 0; m < 12; m++) {
+    acc += (d.superavitPorMes[m] ?? 0) - (d.aplicacoesPorMes[m] ?? 0) + (d.resgatesPorMes[m] ?? 0)
+    saldo.push(acc)
+  }
+  return saldo
+}

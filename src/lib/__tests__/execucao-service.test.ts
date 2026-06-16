@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { calcDesvio, margemContribuicao, custoHora, tributosSobreFaturamento } from "@/lib/services/execucao-service"
+import { calcDesvio, margemContribuicao, custoHora, tributosSobreFaturamento, projecaoCaixa } from "@/lib/services/execucao-service"
 
 describe("calcDesvio", () => {
   it("desvio e percentual", () => {
@@ -32,5 +32,19 @@ describe("tributosSobreFaturamento", () => {
   it("soma pis+cofins+issqn sobre receita realizada", () => {
     expect(tributosSobreFaturamento(10000, { pis: 0.0165, cofins: 0.076, issqn: 0.025 }))
       .toBeCloseTo(1175)
+  })
+})
+
+describe("projecaoCaixa", () => {
+  it("acumula saldo inicial + superávit ± tesouraria", () => {
+    const r = projecaoCaixa({
+      saldoInicial: 1000,
+      superavitPorMes: [100, 200, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      aplicacoesPorMes: [0, 50, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],   // saída de caixa
+      resgatesPorMes:   [0, 0, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0],   // entrada de caixa
+    })
+    expect(r[0]).toBe(1100)            // 1000 + 100
+    expect(r[1]).toBe(1250)            // 1100 + 200 - 50 (aplicação)
+    expect(r[2]).toBe(1280)            // 1250 + 0 + 30 (resgate)
   })
 })
