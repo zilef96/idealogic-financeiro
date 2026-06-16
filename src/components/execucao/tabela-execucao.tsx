@@ -106,7 +106,7 @@ export function TabelaExecucao({
         {aviso && <p className="text-sm" style={{ color: "rgb(var(--danger))" }}>{aviso}</p>}
         <div className="exec-row rounded-t-xl border border-border bg-card px-3 py-2 text-[10px] font-semibold uppercase tracking-wider" style={{ color: "rgb(var(--muted))" }}>
           <div>Conta</div>
-          <div className="orc-tot exec-hide-sm">Orç. projetado</div>
+          <div className="orc-tot exec-hide-sm">Referência</div>
           <div className="orc-tot">Orç. mensal</div>
           <div className="orc-tot px-2">Realizado</div>
           <div className="orc-tot exec-hide-sm">Desvio</div>
@@ -153,6 +153,7 @@ export function TabelaExecucao({
           <thead>
             <tr style={{ color: "rgb(var(--muted))" }}>
               <th rowSpan={2} className="sticky left-0 z-10 bg-card px-3 py-2 text-left align-bottom text-[11px] font-semibold uppercase tracking-wider">Conta</th>
+              <th rowSpan={2} className="border-l border-border px-2 py-2 text-right align-bottom text-[11px] font-semibold uppercase tracking-wider">Referência</th>
               {meses.map((m) => (
                 <th key={m} colSpan={2} className="border-l border-border px-2 py-1.5 text-center text-[11px] font-semibold">{MESES[m - 1]}</th>
               ))}
@@ -171,6 +172,7 @@ export function TabelaExecucao({
               const filhos = filhosDe(e.codigo)
               const expansivel = filhos.length > 0
               const fundo = e.codigoPai === "" ? tintRgb(e.codigo) : "rgb(var(--card))"
+              const referencia = Math.max(0, ...meses.map((m) => e.porMes.get(m)?.orcadoProjetado ?? 0))
               return (
                 <tr key={e.codigo} className="border-t border-border hover:bg-faint" style={e.codigoPai === "" ? { background: tintRgb(e.codigo) } : undefined}>
                   <td className="sticky left-0 z-10 px-3 py-1.5 whitespace-nowrap" style={{ background: fundo, paddingLeft: 12 + nivel * 16 }}>
@@ -180,6 +182,7 @@ export function TabelaExecucao({
                       <span className={`truncate ${e.isGrupo ? "font-medium" : ""}`}>{e.nome}</span>
                     </button>
                   </td>
+                  <td className="num border-l border-border px-2 py-1.5 text-right whitespace-nowrap" style={{ color: "rgb(var(--muted))" }}>{brl(referencia)}</td>
                   {meses.map((m) => {
                     const c = e.porMes.get(m)
                     const realizado = c?.realizado ?? null
