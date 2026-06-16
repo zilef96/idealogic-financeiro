@@ -64,11 +64,11 @@ export function TabelaOrcamento({ linhas, grupos }: { linhas: LinhaOrcamento[]; 
   const filhosDe = (cod: string) => grupos.filter((g) => g.codigoPai === cod)
   const itensDe = (cod: string) => linhas.filter((l) => l.grupoCodigo === cod)
 
-  const totalDe = (tipo: string) => {
+  const totalMensalDe = (tipo: string) => {
     const raiz = raizes.find((g) => g.tipo === tipo)
-    return raiz ? rollupGrupo(raiz.codigo, grupos, linhas).total : 0
+    return raiz ? rollupGrupo(raiz.codigo, grupos, linhas).mensal : 0
   }
-  const receita = totalDe("R"), custos = totalDe("C"), despesas = totalDe("D")
+  const receita = totalMensalDe("R"), custos = totalMensalDe("C"), despesas = totalMensalDe("D")
   const resultado = receita - custos - despesas
   const kpis = [
     { label: "Receita projetada", val: receita, cor: "var(--pos)", sub: "Faturamento total" },
@@ -94,8 +94,8 @@ export function TabelaOrcamento({ linhas, grupos }: { linhas: LinhaOrcamento[]; 
             <span className="num text-[11px]" style={{ color: "rgb(var(--muted) / 0.8)" }}>{g.codigo}</span>
             <span className="truncate">{g.nome}</span>
           </span>
-          <div className="orc-tot num text-[13px] font-semibold" style={{ color: accRgb(g.tipo) }}>{brl(r.total)}</div>
-          <Cel v={r.mensal} cor="rgb(var(--muted))" />
+          <div className="orc-tot" />
+          <div className="orc-tot num text-[13px] font-semibold" style={{ color: accRgb(g.tipo) }}>{brl(r.mensal)}</div>
           <Cel v={r.ess} cor="rgb(var(--pos))" />
           <Cel v={r.cond} cor="rgb(var(--amber))" />
           <div className="orc-col-com" />
@@ -133,7 +133,9 @@ export function TabelaOrcamento({ linhas, grupos }: { linhas: LinhaOrcamento[]; 
         {kpis.map((k) => (
           <div key={k.label} className="rounded-2xl border border-border bg-card p-4">
             <div className="text-[11px] uppercase tracking-wider" style={{ color: "rgb(var(--muted))" }}>{k.label}</div>
-            <div className="num font-display mt-1.5 text-[22px] font-semibold" style={{ color: `rgb(${k.cor})` }}>{brlK(k.val)}</div>
+            <div className="num font-display mt-1.5 text-[22px] font-semibold" style={{ color: `rgb(${k.cor})` }}>
+              {brlK(k.val)}<span className="ml-1 text-[12px] font-normal" style={{ color: "rgb(var(--muted))" }}>/mês</span>
+            </div>
             <div className="mt-1 text-[12px]" style={{ color: "rgb(var(--muted))" }}>{k.sub}</div>
           </div>
         ))}
@@ -177,8 +179,8 @@ export function TabelaOrcamento({ linhas, grupos }: { linhas: LinhaOrcamento[]; 
                     <span className="num block text-[11px]" style={{ color: "rgb(var(--muted))" }}>{b.codigo} · {TIPO_LABEL[b.tipo]} · {filhos.length} grupos</span>
                   </span>
                 </span>
-                <div className="orc-tot num font-display text-[17px] font-semibold" style={{ color: accRgb(b.tipo) }}>{brl(r.total)}</div>
-                <div className="orc-tot num text-[13px]" style={{ color: "rgb(var(--muted))" }}>{brl(r.mensal)}</div>
+                <div className="orc-tot" />
+                <div className="orc-tot num font-display text-[17px] font-semibold" style={{ color: accRgb(b.tipo) }}>{brl(r.mensal)}</div>
                 <div className="orc-tot num text-[13px] font-semibold" style={{ color: "rgb(var(--pos))" }}>{brl(r.ess)}</div>
                 <div className="orc-tot num text-[13px] font-semibold" style={{ color: "rgb(var(--amber))" }}>{brl(r.cond)}</div>
                 <div className="orc-col-com" />
