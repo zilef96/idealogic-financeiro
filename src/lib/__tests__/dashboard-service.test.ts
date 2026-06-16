@@ -51,7 +51,8 @@ describe("competenciaRef", () => {
 describe("serieOrcadoRealizado", () => {
   const ls = [
     ...linhas(1, { "10000": { o: 100, r: 120 }, "10100": { o: 0, r: 0 }, "10200": { o: 0, r: 0 } }),
-    ...linhas(2, { "10000": { o: 100, r: null }, "10100": { o: 0, r: 0 }, "10200": { o: 0, r: 0 } }),
+    // mês 2 pendente: na realidade TODAS as linhas têm realizado null (espelha vw_execucao_mensal)
+    ...linhas(2, { "10000": { o: 100, r: null }, "10100": { o: 0, r: null }, "10200": { o: 0, r: null } }),
   ]
   it("usa faturamento de serviços por mês, com desvio %", () => {
     const s = serieOrcadoRealizado(ls)
@@ -121,7 +122,7 @@ describe("serieCaixa", () => {
   const ls = [
     ...linhas(1, { "10000": { o: 100, r: 100 }, "10100": { o: 0, r: 0 }, "10200": { o: 0, r: 0 },
       "20000": { o: 0, r: 30 }, "30000": { o: 0, r: 20 }, "40000": { o: 0, r: 0 } }),
-    ...linhas(2, { "10000": { o: 100, r: null }, "10100": { o: 0, r: 0 }, "10200": { o: 0, r: 0 },
+    ...linhas(2, { "10000": { o: 100, r: null }, "10100": { o: 0, r: null }, "10200": { o: 0, r: null },
       "20000": { o: 80, r: null }, "30000": { o: 0, r: null }, "40000": { o: 0, r: null } }),
   ]
   const tesouraria: { mes: number; tipo: "aplicacao" | "resgate"; valor: number }[] = []
