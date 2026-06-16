@@ -20,6 +20,19 @@ export function tributosSobreFaturamento(
   return receitaRealizada * (aliquotas.pis + aliquotas.cofins + aliquotas.issqn)
 }
 
+export function valorVigente(
+  serie: { mes: number; valor: number }[],
+  mes: number,
+  padrao = 0,
+): number {
+  let atual = padrao
+  let melhorMes = -1
+  for (const s of serie) {
+    if (s.mes <= mes && s.mes > melhorMes) { atual = s.valor; melhorMes = s.mes }
+  }
+  return atual
+}
+
 export function projecaoCaixa(d: {
   saldoInicial: number
   superavitPorMes: number[]   // 12

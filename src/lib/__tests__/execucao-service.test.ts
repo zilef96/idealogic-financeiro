@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { calcDesvio, margemContribuicao, custoHora, tributosSobreFaturamento, projecaoCaixa } from "@/lib/services/execucao-service"
+import { calcDesvio, margemContribuicao, custoHora, tributosSobreFaturamento, projecaoCaixa, valorVigente } from "@/lib/services/execucao-service"
 
 describe("calcDesvio", () => {
   it("desvio e percentual", () => {
@@ -46,5 +46,20 @@ describe("projecaoCaixa", () => {
     expect(r[0]).toBe(1100)            // 1000 + 100
     expect(r[1]).toBe(1250)            // 1100 + 200 - 50 (aplicação)
     expect(r[2]).toBe(1280)            // 1250 + 0 + 30 (resgate)
+  })
+})
+
+describe("valorVigente", () => {
+  const serie = [{ mes: 1, valor: 0.0165 }, { mes: 4, valor: 0.02 }]
+  it("usa o último valor com competência ≤ mês", () => {
+    expect(valorVigente(serie, 3)).toBe(0.0165)
+    expect(valorVigente(serie, 4)).toBe(0.02)
+    expect(valorVigente(serie, 9)).toBe(0.02)
+  })
+  it("antes do primeiro valor → default", () => {
+    expect(valorVigente([{ mes: 4, valor: 1.05 }], 2, 1)).toBe(1)
+  })
+  it("série vazia → default", () => {
+    expect(valorVigente([], 6, 3200)).toBe(3200)
   })
 })
