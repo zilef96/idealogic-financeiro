@@ -1,7 +1,8 @@
 import { exigirPerfilPagina } from "@/lib/auth-server"
 import { getExecucao } from "@/lib/repositories/execucao-repository"
 import { getSeriesParametros } from "@/lib/repositories/parametro-repository"
-import { listarTesouraria, getStatus } from "@/lib/repositories/fechamento-repository"
+import { getGrupos } from "@/lib/repositories/orcamento-repository"
+import { listarTesouraria, getStatusTodos } from "@/lib/repositories/fechamento-repository"
 import { calcularIndicadoresMes, superavitMensal, valorVigente, projecaoCaixa, type TotaisMes } from "@/lib/services/execucao-service"
 import { AbasExecucao } from "@/components/execucao/abas-execucao"
 
@@ -9,13 +10,14 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
   await exigirPerfilPagina(["admin"])
   const { ano } = await searchParams
   const anoNum = Number(ano) || new Date().getFullYear()
-  const [linhas, series, tesouraria] = await Promise.all([
+  const [linhas, series, tesouraria, statusPorMes, grupos] = await Promise.all([
     getExecucao(anoNum),
     getSeriesParametros(anoNum),
     listarTesouraria(anoNum),
+    getStatusTodos(anoNum),
+    getGrupos(anoNum),
   ])
   const mesAtual = new Date().getMonth() + 1
-  const statusMesAtual = await getStatus(anoNum, mesAtual)
 
   const grupo = (cod: string, mes: number) => linhas.find((l) => l.codigo === cod && l.mes === mes && l.isGrupo)
   const item = (cod: string, mes: number) => linhas.find((l) => l.codigo === cod && l.mes === mes && !l.isGrupo)
@@ -68,8 +70,7 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
     <div className="space-y-4">
       <h1 className="font-display text-xl font-semibold">Execução Orçamentária {anoNum}</h1>
       <AbasExecucao ano={anoNum} mesAtual={mesAtual} linhas={linhas}
-        statusMesAtual={statusMesAtual}
-        indicadoresMes={indicadoresRealizadoPorMes[mesAtual - 1] ?? []}
+        statusPorMes={statusPorMes} grupos={grupos}
         indicadoresOrcadoPorMes={indicadoresOrcadoPorMes}
         indicadoresRealizadoPorMes={indicadoresRealizadoPorMes} />
     </div>
