@@ -6,10 +6,12 @@ import { getReceitaPorCliente } from "@/lib/repositories/dashboard-repository"
 import { montarDashboard, valorVigente, type LinhaDash } from "@/lib/services/dashboard-service"
 import { DashboardView } from "@/components/dashboard/dashboard-view"
 
-export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ ano?: string }> }) {
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ ano?: string; mes?: string }> }) {
   await exigirPerfilPagina(["admin", "socio"])
-  const { ano } = await searchParams
+  const { ano, mes } = await searchParams
   const anoNum = Number(ano) || new Date().getFullYear()
+  const mesNum = Number(mes)
+  const mesSelecionado = mesNum >= 1 && mesNum <= 12 ? mesNum : null
 
   const [linhasExec, series, tesouraria, receitaClientes] = await Promise.all([
     getExecucao(anoNum),
@@ -30,12 +32,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     saldoInicial: valorVigente(series["saldo_inicial_caixa"] ?? [], 12, 126697.96),
     caixaMinimo: valorVigente(series["caixa_minimo"] ?? [], 12, 50000),
     horasPadrao: 3200,
+    mesSelecionado,
   })
 
-  return (
-    <div className="space-y-4">
-      <h1 className="font-display text-xl font-semibold">Dashboard Financeiro {anoNum}</h1>
-      <DashboardView payload={payload} />
-    </div>
-  )
+  return <DashboardView payload={payload} />
 }

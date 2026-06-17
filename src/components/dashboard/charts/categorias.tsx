@@ -3,10 +3,16 @@ import { useState } from "react"
 import { Treemap, ResponsiveContainer, Tooltip } from "recharts"
 import type { CategoriaNode } from "@/lib/services/dashboard-service"
 import { fmtMoedaTip } from "../formatos"
+import { ChartTitulo } from "../chart-ui"
+import { useChartTheme, tooltipEstilo } from "../use-chart-theme"
 
 const COR_TIPO: Record<string, string> = { R: "#16a34a", C: "#ea580c", D: "#dc2626", E: "#7c3aed", "?": "#64748b" }
+const TIPO_ROTULO: { tipo: string; nome: string }[] = [
+  { tipo: "R", nome: "Receita" }, { tipo: "C", nome: "Custo" }, { tipo: "D", nome: "Despesa" }, { tipo: "E", nome: "Distribuição" },
+]
 
 export function CategoriasChart({ raizes }: { raizes: CategoriaNode[] }) {
+  const ct = useChartTheme()
   const [caminho, setCaminho] = useState<CategoriaNode[]>([])
   const atual = caminho.at(-1)
   const nivel = atual ? atual.filhos : raizes
@@ -14,22 +20,28 @@ export function CategoriasChart({ raizes }: { raizes: CategoriaNode[] }) {
 
   return (
     <div>
-      <div className="mb-2 flex items-center gap-2 text-sm">
-        <h3 className="font-semibold">Despesas e Receitas por Categoria</h3>
-        <span className="text-xs" style={{ color: "rgb(var(--muted))" }}>— clique num bloco para detalhar</span>
-        <button type="button" className="text-xs underline" onClick={() => setCaminho([])} disabled={caminho.length === 0}>
+      <ChartTitulo titulo="Despesas e Receitas por Categoria" info="Mostra para onde vai (e de onde vem) o dinheiro, por categoria contábil, no acumulado do ano. O tamanho de cada bloco é proporcional ao valor. Clique num bloco para descer um nível; use as setas do caminho para voltar." />
+      <div className="mb-2 flex flex-wrap items-center gap-2 text-xs" style={{ color: "rgb(var(--muted))" }}>
+        <button type="button" className="underline disabled:no-underline disabled:opacity-50" onClick={() => setCaminho([])} disabled={caminho.length === 0}>
           início
         </button>
         {caminho.map((n, i) => (
-          <span key={n.codigo} className="text-xs" style={{ color: "rgb(var(--muted))" }}>
+          <span key={n.codigo}>
             / <button type="button" className="underline" onClick={() => setCaminho(caminho.slice(0, i + 1))}>{n.nome}</button>
           </span>
         ))}
+        <span className="ml-auto flex flex-wrap gap-2">
+          {TIPO_ROTULO.map((t) => (
+            <span key={t.tipo} className="flex items-center gap-1">
+              <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: COR_TIPO[t.tipo] }} />{t.nome}
+            </span>
+          ))}
+        </span>
       </div>
       <ResponsiveContainer width="100%" height={300}>
         <Treemap data={data} dataKey="size" nameKey="name" stroke="#fff"
           content={<Celula onDrill={(node) => node.filhos.length > 0 && setCaminho([...caminho, node])} />}>
-          <Tooltip formatter={(v) => fmtMoedaTip(v)} />
+          <Tooltip {...tooltipEstilo(ct)} formatter={(v) => fmtMoedaTip(v)} />
         </Treemap>
       </ResponsiveContainer>
     </div>

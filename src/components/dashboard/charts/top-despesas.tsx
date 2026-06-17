@@ -1,6 +1,9 @@
 "use client"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList } from "recharts"
 import { fmtMoedaTip } from "../formatos"
+import { ChartTitulo } from "../chart-ui"
+import { C } from "../cores"
+import { useChartTheme, tooltipEstilo } from "../use-chart-theme"
 
 function rotuloMil(v: unknown): string {
   const n = Number(v)
@@ -8,17 +11,17 @@ function rotuloMil(v: unknown): string {
 }
 
 export function TopDespesasChart({ dados }: { dados: { nome: string; valor: number }[] }) {
+  const ct = useChartTheme()
   return (
     <div>
-      <h3 className="text-sm font-semibold">Top 5 Despesas</h3>
-      <p className="mb-2 text-xs" style={{ color: "rgb(var(--muted))" }}>As cinco maiores despesas do ano — onde mais sai dinheiro.</p>
+      <ChartTitulo titulo="Top 5 Despesas" info="As cinco maiores despesas acumuladas no ano — onde mais sai dinheiro. O valor na ponta de cada barra está em milhares de reais." />
       <ResponsiveContainer width="100%" height={Math.max(160, dados.length * 44)}>
-        <BarChart data={dados} layout="vertical" margin={{ left: 16 }}>
-          <XAxis type="number" tick={{ fontSize: 12 }} hide />
-          <YAxis type="category" dataKey="nome" width={160} tick={{ fontSize: 12 }} />
-          <Tooltip formatter={(v) => fmtMoedaTip(v)} />
-          <Bar dataKey="valor" name="Despesa" fill="#dc2626">
-            <LabelList dataKey="valor" position="right" fontSize={10} formatter={rotuloMil} />
+        <BarChart data={dados} layout="vertical" margin={{ left: 16, right: 28 }}>
+          <XAxis type="number" tick={{ fontSize: 12, fill: ct.axis }} hide />
+          <YAxis type="category" dataKey="nome" width={160} tick={{ fontSize: 12, fill: ct.axis }} />
+          <Tooltip {...tooltipEstilo(ct)} formatter={(v) => fmtMoedaTip(v)} />
+          <Bar dataKey="valor" name="Despesa" fill={C.neg}>
+            <LabelList dataKey="valor" position="right" fontSize={10} fill={ct.label} formatter={rotuloMil} />
           </Bar>
         </BarChart>
       </ResponsiveContainer>

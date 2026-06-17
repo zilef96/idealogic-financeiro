@@ -200,7 +200,12 @@ export function paretoClientes(clientes: ReceitaCliente[]): ClientePareto[] {
 }
 
 export interface KpiDelta { rotulo: string; valor: number | null; formato: "percent" | "pontos" | "moeda" | "numero"; inverted: boolean }
-export interface Kpi { id: string; rotulo: string; valor: number | null; formato: FormatoIndicador; deltas: KpiDelta[]; pendente: boolean }
+export interface Kpi {
+  id: string; rotulo: string; valor: number | null; formato: FormatoIndicador
+  deltas: KpiDelta[]; pendente: boolean
+  referencia?: number | null      // valor de comparação (ex.: orçado) p/ subtexto "Orçado: …"
+  referenciaRotulo?: string
+}
 
 type SerieCaixaResult = { pontos: PontoCaixa[]; caixaMinimo: number }
 const pct = (novo: number, base: number): number | null => (base === 0 ? null : ((novo - base) / Math.abs(base)) * 100)
@@ -222,8 +227,17 @@ export function totaisAcumulados(linhas: LinhaDash[], campo: Campo, ateMes: numb
   return acc
 }
 
-// KPIs do header em base YTD (acumulado de janeiro até a competência de referência).
-export function montarKpis(linhas: LinhaDash[], ref: number, caixa: SerieCaixaResult): Kpi[] {
+// aderência: % de itens-folha (com realizado) dentro da tolerância de desvio, num conjunto de linhas.
+function aderenciaDe(itens: LinhaDash[]): { aderencia: number | null; fora: number } {
+  const dentro = itens.filter((l) => {
+    const { desvioPercentual } = calcDesvio(l.realizado ?? 0, l.orcado)
+    return desvioPercentual == null || Math.abs(desvioPercentual) <= TOLERANCIA
+  }).length
+  return { aderencia: itens.length === 0 ? null : (dentro / itens.length) * 100, fora: itens.length - dentro }
+}
+
+// KPIs em base YTD (acumulado de janeiro até a competência de referência).
+function kpisYtd(linhas: LinhaDash[], ref: number, caixa: SerieCaixaResult): Kpi[] {
   const pend = ref === 0
   const tReal = totaisAcumulados(linhas, "realizado", ref)
   const tOrc = totaisAcumulados(linhas, "orcado", ref)
@@ -232,7 +246,6 @@ export function montarKpis(linhas: LinhaDash[], ref: number, caixa: SerieCaixaRe
   const margemReal = margemContribuicao(supReal, fatReal)
   const saldoRef = caixa.pontos[ref - 1]?.saldo ?? 0
 
-  // carga tributária YTD: soma de PIS/COFINS/ISSQN realizados ÷ faturamento de serviços YTD
   const trib = serieTributos(linhas)
   let pisYtd = 0, cofinsYtd = 0, issqnYtd = 0
   for (let mes = 1; mes <= ref; mes++) {
@@ -240,26 +253,18 @@ export function montarKpis(linhas: LinhaDash[], ref: number, caixa: SerieCaixaRe
     if (t && !t.pendente) { pisYtd += t.pis ?? 0; cofinsYtd += t.cofins ?? 0; issqnYtd += t.issqn ?? 0 }
   }
   const cargaYtd = fatReal === 0 ? null : ((pisYtd + cofinsYtd + issqnYtd) / fatReal) * 100
-
-  // aderência YTD: % de itens-folha de jan..ref dentro da tolerância de desvio
-  const itensYtd = linhas.filter((l) => !l.isGrupo && l.mes <= ref && l.realizado != null)
-  const dentro = itensYtd.filter((l) => {
-    const { desvioPercentual } = calcDesvio(l.realizado ?? 0, l.orcado)
-    return desvioPercentual == null || Math.abs(desvioPercentual) <= TOLERANCIA
-  }).length
-  const fora = itensYtd.length - dentro
-  const aderencia = itensYtd.length === 0 ? null : (dentro / itensYtd.length) * 100
+  const { aderencia, fora } = aderenciaDe(linhas.filter((l) => !l.isGrupo && l.mes <= ref && l.realizado != null))
 
   const m = (v: number | null): number | null => (pend ? null : v)
   return [
-    { id: "faturamento", rotulo: "Faturamento (ano)", valor: m(fatReal), formato: "moeda", pendente: pend, deltas: [
+    { id: "faturamento", rotulo: "Faturamento (ano)", valor: m(fatReal), formato: "moeda", pendente: pend, referencia: m(fatOrc), referenciaRotulo: "Orçado", deltas: [
       { rotulo: "vs orçado", valor: m(pct(fatReal, fatOrc)), formato: "percent", inverted: false },
     ] },
-    { id: "superavit", rotulo: "Superávit/Déficit (ano)", valor: m(supReal), formato: "moeda", pendente: pend, deltas: [
+    { id: "superavit", rotulo: "Superávit/Déficit (ano)", valor: m(supReal), formato: "moeda", pendente: pend, referencia: m(supOrc), referenciaRotulo: "Orçado", deltas: [
       { rotulo: "vs orçado", valor: m(pct(supReal, supOrc)), formato: "percent", inverted: false },
     ] },
     { id: "margem", rotulo: "Margem de contribuição", valor: m(margemReal), formato: "percent", pendente: pend, deltas: [] },
-    { id: "caixa", rotulo: "Caixa atual", valor: saldoRef, formato: "moeda", pendente: false, deltas: [
+    { id: "caixa", rotulo: "Caixa atual", valor: saldoRef, formato: "moeda", pendente: false, referencia: caixa.caixaMinimo, referenciaRotulo: "Mínimo", deltas: [
       { rotulo: "folga vs mínimo", valor: saldoRef - caixa.caixaMinimo, formato: "moeda", inverted: false },
     ] },
     { id: "tributos", rotulo: "Carga tributária (ano)", valor: m(cargaYtd), formato: "percent", pendente: pend, deltas: [] },
@@ -269,15 +274,84 @@ export function montarKpis(linhas: LinhaDash[], ref: number, caixa: SerieCaixaRe
   ]
 }
 
-export interface Alerta { tipo: "caixa" | "margem" | "desvio"; mensagem: string; accordion: number }
+// KPIs de um único mês (point-in-month), com deltas vs orçado e vs mês anterior.
+function kpisMes(linhas: LinhaDash[], mes: number, caixa: SerieCaixaResult): Kpi[] {
+  const pend = !temRealizadoNoMes(linhas, mes)
+  const tReal = construirTotais(linhas, "realizado", mes)
+  const tOrc = construirTotais(linhas, "orcado", mes)
+  const fatReal = faturamentoServicos(tReal), fatOrc = faturamentoServicos(tOrc)
+  const fatAnt = mes > 1 ? faturamentoServicos(construirTotais(linhas, "realizado", mes - 1)) : 0
+  const supReal = superavitMensal(tReal), supOrc = superavitMensal(tOrc)
+  const margemReal = margemContribuicao(supReal, fatReal)
+  const carga = serieTributos(linhas)[mes - 1]?.cargaPercentual ?? null
+  const saldo = caixa.pontos[mes - 1]?.saldo ?? 0
+  const { aderencia, fora } = aderenciaDe(linhas.filter((l) => !l.isGrupo && l.mes === mes && l.realizado != null))
+
+  const m = (v: number | null): number | null => (pend ? null : v)
+  return [
+    { id: "faturamento", rotulo: "Faturamento", valor: m(fatReal), formato: "moeda", pendente: pend, referencia: fatOrc, referenciaRotulo: "Orçado", deltas: [
+      { rotulo: "vs orçado", valor: m(pct(fatReal, fatOrc)), formato: "percent", inverted: false },
+      { rotulo: "vs mês ant.", valor: m(pct(fatReal, fatAnt)), formato: "percent", inverted: false },
+    ] },
+    { id: "superavit", rotulo: "Superávit/Déficit", valor: m(supReal), formato: "moeda", pendente: pend, referencia: supOrc, referenciaRotulo: "Orçado", deltas: [
+      { rotulo: "vs orçado", valor: m(pct(supReal, supOrc)), formato: "percent", inverted: false },
+    ] },
+    { id: "margem", rotulo: "Margem de contribuição", valor: m(margemReal), formato: "percent", pendente: pend, deltas: [] },
+    { id: "caixa", rotulo: "Caixa no mês", valor: m(saldo), formato: "moeda", pendente: pend, referencia: caixa.caixaMinimo, referenciaRotulo: "Mínimo", deltas: [
+      { rotulo: "folga vs mínimo", valor: m(saldo - caixa.caixaMinimo), formato: "moeda", inverted: false },
+    ] },
+    { id: "tributos", rotulo: "Carga tributária", valor: m(carga), formato: "percent", pendente: pend, deltas: [] },
+    { id: "aderencia", rotulo: "Aderência ao orçamento", valor: m(aderencia), formato: "percent", pendente: pend, deltas: [
+      { rotulo: "itens fora", valor: m(fora), formato: "numero", inverted: true },
+    ] },
+  ]
+}
+
+// `mesSelecionado` null/ausente → visão do ano (YTD); 1–12 → visão do mês escolhido.
+export function montarKpis(linhas: LinhaDash[], ref: number, caixa: SerieCaixaResult, mesSelecionado?: number | null): Kpi[] {
+  return mesSelecionado == null ? kpisYtd(linhas, ref, caixa) : kpisMes(linhas, mesSelecionado, caixa)
+}
+
+export interface Alerta { tipo: "caixa" | "margem" | "desvio"; nivel: "critico" | "atencao"; mensagem: string }
 const NOMES_MES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
 
-export function montarAlertas(linhas: LinhaDash[], caixa: SerieCaixaResult, margem: PontoMargem[]): Alerta[] {
+export interface LimitesAlerta {
+  margemMeta?: number   // % de margem abaixo do qual já se avisa (padrão 15)
+  folgaCaixa?: number   // fração acima do mínimo que ainda gera atenção (padrão 0,2 = 20%)
+  desvioTol?: number    // % de estouro de um grupo que gera atenção (padrão 10)
+}
+
+// Alertas preventivos: além de "já estourou" (crítico), avisam quando algo se
+// aproxima do limite (atenção). Olham os 12 meses (inclui projeção).
+export function montarAlertas(
+  caixa: SerieCaixaResult,
+  margem: PontoMargem[],
+  desvioCategorias: DesvioCategoria[] = [],
+  limites: LimitesAlerta = {},
+): Alerta[] {
+  const margemMeta = limites.margemMeta ?? 15
+  const folgaCaixa = limites.folgaCaixa ?? 0.2
+  const desvioTol = limites.desvioTol ?? 10
   const alertas: Alerta[] = []
+
+  // Caixa: crítico se rompe o mínimo; atenção se a folga fica abaixo de `folgaCaixa`.
   const rompe = caixa.pontos.find((p) => p.saldo < caixa.caixaMinimo)
-  if (rompe) alertas.push({ tipo: "caixa", mensagem: `Caixa abaixo do mínimo em ${NOMES_MES[rompe.mes - 1]}`, accordion: 2 })
+  const aperta = caixa.pontos.find((p) => p.saldo < caixa.caixaMinimo * (1 + folgaCaixa))
+  if (rompe) alertas.push({ tipo: "caixa", nivel: "critico", mensagem: `Caixa abaixo do mínimo em ${NOMES_MES[rompe.mes - 1]}` })
+  else if (aperta) alertas.push({ tipo: "caixa", nivel: "atencao", mensagem: `Caixa com pouca folga em ${NOMES_MES[aperta.mes - 1]} (a menos de ${Math.round(folgaCaixa * 100)}% do mínimo)` })
+
+  // Margem: crítico se negativa; atenção se abaixo da meta.
   const margNeg = margem.find((p) => p.margem != null && p.margem < 0)
-  if (margNeg) alertas.push({ tipo: "margem", mensagem: `Margem negativa em ${NOMES_MES[margNeg.mes - 1]}`, accordion: 3 })
+  const margBaixa = margem.find((p) => p.margem != null && p.margem >= 0 && p.margem < margemMeta)
+  if (margNeg) alertas.push({ tipo: "margem", nivel: "critico", mensagem: `Margem negativa em ${NOMES_MES[margNeg.mes - 1]}` })
+  else if (margBaixa) alertas.push({ tipo: "margem", nivel: "atencao", mensagem: `Margem abaixo de ${margemMeta}% em ${NOMES_MES[margBaixa.mes - 1]}` })
+
+  // Desvio: atenção quando algum grupo estoura o orçado além da tolerância.
+  const estouro = desvioCategorias
+    .filter((d) => (d.desvioPercentual ?? 0) > desvioTol)
+    .sort((a, b) => (b.desvioPercentual ?? 0) - (a.desvioPercentual ?? 0))[0]
+  if (estouro) alertas.push({ tipo: "desvio", nivel: "atencao", mensagem: `${estouro.nome} estourou o orçado em ${Math.round(estouro.desvioPercentual ?? 0)}%` })
+
   return alertas
 }
 
@@ -306,6 +380,8 @@ export function desvioPorCategoria(linhas: LinhaDash[]): DesvioCategoria[] {
 export interface DashboardPayload {
   ano: number
   competenciaRef: number
+  mesSelecionado: number | null   // null = visão do ano (YTD); 1–12 = mês escolhido
+  faturamentoYtd: number          // faturamento de serviços acumulado no ano (para o cabeçalho)
   kpis: Kpi[]
   alertas: Alerta[]
   desvioCategorias: DesvioCategoria[]
@@ -330,17 +406,22 @@ export function montarDashboard(input: {
   saldoInicial: number
   caixaMinimo: number
   horasPadrao: number
+  mesSelecionado?: number | null
 }): DashboardPayload {
   const { ano, linhas, series, tesouraria, receitaClientes, saldoInicial, caixaMinimo, horasPadrao } = input
+  const mesSelecionado = input.mesSelecionado ?? null
   const caixa = serieCaixa(linhas, tesouraria, saldoInicial, caixaMinimo)
   const margem = serieMargem(linhas)
+  const desvioCategorias = desvioPorCategoria(linhas)
   const ref = competenciaRef(linhas)
   return {
     ano,
     competenciaRef: ref,
-    kpis: montarKpis(linhas, ref, caixa),
-    alertas: montarAlertas(linhas, caixa, margem),
-    desvioCategorias: desvioPorCategoria(linhas),
+    mesSelecionado,
+    faturamentoYtd: faturamentoServicos(totaisAcumulados(linhas, "realizado", ref)),
+    kpis: montarKpis(linhas, ref, caixa, mesSelecionado),
+    alertas: montarAlertas(caixa, margem, desvioCategorias),
+    desvioCategorias,
     orcadoRealizado: serieOrcadoRealizado(linhas),
     superavit: serieSuperavit(linhas),
     caixa: caixa.pontos,

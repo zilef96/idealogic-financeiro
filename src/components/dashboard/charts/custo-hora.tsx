@@ -1,23 +1,27 @@
 "use client"
-import { ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts"
+import { ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts"
 import type { PontoCustoHora } from "@/lib/services/dashboard-service"
 import { NOMES_MES } from "../formatos"
+import { ChartTitulo, legendaFormatter } from "../chart-ui"
+import { C } from "../cores"
+import { useChartTheme, tooltipEstilo } from "../use-chart-theme"
 
 export function CustoHoraChart({ dados }: { dados: PontoCustoHora[] }) {
+  const ct = useChartTheme()
   const data = dados.map((p) => ({ mes: NOMES_MES[p.mes - 1], custoHora: p.custoHora, horas: p.horas }))
   return (
     <div>
-      <h3 className="text-sm font-semibold">Custo Hora Idealogic</h3>
-      <p className="mb-2 text-xs" style={{ color: "rgb(var(--muted))" }}>Quanto custa cada hora de trabalho da empresa. A barra ao fundo são as horas faturáveis do mês.</p>
+      <ChartTitulo titulo="Custo Hora Idealogic" info="Quanto custa cada hora de trabalho da empresa (custos operacionais e administrativos divididos pelas horas faturáveis). A barra ao fundo são as horas faturáveis do mês." />
       <ResponsiveContainer width="100%" height={260}>
         <ComposedChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--border))" />
-          <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
-          <YAxis yAxisId="r" tick={{ fontSize: 12 }} />
-          <YAxis yAxisId="h" orientation="right" tick={{ fontSize: 12 }} />
-          <Tooltip formatter={(v, n) => n === "horas" ? `${(Number(v) || 0).toLocaleString("pt-BR")} h` : (Number(v) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} />
-          <Bar yAxisId="h" dataKey="horas" name="Horas" fill="#64748b" fillOpacity={0.2} />
-          <Line yAxisId="r" dataKey="custoHora" name="Custo/hora" stroke="#2563eb" dot connectNulls />
+          <CartesianGrid strokeDasharray="3 3" stroke={ct.grid} />
+          <XAxis dataKey="mes" tick={{ fontSize: 12, fill: ct.axis }} />
+          <YAxis yAxisId="r" tick={{ fontSize: 12, fill: ct.axis }} />
+          <YAxis yAxisId="h" orientation="right" tick={{ fontSize: 12, fill: ct.axis }} />
+          <Tooltip {...tooltipEstilo(ct)} formatter={(v, n) => n === "Horas" ? `${(Number(v) || 0).toLocaleString("pt-BR")} h` : (Number(v) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} />
+          <Legend verticalAlign="bottom" height={28} wrapperStyle={{ fontSize: 12 }} formatter={legendaFormatter(ct.axis)} />
+          <Bar yAxisId="h" dataKey="horas" name="Horas" fill={C.orcado} fillOpacity={0.25} />
+          <Line yAxisId="r" dataKey="custoHora" name="Custo/hora" stroke={C.realizado} dot connectNulls />
         </ComposedChart>
       </ResponsiveContainer>
     </div>

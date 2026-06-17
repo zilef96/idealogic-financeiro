@@ -212,10 +212,32 @@ describe("montarKpis", () => {
 })
 
 describe("montarAlertas", () => {
-  it("emite alerta quando o caixa fica abaixo do mínimo", () => {
+  it("emite alerta crítico quando o caixa fica abaixo do mínimo", () => {
     const caixa = { pontos: [{ mes: 1, saldo: 100, projetado: false }, { mes: 2, saldo: 400, projetado: true }], caixaMinimo: 500 } as never
-    const a = montarAlertas([], caixa, [])
-    expect(a.some((x) => x.tipo === "caixa")).toBe(true)
+    const a = montarAlertas(caixa, [])
+    expect(a.some((x) => x.tipo === "caixa" && x.nivel === "critico")).toBe(true)
+  })
+  it("emite atenção quando o caixa tem pouca folga (sem romper o mínimo)", () => {
+    const caixa = { pontos: [{ mes: 3, saldo: 540, projetado: false }], caixaMinimo: 500 } as never // folga 8% < 20%
+    const a = montarAlertas(caixa, [])
+    expect(a.some((x) => x.tipo === "caixa" && x.nivel === "atencao")).toBe(true)
+  })
+  it("emite atenção quando a margem fica abaixo da meta (ainda positiva)", () => {
+    const caixa = { pontos: [{ mes: 1, saldo: 9999, projetado: false }], caixaMinimo: 500 } as never
+    const margem = [{ mes: 1, margem: 8, pendente: false }] as never
+    const a = montarAlertas(caixa, margem)
+    expect(a.some((x) => x.tipo === "margem" && x.nivel === "atencao")).toBe(true)
+  })
+  it("emite atenção de desvio quando um grupo estoura a tolerância", () => {
+    const caixa = { pontos: [{ mes: 1, saldo: 9999, projetado: false }], caixaMinimo: 500 } as never
+    const desvio = [{ codigo: "31000", nome: "Pessoal", orcado: 100, realizado: 130, desvioPercentual: 30 }]
+    const a = montarAlertas(caixa, [], desvio)
+    expect(a.some((x) => x.tipo === "desvio" && x.mensagem.includes("Pessoal"))).toBe(true)
+  })
+  it("não alerta quando tudo está saudável", () => {
+    const caixa = { pontos: [{ mes: 1, saldo: 9999, projetado: false }], caixaMinimo: 500 } as never
+    const margem = [{ mes: 1, margem: 40, pendente: false }] as never
+    expect(montarAlertas(caixa, margem, [])).toHaveLength(0)
   })
 })
 
@@ -277,5 +299,20 @@ describe("desvioPorCategoria", () => {
     expect(d.map((x) => x.codigo).sort()).toEqual(["31000", "32000"])
     expect(d.find((x) => x.codigo === "31000")!.desvioPercentual).toBeCloseTo(20)
     expect(d.find((x) => x.codigo === "32000")!.desvioPercentual).toBeCloseTo(-20)
+  })
+})
+
+describe("montarKpis (mês selecionado)", () => {
+  const ls = [
+    ...linhas(1, { "10000": { o: 80, r: 100 }, "10100": { o: 0, r: 0 }, "10200": { o: 0, r: 0 } }),
+    ...linhas(2, { "10000": { o: 80, r: 60 }, "10100": { o: 0, r: 0 }, "10200": { o: 0, r: 0 } }),
+  ]
+  const caixa = { pontos: [{ mes: 1, saldo: 1000, projetado: false }, { mes: 2, saldo: 900, projetado: false }], caixaMinimo: 500 } as never
+  it("usa só o mês escolhido (não acumula) e expõe a referência orçada", () => {
+    const kpis = montarKpis(ls, 2, caixa, 2)
+    const fat = kpis.find((k) => k.id === "faturamento")!
+    expect(fat.valor).toBe(60)         // só o mês 2
+    expect(fat.referencia).toBe(80)    // orçado do mês 2
+    expect(fat.deltas.find((d) => d.rotulo.includes("mês ant."))!.valor).toBeCloseTo(-40) // 60 vs 100
   })
 })

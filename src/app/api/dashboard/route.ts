@@ -10,9 +10,12 @@ import { montarDashboard, valorVigente, type LinhaDash } from "@/lib/services/da
 
 export async function GET(req: Request) {
   const auth = await requirePerfil(["admin", "socio"]); if (!auth.ok) return auth.response
-  const parsed = parseQuery(new URL(req.url).searchParams, z.object({ ano: anoSchema }))
+  const sp = new URL(req.url).searchParams
+  const parsed = parseQuery(sp, z.object({ ano: anoSchema }))
   if (!parsed.ok) return parsed.response
   const ano = parsed.data.ano
+  const mesNum = Number(sp.get("mes"))
+  const mesSelecionado = mesNum >= 1 && mesNum <= 12 ? mesNum : null
   try {
     const [linhasExec, series, tesouraria, receitaClientes] = await Promise.all([
       getExecucao(ano), getSeriesParametros(ano), listarTesouraria(ano), getReceitaPorCliente(ano),
@@ -28,6 +31,7 @@ export async function GET(req: Request) {
       saldoInicial: valorVigente(series["saldo_inicial_caixa"] ?? [], 12, 126697.96),
       caixaMinimo: valorVigente(series["caixa_minimo"] ?? [], 12, 50000),
       horasPadrao: 3200,
+      mesSelecionado,
     })
     return NextResponse.json(payload)
   } catch (e) { return handleApiError(e, "Erro ao carregar dashboard.") }
