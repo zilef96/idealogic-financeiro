@@ -57,3 +57,8 @@ export function rollupGrupo(
   }
   return r
 }
+
+// Orçamento publicado fica congelado; só rascunho aceita escrita.
+export function podeEditarOrcamento(status: string): boolean {
+  return status !== "publicado"
+}

@@ -1,8 +1,22 @@
 import { prisma } from "@/lib/prisma"
 import { normalizarOrcado, distribuirPorMes } from "@/lib/services/orcamento-service"
+import { exigirRascunhoPorAno } from "@/lib/repositories/periodo-repository"
 import type {
   LinhaOrcamento, GrupoOrcamento, NovoItemInput, AtualizarItemInput, TipoConta,
 } from "@/lib/types"
+
+async function anoDoGrupo(grupoId: number): Promise<number> {
+  const r = await prisma.$queryRaw<{ ano: number }[]>`
+    SELECT e.ano FROM conta_grupo cg JOIN exercicio e ON e.id = cg.exercicio_id WHERE cg.id = ${grupoId}`
+  return r[0].ano
+}
+async function anoDoItem(itemId: number): Promise<number> {
+  const r = await prisma.$queryRaw<{ ano: number }[]>`
+    SELECT e.ano FROM conta_item ci
+      JOIN conta_grupo cg ON cg.id = ci.grupo_id
+      JOIN exercicio e ON e.id = cg.exercicio_id WHERE ci.id = ${itemId}`
+  return r[0].ano
+}
 
 interface ItemRow {
   id: bigint; grupo_id: bigint; grupo_codigo: string; codigo: string; nome: string
@@ -53,6 +67,7 @@ export async function getGrupos(ano: number): Promise<GrupoOrcamento[]> {
 }
 
 export async function criarItem(input: NovoItemInput): Promise<number> {
+  await exigirRascunhoPorAno(await anoDoGrupo(input.grupoId))
   const { valorOrcado, valorOrcadoMensal } = normalizarOrcado(input.valor, input.periodicidade)
   const prox = await prisma.$queryRaw<{ codigo: number }[]>`
     SELECT COALESCE(MAX(codigo)::int, (SELECT codigo::int FROM conta_grupo WHERE id = ${input.grupoId})) + 1 AS codigo
@@ -70,6 +85,7 @@ export async function criarItem(input: NovoItemInput): Promise<number> {
 }
 
 export async function atualizarItem(id: number, input: AtualizarItemInput): Promise<void> {
+  await exigirRascunhoPorAno(await anoDoItem(id))
   const atual = (await prisma.$queryRaw<ItemRow[]>`
     SELECT ci.*, cg.codigo::text AS grupo_codigo FROM conta_item ci
     JOIN conta_grupo cg ON cg.id = ci.grupo_id WHERE ci.id = ${id}`)[0]
@@ -91,6 +107,7 @@ export async function atualizarItem(id: number, input: AtualizarItemInput): Prom
 }
 
 export async function criarGrupo(input: { ano: number; codigoPai: string | null; tipo: TipoConta; nome: string; codigo: number }): Promise<number> {
+  await exigirRascunhoPorAno(input.ano)
   const rows = await prisma.$queryRaw<{ id: bigint }[]>`
     INSERT INTO conta_grupo (exercicio_id, codigo, grupo_pai_id, tipo_conta_id, nome)
     SELECT e.id, ${input.codigo},
@@ -103,5 +120,23 @@ export async function criarGrupo(input: { ano: number; codigoPai: string | null;
 }
 
 export async function atualizarGrupo(id: number, nome: string): Promise<void> {
+  await exigirRascunhoPorAno(await anoDoGrupo(id))
   await prisma.$executeRaw`UPDATE conta_grupo SET nome = ${nome}, updated_at = now() WHERE id = ${id}`
+}
+
+export async function excluirItem(id: number): Promise<void> {
+  await exigirRascunhoPorAno(await anoDoItem(id))
+  await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`DELETE FROM lancamento_realizado WHERE conta_item_id = ${id}`
+    await tx.$executeRaw`DELETE FROM conta_item WHERE id = ${id}`
+  })
+}
+
+export async function excluirGrupo(id: number): Promise<void> {
+  await exigirRascunhoPorAno(await anoDoGrupo(id))
+  const filhos = await prisma.$queryRaw<{ n: bigint }[]>`
+    SELECT (SELECT count(*) FROM conta_grupo WHERE grupo_pai_id = ${id})
+         + (SELECT count(*) FROM conta_item  WHERE grupo_id     = ${id}) AS n`
+  if (Number(filhos[0].n) > 0) throw new Error("GRUPO_NAO_VAZIO")
+  await prisma.$executeRaw`DELETE FROM conta_grupo WHERE id = ${id}`
 }

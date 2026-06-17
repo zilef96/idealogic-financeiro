@@ -23,3 +23,12 @@ describe("schemas", () => {
     expect(() => mesSchema.parse("13")).toThrow()
   })
 })
+
+describe("mapErroPostgres — orçamento publicado", () => {
+  it("mensagem com OR_PUBLICADO vira 409", () => {
+    expect(mapErroPostgres({ message: "OR_PUBLICADO" })).toEqual({
+      status: 409,
+      error: "Orçamento publicado; despublique o ano para editar.",
+    })
+  })
+})

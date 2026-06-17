@@ -16,6 +16,12 @@ export function mapErroPostgres(e: { code?: string; meta?: { code?: string }; me
   if (ehFC001) {
     return { status: 409, error: "Competência fechada; reabra o mês para editar." }
   }
+  if (typeof e?.message === "string" && e.message.includes("OR_PUBLICADO")) {
+    return { status: 409, error: "Orçamento publicado; despublique o ano para editar." }
+  }
+  if (typeof e?.message === "string" && e.message.includes("GRUPO_NAO_VAZIO")) {
+    return { status: 409, error: "Grupo não está vazio; remova itens e subgrupos antes de excluir." }
+  }
   return null
 }
 
