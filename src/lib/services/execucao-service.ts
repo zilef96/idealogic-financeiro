@@ -13,6 +13,8 @@ export function custoHora(custosOperacionais: number, despesasAdm: number, horas
   return (custosOperacionais + despesasAdm) / horas
 }
 
+// (Decisão 17/06/2026) Na Execução, tributos são lançados manualmente; esta função
+// fica disponível para projeção/simulação futura, não sobrescreve o realizado.
 export function tributosSobreFaturamento(
   receitaRealizada: number,
   aliquotas: { pis: number; cofins: number; issqn: number },
