@@ -2,9 +2,9 @@
 import { ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, CartesianGrid, Legend } from "recharts"
 import type { ClientePareto } from "@/lib/services/dashboard-service"
 import { fmtMoedaTip, fmtPctTip } from "../formatos"
-import { ChartTitulo, legendaFormatter } from "../chart-ui"
+import { ChartTitulo, legendaFormatter, tooltipColorido } from "../chart-ui"
 import { C } from "../cores"
-import { useChartTheme, tooltipEstilo } from "../use-chart-theme"
+import { useChartTheme } from "../use-chart-theme"
 
 // Traduz a participação do maior cliente em nível de risco de dependência.
 function risco(pct: number): { rotulo: string; cor: string } {
@@ -37,7 +37,7 @@ export function ConcentracaoClientesChart({ dados }: { dados: ClientePareto[] })
           <YAxis yAxisId="r" tick={{ fontSize: 12, fill: ct.axis }} />
           <YAxis yAxisId="p" orientation="right" unit="%" domain={[0, 100]} tick={{ fontSize: 12, fill: ct.axis }} />
           <ReferenceLine yAxisId="p" y={80} stroke={C.ambar} strokeDasharray="4 4" />
-          <Tooltip {...tooltipEstilo(ct)} formatter={(v, n) => n === "% acumulado" ? fmtPctTip(v) : fmtMoedaTip(v)} />
+          <Tooltip content={tooltipColorido(ct, (v, n) => n === "% acumulado" ? fmtPctTip(v) : fmtMoedaTip(v))} />
           <Legend verticalAlign="bottom" height={28} wrapperStyle={{ fontSize: 12 }} formatter={legendaFormatter(ct.axis)} />
           <Bar yAxisId="r" dataKey="receita" name="Receita" fill={C.realizado} />
           <Line yAxisId="p" dataKey="acumulado" name="% acumulado" stroke={C.ambar} dot connectNulls />

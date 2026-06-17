@@ -2,9 +2,9 @@
 import { ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from "recharts"
 import type { PontoTributo } from "@/lib/services/dashboard-service"
 import { NOMES_MES, fmtMoedaTip, fmtPctTip } from "../formatos"
-import { ChartTitulo, legendaFormatter } from "../chart-ui"
+import { ChartTitulo, legendaFormatter, tooltipColorido } from "../chart-ui"
 import { C } from "../cores"
-import { useChartTheme, tooltipEstilo } from "../use-chart-theme"
+import { useChartTheme } from "../use-chart-theme"
 
 export function TributosChart({ dados }: { dados: PontoTributo[] }) {
   const ct = useChartTheme()
@@ -18,7 +18,7 @@ export function TributosChart({ dados }: { dados: PontoTributo[] }) {
           <XAxis dataKey="mes" tick={{ fontSize: 12, fill: ct.axis }} />
           <YAxis yAxisId="r" tick={{ fontSize: 12, fill: ct.axis }} />
           <YAxis yAxisId="p" orientation="right" unit="%" tick={{ fontSize: 12, fill: ct.axis }} />
-          <Tooltip {...tooltipEstilo(ct)} formatter={(v, n) => n === "Carga %" ? fmtPctTip(v) : fmtMoedaTip(v)} />
+          <Tooltip content={tooltipColorido(ct, (v, n) => n === "Carga %" ? fmtPctTip(v) : fmtMoedaTip(v))} />
           <Legend verticalAlign="bottom" height={28} wrapperStyle={{ fontSize: 12 }} formatter={legendaFormatter(ct.axis)} />
           <Bar yAxisId="r" dataKey="pis" name="PIS" stackId="t" fill={ct.tributos[0]} />
           <Bar yAxisId="r" dataKey="cofins" name="COFINS" stackId="t" fill={ct.tributos[1]} />

@@ -2,9 +2,9 @@
 import { ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, ReferenceArea, CartesianGrid, Legend } from "recharts"
 import type { PontoCaixa } from "@/lib/services/dashboard-service"
 import { NOMES_MES, fmtMoedaTip } from "../formatos"
-import { ChartTitulo, legendaFormatter } from "../chart-ui"
+import { ChartTitulo, legendaFormatter, tooltipColorido } from "../chart-ui"
 import { C } from "../cores"
-import { useChartTheme, tooltipEstilo } from "../use-chart-theme"
+import { useChartTheme } from "../use-chart-theme"
 
 export function CaixaChart({ dados, caixaMinimo }: { dados: PontoCaixa[]; caixaMinimo: number }) {
   const ct = useChartTheme()
@@ -30,7 +30,7 @@ export function CaixaChart({ dados, caixaMinimo }: { dados: PontoCaixa[]; caixaM
           <ReferenceArea y1={0} y2={caixaMinimo} fill={C.ambar} fillOpacity={0.08} />
           <ReferenceLine y={caixaMinimo} stroke={C.neg} strokeDasharray="4 4"
             label={{ value: "Caixa mínimo", fontSize: 11, fill: C.neg, position: "insideTopRight" }} />
-          <Tooltip {...tooltipEstilo(ct)} formatter={(v) => fmtMoedaTip(v)} />
+          <Tooltip content={tooltipColorido(ct, (v) => fmtMoedaTip(v))} />
           <Legend verticalAlign="bottom" height={28} wrapperStyle={{ fontSize: 12 }} formatter={legendaFormatter(ct.axis)} />
           <Area dataKey="realizado" name="Saldo realizado" stroke={C.realizado} fill={C.realizado} fillOpacity={0.15} connectNulls />
           <Line dataKey="projetado" name="Projeção" stroke={C.realizado} strokeDasharray="5 5" dot={false} connectNulls />

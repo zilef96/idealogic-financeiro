@@ -2,9 +2,9 @@
 import { ComposedChart, Bar, Line, Cell, LabelList, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, CartesianGrid, Legend } from "recharts"
 import type { PontoSuperavit } from "@/lib/services/dashboard-service"
 import { NOMES_MES, fmtMoedaTip } from "../formatos"
-import { ChartTitulo, legendaFormatter } from "../chart-ui"
+import { ChartTitulo, legendaFormatter, tooltipColorido } from "../chart-ui"
 import { C } from "../cores"
-import { useChartTheme, tooltipEstilo } from "../use-chart-theme"
+import { useChartTheme } from "../use-chart-theme"
 
 // Rótulo com sinal explícito (+/−): reforça superávit×déficit sem depender só da cor (WCAG).
 function rotuloSinal(v: unknown): string {
@@ -26,7 +26,8 @@ export function SuperavitChart({ dados }: { dados: PontoSuperavit[] }) {
           <XAxis dataKey="mes" tick={{ fontSize: 12, fill: ct.axis }} />
           <YAxis tick={{ fontSize: 12, fill: ct.axis }} />
           <ReferenceLine y={0} stroke={ct.refLine} strokeWidth={1.5} />
-          <Tooltip {...tooltipEstilo(ct)} formatter={(v) => fmtMoedaTip(v)} />
+          <Tooltip content={tooltipColorido(ct, (v) => fmtMoedaTip(v),
+            (e) => e.name === "Superávit/Déficit" ? ((Number(e.value) || 0) >= 0 ? C.pos : C.neg) : e.color)} />
           <Legend verticalAlign="bottom" height={28} wrapperStyle={{ fontSize: 12 }} formatter={legendaFormatter(ct.axis)} />
           <Bar dataKey="superavit" name="Superávit/Déficit" fill={C.pos}>
             {data.map((d, i) => <Cell key={i} fill={(d.superavit ?? 0) >= 0 ? C.pos : C.neg} />)}

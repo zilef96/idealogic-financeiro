@@ -2,9 +2,9 @@
 import { ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceArea, CartesianGrid, Legend } from "recharts"
 import type { PontoOrcadoRealizado } from "@/lib/services/dashboard-service"
 import { NOMES_MES, fmtMoedaTip, fmtPctTip } from "../formatos"
-import { ChartTitulo, legendaFormatter } from "../chart-ui"
+import { ChartTitulo, legendaFormatter, tooltipColorido } from "../chart-ui"
 import { C } from "../cores"
-import { useChartTheme, tooltipEstilo } from "../use-chart-theme"
+import { useChartTheme } from "../use-chart-theme"
 
 export function OrcadoRealizadoChart({ dados }: { dados: PontoOrcadoRealizado[] }) {
   const ct = useChartTheme()
@@ -19,7 +19,7 @@ export function OrcadoRealizadoChart({ dados }: { dados: PontoOrcadoRealizado[] 
           <YAxis yAxisId="r" tick={{ fontSize: 12, fill: ct.axis }} />
           <YAxis yAxisId="p" orientation="right" unit="%" tick={{ fontSize: 12, fill: ct.axis }} />
           <ReferenceArea yAxisId="p" y1={-5} y2={5} fill={C.pos} fillOpacity={0.06} />
-          <Tooltip {...tooltipEstilo(ct)} formatter={(v, n) => n === "Desvio %" ? fmtPctTip(v) : fmtMoedaTip(v)} />
+          <Tooltip content={tooltipColorido(ct, (v, n) => n === "Desvio %" ? fmtPctTip(v) : fmtMoedaTip(v))} />
           <Legend verticalAlign="bottom" height={28} wrapperStyle={{ fontSize: 12 }} formatter={legendaFormatter(ct.axis)} />
           <Bar yAxisId="r" dataKey="orcado" name="Orçado" fill={C.orcado} fillOpacity={0.55} />
           <Bar yAxisId="r" dataKey="realizado" name="Realizado" fill={C.realizado} />

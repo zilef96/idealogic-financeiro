@@ -48,5 +48,7 @@ export function tooltipEstilo(ct: ChartTheme) {
   return {
     contentStyle: { backgroundColor: ct.tooltipBg, border: `1px solid ${ct.tooltipBorder}`, borderRadius: 8, fontSize: 12, color: ct.tooltipText },
     labelStyle: { color: ct.tooltipText },
+    // Sem itemStyle o Recharts pinta cada linha de item em preto (invisível no tema escuro).
+    itemStyle: { color: ct.tooltipText },
   }
 }

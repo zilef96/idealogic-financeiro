@@ -18,7 +18,7 @@ export function DesvioCategoriaChart({ dados }: { dados: DesvioCategoria[] }) {
   return (
     <div>
       <ChartTitulo titulo="Desvio do Orçamento por Categoria" info="Quais grupos de custo/despesa fugiram do planejado no ano, em %. Vermelho à direita = gastou mais que o orçado (estouro); verde à esquerda = gastou menos (economia)." />
-      <div className="-mt-1 mb-2 flex gap-3 text-[11px]" style={{ color: "rgb(var(--muted))" }}>
+      <div className="-mt-1 mb-2 flex gap-3 text-xs" style={{ color: "rgb(var(--foreground))" }}>
         <span><span style={{ color: C.neg }}>■</span> acima do orçado</span>
         <span><span style={{ color: C.pos }}>■</span> abaixo do orçado</span>
       </div>

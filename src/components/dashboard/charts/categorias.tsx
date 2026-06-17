@@ -30,7 +30,7 @@ export function CategoriasChart({ raizes }: { raizes: CategoriaNode[] }) {
             / <button type="button" className="underline" onClick={() => setCaminho(caminho.slice(0, i + 1))}>{n.nome}</button>
           </span>
         ))}
-        <span className="ml-auto flex flex-wrap gap-2">
+        <span className="ml-auto flex flex-wrap gap-2" style={{ color: "rgb(var(--foreground))" }}>
           {TIPO_ROTULO.map((t) => (
             <span key={t.tipo} className="flex items-center gap-1">
               <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: COR_TIPO[t.tipo] }} />{t.nome}
