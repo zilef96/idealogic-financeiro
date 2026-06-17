@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { calcDesvio, margemContribuicao, custoHora, tributosSobreFaturamento, projecaoCaixa, valorVigente, superavitMensal, calcularIndicadoresMes, type TotaisMes } from "@/lib/services/execucao-service"
+import { calcDesvio, margemContribuicao, custoHora, tributosSobreFaturamento, projecaoCaixa, valorVigente, superavitMensal, calcularIndicadoresMes, contarPendencias, type TotaisMes } from "@/lib/services/execucao-service"
 
 describe("calcDesvio", () => {
   it("desvio e percentual", () => {
@@ -35,17 +35,28 @@ describe("tributosSobreFaturamento", () => {
   })
 })
 
+describe("contarPendencias", () => {
+  const linhas = [
+    { isGrupo: true,  mes: 6, orcado: 100, realizado: null },  // grupo: ignorado
+    { isGrupo: false, mes: 6, orcado: 100, realizado: null },  // pendente
+    { isGrupo: false, mes: 6, orcado: 50,  realizado: 10 },    // preenchido
+    { isGrupo: false, mes: 6, orcado: 0,   realizado: null },  // fora de vigência: ignorado
+    { isGrupo: false, mes: 7, orcado: 100, realizado: null },  // outro mês: ignorado
+  ]
+  it("conta itens dentro da vigência sem realizado no mês", () => {
+    expect(contarPendencias(linhas, 6)).toBe(1)
+  })
+})
+
 describe("projecaoCaixa", () => {
-  it("acumula saldo inicial + superávit ± tesouraria", () => {
+  it("1º mês = caixa inicial; demais acumulam só o superávit", () => {
     const r = projecaoCaixa({
       saldoInicial: 1000,
-      superavitPorMes: [100, 200, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      aplicacoesPorMes: [0, 50, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],   // saída de caixa
-      resgatesPorMes:   [0, 0, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0],   // entrada de caixa
+      superavitPorMes: [500, 200, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     })
-    expect(r[0]).toBe(1100)            // 1000 + 100
-    expect(r[1]).toBe(1250)            // 1100 + 200 - 50 (aplicação)
-    expect(r[2]).toBe(1280)            // 1250 + 0 + 30 (resgate)
+    expect(r[0]).toBe(1000)   // 1º mês = caixa inicial (ignora superávit do mês)
+    expect(r[1]).toBe(1200)   // 1000 + 200
+    expect(r[2]).toBe(1200)   // sem mudança
   })
 })
 

@@ -13,7 +13,7 @@ const CLASSIFS: { v: Classificacao; nome: string }[] = [
 
 const inputCls = "mt-1 w-full rounded border border-border bg-background p-2 text-sm"
 
-export function NovoItem({ grupos }: { grupos: GrupoOrcamento[] }) {
+export function NovoItem({ grupos, endpoint = "/api/orcamento" }: { grupos: GrupoOrcamento[]; endpoint?: string }) {
   const router = useRouter()
   const { toast } = useToast()
   const [aberto, setAberto] = useState(false)
@@ -51,7 +51,7 @@ export function NovoItem({ grupos }: { grupos: GrupoOrcamento[] }) {
       mesInicio: periodicidade === "M" && mesInicio ? Number(mesInicio) : null,
       mesFim: periodicidade === "M" && mesFim ? Number(mesFim) : null,
     }
-    const r = await fetch("/api/orcamento", {
+    const r = await fetch(endpoint, {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
     })
     setSalvando(false)

@@ -66,8 +66,7 @@ export async function getGrupos(ano: number): Promise<GrupoOrcamento[]> {
   }))
 }
 
-export async function criarItem(input: NovoItemInput): Promise<number> {
-  await exigirRascunhoPorAno(await anoDoGrupo(input.grupoId))
+async function inserirItem(input: NovoItemInput): Promise<number> {
   const { valorOrcado, valorOrcadoMensal } = normalizarOrcado(input.valor, input.periodicidade)
   const prox = await prisma.$queryRaw<{ codigo: number }[]>`
     SELECT COALESCE(MAX(codigo)::int, (SELECT codigo::int FROM conta_grupo WHERE id = ${input.grupoId})) + 1 AS codigo
@@ -82,6 +81,16 @@ export async function criarItem(input: NovoItemInput): Promise<number> {
     RETURNING id
   `
   return Number(rows[0].id)
+}
+
+export async function criarItem(input: NovoItemInput): Promise<number> {
+  await exigirRascunhoPorAno(await anoDoGrupo(input.grupoId))
+  return inserirItem(input)
+}
+
+// Ajuste de meio de ano: cria item mesmo com o orçamento publicado.
+export async function criarItemExecucao(input: NovoItemInput): Promise<number> {
+  return inserirItem(input)
 }
 
 export async function atualizarItem(id: number, input: AtualizarItemInput): Promise<void> {

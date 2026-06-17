@@ -106,17 +106,10 @@ export interface PontoCaixa { mes: number; saldo: number; projetado: boolean }
 export function serieCaixa(
   linhas: LinhaDash[], tesouraria: EventoTesourariaDash[], saldoInicial: number, caixaMinimo: number,
 ): { pontos: PontoCaixa[]; caixaMinimo: number } {
-  const soma = (mes: number, tipo: "aplicacao" | "resgate") =>
-    tesouraria.filter((e) => e.mes === mes && e.tipo === tipo).reduce((s, e) => s + e.valor, 0)
   const projetadoPorMes = MESES.map((m) => !temRealizadoNoMes(linhas, m))
   const superavitPorMes = MESES.map((m) =>
     superavitMensal(construirTotais(linhas, projetadoPorMes[m - 1] ? "orcado" : "realizado", m)))
-  const saldos = projecaoCaixa({
-    saldoInicial,
-    superavitPorMes,
-    aplicacoesPorMes: MESES.map((m) => soma(m, "aplicacao")),
-    resgatesPorMes: MESES.map((m) => soma(m, "resgate")),
-  })
+  const saldos = projecaoCaixa({ saldoInicial, superavitPorMes })
   return { pontos: MESES.map((m) => ({ mes: m, saldo: saldos[m - 1], projetado: projetadoPorMes[m - 1] })), caixaMinimo }
 }
 
