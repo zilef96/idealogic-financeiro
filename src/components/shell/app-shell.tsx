@@ -25,6 +25,7 @@ export function AppShell({
           <a className="block rounded px-2 py-1 hover:bg-muted/10" href="/orcamento">Orçamentação</a>
           <a className="block rounded px-2 py-1 hover:bg-muted/10" href="/execucao">Execução</a>
           <a className="block rounded px-2 py-1 hover:bg-muted/10" href="/dashboard">Dashboard</a>
+          <a className="block rounded px-2 py-1 hover:bg-muted/10" href="/parametros">Parâmetros</a>
         </nav>
       </aside>
       {aberto && (
