@@ -42,3 +42,24 @@ export async function criarPeriodo(ano: number, copiarDe: number | null): Promis
       JOIN conta_grupo ng ON ng.exercicio_id = ${novoId} AND ng.codigo = og.codigo`
   })
 }
+
+export type StatusExercicio = "rascunho" | "publicado"
+
+export async function getStatusExercicio(ano: number): Promise<StatusExercicio> {
+  const rows = await prisma.$queryRaw<{ status: string }[]>`
+    SELECT status FROM exercicio WHERE ano = ${ano} LIMIT 1`
+  return (rows[0]?.status as StatusExercicio) ?? "rascunho"
+}
+
+export async function publicarExercicio(ano: number): Promise<void> {
+  await prisma.$executeRaw`UPDATE exercicio SET status = 'publicado', updated_at = now() WHERE ano = ${ano}`
+}
+
+export async function despublicarExercicio(ano: number): Promise<void> {
+  await prisma.$executeRaw`UPDATE exercicio SET status = 'rascunho', updated_at = now() WHERE ano = ${ano}`
+}
+
+// Guard de escrita: lança sentinela OR_PUBLICADO (mapeada para 409) se o ano estiver publicado.
+export async function exigirRascunhoPorAno(ano: number): Promise<void> {
+  if ((await getStatusExercicio(ano)) === "publicado") throw new Error("OR_PUBLICADO")
+}
