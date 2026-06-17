@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { normalizarOrcado, distribuirPorMes, somasPorClassificacao, rollupGrupo } from "@/lib/services/orcamento-service"
+import { normalizarOrcado, distribuirPorMes, somasPorClassificacao, rollupGrupo, podeEditarOrcamento } from "@/lib/services/orcamento-service"
 import type { GrupoOrcamento, LinhaOrcamento } from "@/lib/types"
 
 describe("normalizarOrcado", () => {
@@ -63,5 +63,14 @@ describe("rollupGrupo", () => {
   it("orçado mensal = essencial mensal + condicionado mensal", () => {
     const r = rollupGrupo("100", grupos, linhas)
     expect(r.essMensal + r.condMensal).toBe(r.mensal)
+  })
+})
+
+describe("podeEditarOrcamento", () => {
+  it("rascunho é editável", () => {
+    expect(podeEditarOrcamento("rascunho")).toBe(true)
+  })
+  it("publicado não é editável", () => {
+    expect(podeEditarOrcamento("publicado")).toBe(false)
   })
 })
