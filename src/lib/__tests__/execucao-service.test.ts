@@ -36,16 +36,14 @@ describe("tributosSobreFaturamento", () => {
 })
 
 describe("projecaoCaixa", () => {
-  it("acumula saldo inicial + superávit ± tesouraria", () => {
+  it("1º mês = caixa inicial; demais acumulam só o superávit", () => {
     const r = projecaoCaixa({
       saldoInicial: 1000,
-      superavitPorMes: [100, 200, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      aplicacoesPorMes: [0, 50, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],   // saída de caixa
-      resgatesPorMes:   [0, 0, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0],   // entrada de caixa
+      superavitPorMes: [500, 200, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     })
-    expect(r[0]).toBe(1100)            // 1000 + 100
-    expect(r[1]).toBe(1250)            // 1100 + 200 - 50 (aplicação)
-    expect(r[2]).toBe(1280)            // 1250 + 0 + 30 (resgate)
+    expect(r[0]).toBe(1000)   // 1º mês = caixa inicial (ignora superávit do mês)
+    expect(r[1]).toBe(1200)   // 1000 + 200
+    expect(r[2]).toBe(1200)   // sem mudança
   })
 })
 

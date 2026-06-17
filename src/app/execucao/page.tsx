@@ -40,8 +40,6 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
   const projDe = (totaisFn: (mes: number) => TotaisMes) => projecaoCaixa({
     saldoInicial,
     superavitPorMes: meses.map((m) => superavitMensal(totaisFn(m))),
-    aplicacoesPorMes: meses.map(aplic),
-    resgatesPorMes: meses.map(resg),
   })
   const projecaoReal = projDe(totaisReal)
   const projecaoOrc = projDe(totaisOrc)

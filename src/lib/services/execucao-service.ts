@@ -33,17 +33,17 @@ export function valorVigente(
   return atual
 }
 
+// Caixa: 1º mês = caixa inicial (saldo do exercício). Demais meses acumulam o
+// superávit do mês. Aplicações/resgates NÃO entram aqui (são informativos).
+// (Regra definida em 17/06/2026; refinar fórmula dos demais meses depois.)
 export function projecaoCaixa(d: {
   saldoInicial: number
   superavitPorMes: number[]   // 12
-  aplicacoesPorMes: number[]  // 12 (saída de caixa)
-  resgatesPorMes: number[]    // 12 (entrada de caixa)
 }): number[] {
   const saldo: number[] = []
-  let acc = d.saldoInicial
   for (let m = 0; m < 12; m++) {
-    acc += (d.superavitPorMes[m] ?? 0) - (d.aplicacoesPorMes[m] ?? 0) + (d.resgatesPorMes[m] ?? 0)
-    saldo.push(acc)
+    if (m === 0) saldo.push(d.saldoInicial)
+    else saldo.push(saldo[m - 1] + (d.superavitPorMes[m] ?? 0))
   }
   return saldo
 }

@@ -128,10 +128,10 @@ describe("serieCaixa", () => {
       "20000": { o: 80, r: null }, "30000": { o: 0, r: null }, "40000": { o: 0, r: null } }),
   ]
   const tesouraria: { mes: number; tipo: "aplicacao" | "resgate"; valor: number }[] = []
-  it("acumula saldo a partir do inicial e marca projeção", () => {
+  it("1º mês = caixa inicial; demais acumulam superávit e marcam projeção", () => {
     const { pontos, caixaMinimo } = serieCaixa(ls, tesouraria, 1000, 500)
-    expect(pontos[0]).toMatchObject({ mes: 1, saldo: 1050, projetado: false })
-    expect(pontos[1]).toMatchObject({ mes: 2, saldo: 1070, projetado: true }) // 1050 + orçado 20
+    expect(pontos[0]).toMatchObject({ mes: 1, saldo: 1000, projetado: false }) // 1º mês = caixa inicial
+    expect(pontos[1]).toMatchObject({ mes: 2, saldo: 1020, projetado: true })  // 1000 + orçado 20
     expect(caixaMinimo).toBe(500)
   })
 })
