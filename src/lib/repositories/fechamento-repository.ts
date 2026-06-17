@@ -14,6 +14,18 @@ export async function getStatus(ano: number, mes: number): Promise<StatusFechame
   return (rows[0]?.status as StatusFechamento) ?? "aberto"
 }
 
+export async function getStatusTodos(ano: number): Promise<Record<number, StatusFechamento>> {
+  const rows = await prisma.$queryRaw<{ mes: number; status: string }[]>`
+    SELECT EXTRACT(MONTH FROM fm.competencia)::int AS mes, fm.status
+    FROM fechamento_mensal fm JOIN exercicio e ON e.id = fm.exercicio_id
+    WHERE e.ano = ${ano}
+  `
+  const out: Record<number, StatusFechamento> = {}
+  for (let m = 1; m <= 12; m++) out[m] = "aberto"
+  for (const r of rows) out[r.mes] = r.status as StatusFechamento
+  return out
+}
+
 export async function concluir(ano: number, mes: number, responsavel: string) {
   const comp = competencia(ano, mes)
   await prisma.$executeRaw`
