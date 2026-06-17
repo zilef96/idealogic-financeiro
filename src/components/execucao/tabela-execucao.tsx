@@ -2,6 +2,7 @@
 import { Fragment, useState, type ReactNode } from "react"
 import type { LinhaExecucao } from "@/lib/repositories/execucao-repository"
 import { CampoRealizado } from "./campo-realizado"
+import { CampoOrcado } from "./campo-orcado"
 
 const brl = (n: number | null) => (n == null ? "—" : n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
@@ -29,8 +30,9 @@ function Chevron({ aberto }: { aberto: boolean }) {
 }
 
 export function TabelaExecucao({
-  ano, linhas, meses, editavel,
-}: { ano: number; linhas: LinhaExecucao[]; meses: number[]; editavel: boolean }) {
+  ano, linhas, meses, editavel, mesesOcultos = [],
+}: { ano: number; linhas: LinhaExecucao[]; meses: number[]; editavel: boolean; mesesOcultos?: number[] }) {
+  const mesesVisiveis = meses.filter((m) => !mesesOcultos.includes(m))
   // monta o índice por código com os dados de cada mês
   const info = new Map<string, No>()
   for (const l of linhas) {
@@ -81,8 +83,11 @@ export function TabelaExecucao({
             <span className="num text-[11px]" style={{ color: "rgb(var(--muted) / 0.8)" }}>{e.codigo}</span>
             <span className={`truncate ${e.isGrupo ? "font-semibold" : ""}`}>{e.nome}</span>
           </button>
-          <div className="orc-tot num text-[13px] exec-hide-sm" style={{ color: "rgb(var(--muted))" }}>{brl(c?.orcadoProjetado ?? 0)}</div>
-          <div className={`orc-tot num text-[13px] ${e.isGrupo ? "font-semibold" : ""}`} style={e.isGrupo ? { color: accRgb(e.codigo) } : undefined}>{brl(c?.orcado ?? 0)}</div>
+          <div className={`orc-tot num text-[13px] ${e.isGrupo ? "font-semibold" : ""}`} style={e.isGrupo ? { color: accRgb(e.codigo) } : undefined}>
+            {editavel && !e.isGrupo && e.itemId != null
+              ? <CampoOrcado ano={ano} mes={mes} itemId={e.itemId} valorInicial={c?.orcado ?? null} />
+              : brl(c?.orcado ?? 0)}
+          </div>
           <div className="orc-tot num text-[13px] px-2">
             {editavel && !e.isGrupo && e.itemId != null ? (
               <CampoRealizado ano={ano} mes={mes} itemId={e.itemId} valorInicial={realizado} />
@@ -105,7 +110,6 @@ export function TabelaExecucao({
         <div className="flex justify-end">{btnTudo}</div>
         <div className="exec-row rounded-t-xl border border-border bg-card px-3 py-2 text-[10px] font-semibold uppercase tracking-wider" style={{ color: "rgb(var(--muted))" }}>
           <div>Conta</div>
-          <div className="orc-tot exec-hide-sm">Referência</div>
           <div className="orc-tot">Orç. mensal</div>
           <div className="orc-tot px-2">Realizado</div>
           <div className="orc-tot exec-hide-sm">Desvio</div>
@@ -122,7 +126,6 @@ export function TabelaExecucao({
                     <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg font-display text-sm font-bold bg-card" style={{ color: accRgb(b.codigo) }}>{b.nome[0]}</span>
                     <span className="font-display truncate text-[14px] font-semibold">{b.nome}</span>
                   </button>
-                  <div className="orc-tot num text-[13px] exec-hide-sm" style={{ color: "rgb(var(--muted))" }}>{brl(c?.orcadoProjetado ?? 0)}</div>
                   <div className="orc-tot num font-display text-[15px] font-semibold" style={{ color: accRgb(b.codigo) }}>{brl(c?.orcado ?? 0)}</div>
                   <div className="orc-tot num text-[13px] px-2 font-semibold">{c?.realizado == null ? "—" : brl(c.realizado)}</div>
                   <div className="orc-tot num text-[13px] exec-hide-sm" style={{ color: corDesvio(c?.realizado ?? null, c?.desvio ?? 0) }}>{c?.realizado == null ? "—" : brl(c?.desvio ?? 0)}</div>
@@ -161,13 +164,12 @@ export function TabelaExecucao({
           <thead>
             <tr style={{ color: "rgb(var(--muted))" }}>
               <th rowSpan={2} className="sticky left-0 z-10 bg-card px-3 py-2 text-left align-bottom text-[11px] font-semibold uppercase tracking-wider">Conta</th>
-              <th rowSpan={2} className="border-l border-border px-2 py-2 text-right align-bottom text-[11px] font-semibold uppercase tracking-wider">Referência</th>
-              {meses.map((m) => (
+              {mesesVisiveis.map((m) => (
                 <th key={m} colSpan={mostrarOrcado ? 2 : 1} className="border-l border-border px-2 py-1.5 text-center text-[11px] font-semibold">{MESES[m - 1]}</th>
               ))}
             </tr>
             <tr className="text-[10px]" style={{ color: "rgb(var(--muted))" }}>
-              {meses.map((m) => (
+              {mesesVisiveis.map((m) => (
                 <Fragment key={m}>
                   {mostrarOrcado && <th className="border-l border-border px-2 pb-1.5 text-right font-medium">Orçado</th>}
                   <th className={`px-2 pb-1.5 text-right font-medium ${mostrarOrcado ? "" : "border-l border-border"}`}>Realiz.</th>
@@ -181,7 +183,6 @@ export function TabelaExecucao({
               const expansivel = filhos.length > 0
               const fundo = e.codigoPai === "" ? tintRgb(e.codigo) : e.isGrupo ? "rgb(var(--faint))" : "rgb(var(--card))"
               const fundoLinha = e.codigoPai === "" ? tintRgb(e.codigo) : e.isGrupo ? "rgb(var(--faint))" : undefined
-              const referencia = Math.max(0, ...meses.map((m) => e.porMes.get(m)?.orcadoProjetado ?? 0))
               return (
                 <tr key={e.codigo} className={`border-t border-border ${e.isGrupo ? "" : "hover:bg-faint"}`} style={fundoLinha ? { background: fundoLinha } : undefined}>
                   <td className="sticky left-0 z-10 px-3 py-1.5 whitespace-nowrap" style={{ background: fundo, paddingLeft: 12 + nivel * 16 }}>
@@ -193,15 +194,16 @@ export function TabelaExecucao({
                       <span className={`truncate ${e.isGrupo ? "font-semibold" : ""}`}>{e.nome}</span>
                     </button>
                   </td>
-                  <td className="num border-l border-border px-2 py-1.5 text-right whitespace-nowrap" style={{ color: "rgb(var(--muted))" }}>{brl(referencia)}</td>
-                  {meses.map((m) => {
+                  {mesesVisiveis.map((m) => {
                     const c = e.porMes.get(m)
                     const realizado = c?.realizado ?? null
                     return (
                       <Fragment key={m}>
                         {mostrarOrcado && (
                           <td className="num border-l border-border px-2 py-1.5 text-right whitespace-nowrap" style={{ color: "rgb(var(--muted))" }}>
-                            {brl(c?.orcado ?? 0)}
+                            {editavel && !e.isGrupo && e.itemId != null
+                              ? <CampoOrcado ano={ano} mes={m} itemId={e.itemId} valorInicial={c?.orcado ?? null} />
+                              : brl(c?.orcado ?? 0)}
                           </td>
                         )}
                         <td className={`num px-2 py-1.5 text-right whitespace-nowrap ${mostrarOrcado ? "" : "border-l border-border"}`} style={editavel && !e.isGrupo && e.itemId != null ? undefined : { color: corDesvio(realizado, c?.desvio ?? 0) }}>
