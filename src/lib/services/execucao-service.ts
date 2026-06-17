@@ -106,6 +106,14 @@ export function calcularIndicadoresMes(input: {
   ]
 }
 
+// Item "pendente": dentro da vigência (orçado > 0) e sem realizado lançado no mês.
+export function contarPendencias(
+  linhas: { isGrupo: boolean; mes: number; orcado: number; realizado: number | null }[],
+  mes: number,
+): number {
+  return linhas.filter((l) => !l.isGrupo && l.mes === mes && l.orcado > 0 && l.realizado == null).length
+}
+
 export function formatarIndicador(i: Indicador): string {
   if (i.pendente || i.valor == null) return "—"
   switch (i.formato) {

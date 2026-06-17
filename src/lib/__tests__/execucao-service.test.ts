@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { calcDesvio, margemContribuicao, custoHora, tributosSobreFaturamento, projecaoCaixa, valorVigente, superavitMensal, calcularIndicadoresMes, type TotaisMes } from "@/lib/services/execucao-service"
+import { calcDesvio, margemContribuicao, custoHora, tributosSobreFaturamento, projecaoCaixa, valorVigente, superavitMensal, calcularIndicadoresMes, contarPendencias, type TotaisMes } from "@/lib/services/execucao-service"
 
 describe("calcDesvio", () => {
   it("desvio e percentual", () => {
@@ -32,6 +32,19 @@ describe("tributosSobreFaturamento", () => {
   it("soma pis+cofins+issqn sobre receita realizada", () => {
     expect(tributosSobreFaturamento(10000, { pis: 0.0165, cofins: 0.076, issqn: 0.025 }))
       .toBeCloseTo(1175)
+  })
+})
+
+describe("contarPendencias", () => {
+  const linhas = [
+    { isGrupo: true,  mes: 6, orcado: 100, realizado: null },  // grupo: ignorado
+    { isGrupo: false, mes: 6, orcado: 100, realizado: null },  // pendente
+    { isGrupo: false, mes: 6, orcado: 50,  realizado: 10 },    // preenchido
+    { isGrupo: false, mes: 6, orcado: 0,   realizado: null },  // fora de vigência: ignorado
+    { isGrupo: false, mes: 7, orcado: 100, realizado: null },  // outro mês: ignorado
+  ]
+  it("conta itens dentro da vigência sem realizado no mês", () => {
+    expect(contarPendencias(linhas, 6)).toBe(1)
   })
 })
 
