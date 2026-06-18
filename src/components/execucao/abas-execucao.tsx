@@ -83,7 +83,7 @@ export function AbasExecucao({
             </label>
           </div>
           <TabelaExecucao ano={ano} linhas={linhas} meses={meses} editavel={editavel} mesesSemOrcado={mesesSemOrcado} />
-          <TabelaIndicadores orcado={indicadoresOrcadoPorMes} realizado={indicadoresRealizadoPorMes} />
+          <TabelaIndicadores orcado={indicadoresOrcadoPorMes} realizado={indicadoresRealizadoPorMes} mesesSemOrcado={mesesSemOrcado} />
         </div>
       )}
     </div>
