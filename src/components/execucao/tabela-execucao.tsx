@@ -31,9 +31,8 @@ function Chevron({ aberto }: { aberto: boolean }) {
 }
 
 export function TabelaExecucao({
-  ano, linhas, meses, editavel, mesesOcultos = [],
-}: { ano: number; linhas: LinhaExecucao[]; meses: number[]; editavel: boolean; mesesOcultos?: number[] }) {
-  const mesesVisiveis = meses.filter((m) => !mesesOcultos.includes(m))
+  ano, linhas, meses, editavel, mesesSemOrcado = [],
+}: { ano: number; linhas: LinhaExecucao[]; meses: number[]; editavel: boolean; mesesSemOrcado?: number[] }) {
   // monta o índice por código com os dados de cada mês
   const info = new Map<string, No>()
   for (const l of linhas) {
@@ -62,6 +61,8 @@ export function TabelaExecucao({
   )
 
   const [mostrarOrcado, setMostrarOrcado] = useState(true)
+  // Orçado visível por mês: respeita o toggle global e oculta nos meses fechados.
+  const orcadoVisivel = (m: number) => mostrarOrcado && !mesesSemOrcado.includes(m)
 
   const umMes = meses.length === 1
   const pendencias = umMes ? pendenciasPorGrupo(linhas, meses[0]) : {}
@@ -178,15 +179,15 @@ export function TabelaExecucao({
           <thead>
             <tr style={{ color: "rgb(var(--muted))" }}>
               <th rowSpan={2} className="sticky left-0 z-10 bg-card px-3 py-2 text-left align-bottom text-[11px] font-semibold uppercase tracking-wider">Conta</th>
-              {mesesVisiveis.map((m) => (
-                <th key={m} colSpan={mostrarOrcado ? 2 : 1} className="border-l border-border px-2 py-1.5 text-center text-[11px] font-semibold">{MESES[m - 1]}</th>
+              {meses.map((m) => (
+                <th key={m} colSpan={orcadoVisivel(m) ? 2 : 1} className="border-l border-border px-2 py-1.5 text-center text-[11px] font-semibold">{MESES[m - 1]}</th>
               ))}
             </tr>
             <tr className="text-[10px]" style={{ color: "rgb(var(--muted))" }}>
-              {mesesVisiveis.map((m) => (
+              {meses.map((m) => (
                 <Fragment key={m}>
-                  {mostrarOrcado && <th className="border-l border-border px-2 pb-1.5 text-right font-medium">Orçado</th>}
-                  <th className={`px-2 pb-1.5 text-right font-medium ${mostrarOrcado ? "" : "border-l border-border"}`}>Realiz.</th>
+                  {orcadoVisivel(m) && <th className="border-l border-border px-2 pb-1.5 text-right font-medium">Orçado</th>}
+                  <th className={`px-2 pb-1.5 text-right font-medium ${orcadoVisivel(m) ? "" : "border-l border-border"}`}>Realiz.</th>
                 </Fragment>
               ))}
             </tr>
@@ -208,19 +209,19 @@ export function TabelaExecucao({
                       <span className={`truncate ${e.isGrupo ? "font-semibold" : ""}`}>{e.nome}</span>
                     </button>
                   </td>
-                  {mesesVisiveis.map((m) => {
+                  {meses.map((m) => {
                     const c = e.porMes.get(m)
                     const realizado = c?.realizado ?? null
                     return (
                       <Fragment key={m}>
-                        {mostrarOrcado && (
+                        {orcadoVisivel(m) && (
                           <td className="num border-l border-border px-2 py-1.5 text-right whitespace-nowrap" style={{ color: "rgb(var(--muted))" }}>
                             {editavel && !e.isGrupo && e.itemId != null
                               ? <CampoOrcado ano={ano} mes={m} itemId={e.itemId} valorInicial={c?.orcado ?? null} />
                               : brl(c?.orcado ?? 0)}
                           </td>
                         )}
-                        <td className={`num px-2 py-1.5 text-right whitespace-nowrap ${mostrarOrcado ? "" : "border-l border-border"}`} style={editavel && !e.isGrupo && e.itemId != null ? undefined : { color: corDesvio(realizado, c?.desvio ?? 0) }}>
+                        <td className={`num px-2 py-1.5 text-right whitespace-nowrap ${orcadoVisivel(m) ? "" : "border-l border-border"}`} style={editavel && !e.isGrupo && e.itemId != null ? undefined : { color: corDesvio(realizado, c?.desvio ?? 0) }}>
                           {editavel && !e.isGrupo && e.itemId != null
                             ? <CampoRealizado ano={ano} mes={m} itemId={e.itemId} valorInicial={realizado} />
                             : realizado == null ? "—" : brl(realizado)}
