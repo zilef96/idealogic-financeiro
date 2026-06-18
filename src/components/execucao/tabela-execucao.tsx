@@ -1,7 +1,7 @@
 "use client"
 import { Fragment, useState, type ReactNode } from "react"
 import type { LinhaExecucao } from "@/lib/repositories/execucao-repository"
-import { pendenciasPorGrupo } from "@/lib/services/execucao-service"
+import { pendenciasPorGrupo, julgamentoDesvio } from "@/lib/services/execucao-service"
 import { CampoRealizado } from "./campo-realizado"
 import { CampoOrcado } from "./campo-orcado"
 
@@ -13,8 +13,17 @@ const TINT: Record<string, string> = { R: "--pos-soft", C: "--rose-soft", D: "--
 const tipoDe = (codigo: string) => ({ "1": "R", "2": "C", "3": "D", "4": "E" }[codigo[0]] ?? "D")
 const accRgb = (codigo: string) => `rgb(var(${ACC[tipoDe(codigo)]}))`
 const tintRgb = (codigo: string) => `rgb(var(${TINT[tipoDe(codigo)]}))`
-const corDesvio = (realizado: number | null, desvio: number) =>
-  realizado == null ? "rgb(var(--muted) / 0.5)" : desvio < 0 ? "rgb(var(--danger))" : "rgb(var(--pos))"
+const corDesvio = (realizado: number | null, desvio: number, codigo: string) => {
+  if (realizado == null) return "rgb(var(--muted) / 0.5)"
+  const j = julgamentoDesvio(codigo, desvio)
+  return j === "bom" ? "rgb(var(--pos))" : j === "ruim" ? "rgb(var(--danger))" : "rgb(var(--muted))"
+}
+// Seta de acessibilidade: ▲ quando estourou/pior, ▼ quando melhor/economia (não depende só de cor).
+const setaDesvio = (codigo: string, desvio: number) => {
+  const j = julgamentoDesvio(codigo, desvio)
+  if (j === "neutro" || desvio === 0) return ""
+  return desvio > 0 ? "▲ " : "▼ "
+}
 
 interface No {
   codigo: string; codigoPai: string; nome: string; isGrupo: boolean; itemId: number | null
@@ -109,8 +118,8 @@ export function TabelaExecucao({
               <span style={{ color: realizado == null ? (e.isGrupo ? "rgb(var(--muted) / 0.6)" : "rgb(var(--amber))") : undefined }}>{realizado == null ? (e.isGrupo ? "—" : "pendente") : brl(realizado)}</span>
             )}
           </div>
-          <div className="orc-tot num text-[13px] exec-hide-sm" style={{ color: corDesvio(realizado, c?.desvio ?? 0) }}>
-            {realizado == null ? "—" : brl(c?.desvio ?? 0)}
+          <div className="orc-tot num text-[13px] exec-hide-sm" style={{ color: corDesvio(realizado, c?.desvio ?? 0, e.codigo) }}>
+            {realizado == null ? "—" : `${setaDesvio(e.codigo, c?.desvio ?? 0)}${brl(c?.desvio ?? 0)}`}
           </div>
         </div>
         {expansivel && aberto(e.codigo) && <div>{filhos.map((f) => renderGrupoMes(f, nivel + 1))}</div>}
@@ -143,7 +152,7 @@ export function TabelaExecucao({
                   </button>
                   <div className="orc-tot num font-display text-[15px] font-semibold" style={{ color: accRgb(b.codigo) }}>{brl(c?.orcado ?? 0)}</div>
                   <div className="orc-tot num text-[13px] px-2 font-semibold">{c?.realizado == null ? "—" : brl(c.realizado)}</div>
-                  <div className="orc-tot num text-[13px] exec-hide-sm" style={{ color: corDesvio(c?.realizado ?? null, c?.desvio ?? 0) }}>{c?.realizado == null ? "—" : brl(c?.desvio ?? 0)}</div>
+                  <div className="orc-tot num text-[13px] exec-hide-sm" style={{ color: corDesvio(c?.realizado ?? null, c?.desvio ?? 0, b.codigo) }}>{c?.realizado == null ? "—" : `${setaDesvio(b.codigo, c?.desvio ?? 0)}${brl(c?.desvio ?? 0)}`}</div>
                 </div>
                 {aberto(b.codigo) && <div>{filhos.map((f) => renderGrupoMes(f, 0))}</div>}
               </div>
@@ -221,7 +230,7 @@ export function TabelaExecucao({
                               : brl(c?.orcado ?? 0)}
                           </td>
                         )}
-                        <td className={`num px-2 py-1.5 text-right whitespace-nowrap ${orcadoVisivel(m) ? "" : "border-l border-border"}`} style={editavel && !e.isGrupo && e.itemId != null ? undefined : { color: corDesvio(realizado, c?.desvio ?? 0) }}>
+                        <td className={`num px-2 py-1.5 text-right whitespace-nowrap ${orcadoVisivel(m) ? "" : "border-l border-border"}`} style={editavel && !e.isGrupo && e.itemId != null ? undefined : { color: corDesvio(realizado, c?.desvio ?? 0, e.codigo) }}>
                           {editavel && !e.isGrupo && e.itemId != null
                             ? <CampoRealizado ano={ano} mes={m} itemId={e.itemId} valorInicial={realizado} />
                             : realizado == null ? "—" : brl(realizado)}
