@@ -22,10 +22,17 @@ export function AppShell({
           ${aberto ? "translate-x-0" : "-translate-x-full"}`}
       >
         <nav className="space-y-1 text-sm" aria-label="Navegação principal">
-          <a className="block rounded px-2 py-1 hover:bg-muted/10" href="/orcamento">Orçamentação</a>
-          <a className="block rounded px-2 py-1 hover:bg-muted/10" href="/execucao">Execução</a>
-          <a className="block rounded px-2 py-1 hover:bg-muted/10" href="/dashboard">Dashboard</a>
-          <a className="block rounded px-2 py-1 hover:bg-muted/10" href="/parametros">Parâmetros</a>
+          {(usuario?.perfil === "admin"
+            ? [
+                { href: "/orcamento", label: "Orçamentação" },
+                { href: "/execucao", label: "Execução" },
+                { href: "/parametros", label: "Parâmetros" },
+                { href: "/dashboard", label: "Dashboard" },
+              ]
+            : [{ href: "/dashboard", label: "Dashboard" }]
+          ).map((l) => (
+            <a key={l.href} className="block rounded px-2 py-1 hover:bg-muted/10" href={l.href}>{l.label}</a>
+          ))}
         </nav>
       </aside>
       {aberto && (
