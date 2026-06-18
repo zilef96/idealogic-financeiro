@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { calcDesvio, margemContribuicao, custoHora, tributosSobreFaturamento, projecaoCaixa, valorVigente, superavitMensal, calcularIndicadoresMes, contarPendencias, naturezaPorCodigo, julgamentoDesvio, type TotaisMes } from "@/lib/services/execucao-service"
+import { calcDesvio, margemContribuicao, custoHora, tributosSobreFaturamento, projecaoCaixa, valorVigente, superavitMensal, calcularIndicadoresMes, contarPendencias, naturezaPorCodigo, julgamentoDesvio, pendenciasPorGrupo, type TotaisMes } from "@/lib/services/execucao-service"
 
 describe("calcDesvio", () => {
   it("desvio e percentual", () => {
@@ -141,5 +141,19 @@ describe("julgamentoDesvio", () => {
   it("distribuição e desvio zero são neutros", () => {
     expect(julgamentoDesvio("40000", 50)).toBe("neutro")
     expect(julgamentoDesvio("30000", 0)).toBe("neutro")
+  })
+})
+
+describe("pendenciasPorGrupo", () => {
+  const linhas = [
+    { codigo: "100", codigoPai: "",    isGrupo: true,  mes: 6, orcado: 0,   realizado: null },
+    { codigo: "110", codigoPai: "100", isGrupo: true,  mes: 6, orcado: 0,   realizado: null },
+    { codigo: "111", codigoPai: "110", isGrupo: false, mes: 6, orcado: 100, realizado: null }, // pendente
+    { codigo: "112", codigoPai: "110", isGrupo: false, mes: 6, orcado: 50,  realizado: 10 },   // preenchido
+    { codigo: "113", codigoPai: "110", isGrupo: false, mes: 6, orcado: 0,   realizado: null }, // fora de vigência
+    { codigo: "111", codigoPai: "110", isGrupo: false, mes: 7, orcado: 100, realizado: null }, // outro mês
+  ]
+  it("conta pendências por grupo com rollup até a raiz", () => {
+    expect(pendenciasPorGrupo(linhas, 6)).toEqual({ "110": 1, "100": 1 })
   })
 })

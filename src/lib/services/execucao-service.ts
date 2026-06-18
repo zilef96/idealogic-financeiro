@@ -126,6 +126,28 @@ export function formatarIndicador(i: Indicador): string {
   }
 }
 
+// Pendências (itens-folha sem realizado na vigência) agregadas por grupo, com rollup
+// pela hierarquia de codigoPai (cada pendência soma no grupo imediato e nos ancestrais).
+export function pendenciasPorGrupo(
+  linhas: { codigo: string; codigoPai: string; isGrupo: boolean; mes: number; orcado: number; realizado: number | null }[],
+  mes: number,
+): Record<string, number> {
+  const paiDe: Record<string, string> = {}
+  for (const l of linhas) if (l.isGrupo) paiDe[l.codigo] = l.codigoPai
+
+  const total: Record<string, number> = {}
+  for (const l of linhas) {
+    if (l.isGrupo || l.mes !== mes) continue
+    if (!(l.orcado > 0 && l.realizado == null)) continue
+    let atual: string | undefined = l.codigoPai
+    while (atual && atual !== "") {
+      total[atual] = (total[atual] ?? 0) + 1
+      atual = paiDe[atual]
+    }
+  }
+  return total
+}
+
 export type NaturezaConta = "R" | "C" | "D" | "E"
 
 // Natureza da conta pelo 1º dígito do código (1=Receita, 2=Custo, 3=Despesa, 4=Distribuição).
