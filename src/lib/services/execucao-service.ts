@@ -125,3 +125,20 @@ export function formatarIndicador(i: Indicador): string {
     default: return i.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
   }
 }
+
+export type NaturezaConta = "R" | "C" | "D" | "E"
+
+// Natureza da conta pelo 1º dígito do código (1=Receita, 2=Custo, 3=Despesa, 4=Distribuição).
+export function naturezaPorCodigo(codigo: string): NaturezaConta {
+  return (({ "1": "R", "2": "C", "3": "D", "4": "E" } as const)[codigo[0]] ?? "D")
+}
+
+// Julgamento do desvio (realizado − orçado) pela natureza: para receita, acima do
+// orçado é bom; para custo/despesa, acima é ruim; distribuição e desvio zero = neutro.
+export function julgamentoDesvio(codigo: string, desvio: number): "bom" | "ruim" | "neutro" {
+  const nat = naturezaPorCodigo(codigo)
+  if (nat === "E" || desvio === 0) return "neutro"
+  const acima = desvio > 0
+  const acimaEhBom = nat === "R"
+  return acima === acimaEhBom ? "bom" : "ruim"
+}

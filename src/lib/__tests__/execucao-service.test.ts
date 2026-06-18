@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { calcDesvio, margemContribuicao, custoHora, tributosSobreFaturamento, projecaoCaixa, valorVigente, superavitMensal, calcularIndicadoresMes, contarPendencias, type TotaisMes } from "@/lib/services/execucao-service"
+import { calcDesvio, margemContribuicao, custoHora, tributosSobreFaturamento, projecaoCaixa, valorVigente, superavitMensal, calcularIndicadoresMes, contarPendencias, naturezaPorCodigo, julgamentoDesvio, type TotaisMes } from "@/lib/services/execucao-service"
 
 describe("calcDesvio", () => {
   it("desvio e percentual", () => {
@@ -117,5 +117,29 @@ describe("calcularIndicadoresMes", () => {
     expect(val(r, "Superávit/Déficit do mês")).toBeNull()
     expect(r.find((i) => i.rotulo === "Superávit/Déficit do mês")?.pendente).toBe(true)
     expect(val(r, "Horas faturáveis")).toBe(3200)
+  })
+})
+
+describe("naturezaPorCodigo", () => {
+  it("deriva a natureza do primeiro dígito", () => {
+    expect(naturezaPorCodigo("10000")).toBe("R")
+    expect(naturezaPorCodigo("20000")).toBe("C")
+    expect(naturezaPorCodigo("30000")).toBe("D")
+    expect(naturezaPorCodigo("40000")).toBe("E")
+  })
+})
+
+describe("julgamentoDesvio", () => {
+  it("receita acima do orçado é bom; abaixo é ruim", () => {
+    expect(julgamentoDesvio("10000", 50)).toBe("bom")
+    expect(julgamentoDesvio("10000", -50)).toBe("ruim")
+  })
+  it("custo/despesa acima do orçado é ruim; abaixo (economia) é bom", () => {
+    expect(julgamentoDesvio("20000", 50)).toBe("ruim")
+    expect(julgamentoDesvio("30000", -50)).toBe("bom")
+  })
+  it("distribuição e desvio zero são neutros", () => {
+    expect(julgamentoDesvio("40000", 50)).toBe("neutro")
+    expect(julgamentoDesvio("30000", 0)).toBe("neutro")
   })
 })
