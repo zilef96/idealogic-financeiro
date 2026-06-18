@@ -1,6 +1,7 @@
 "use client"
 import { Fragment, useState, type ReactNode } from "react"
 import type { LinhaExecucao } from "@/lib/repositories/execucao-repository"
+import { pendenciasPorGrupo, julgamentoDesvio } from "@/lib/services/execucao-service"
 import { CampoRealizado } from "./campo-realizado"
 import { CampoOrcado } from "./campo-orcado"
 
@@ -12,8 +13,17 @@ const TINT: Record<string, string> = { R: "--pos-soft", C: "--rose-soft", D: "--
 const tipoDe = (codigo: string) => ({ "1": "R", "2": "C", "3": "D", "4": "E" }[codigo[0]] ?? "D")
 const accRgb = (codigo: string) => `rgb(var(${ACC[tipoDe(codigo)]}))`
 const tintRgb = (codigo: string) => `rgb(var(${TINT[tipoDe(codigo)]}))`
-const corDesvio = (realizado: number | null, desvio: number) =>
-  realizado == null ? "rgb(var(--muted) / 0.5)" : desvio < 0 ? "rgb(var(--danger))" : "rgb(var(--pos))"
+const corDesvio = (realizado: number | null, desvio: number, codigo: string) => {
+  if (realizado == null) return "rgb(var(--muted) / 0.5)"
+  const j = julgamentoDesvio(codigo, desvio)
+  return j === "bom" ? "rgb(var(--pos))" : j === "ruim" ? "rgb(var(--danger))" : "rgb(var(--muted))"
+}
+// Seta de acessibilidade: ▲ quando estourou/pior, ▼ quando melhor/economia (não depende só de cor).
+const setaDesvio = (codigo: string, desvio: number) => {
+  const j = julgamentoDesvio(codigo, desvio)
+  if (j === "neutro" || desvio === 0) return ""
+  return desvio > 0 ? "▲ " : "▼ "
+}
 
 interface No {
   codigo: string; codigoPai: string; nome: string; isGrupo: boolean; itemId: number | null
@@ -30,9 +40,8 @@ function Chevron({ aberto }: { aberto: boolean }) {
 }
 
 export function TabelaExecucao({
-  ano, linhas, meses, editavel, mesesOcultos = [],
-}: { ano: number; linhas: LinhaExecucao[]; meses: number[]; editavel: boolean; mesesOcultos?: number[] }) {
-  const mesesVisiveis = meses.filter((m) => !mesesOcultos.includes(m))
+  ano, linhas, meses, editavel, mesesSemOrcado = [],
+}: { ano: number; linhas: LinhaExecucao[]; meses: number[]; editavel: boolean; mesesSemOrcado?: number[] }) {
   // monta o índice por código com os dados de cada mês
   const info = new Map<string, No>()
   for (const l of linhas) {
@@ -61,8 +70,21 @@ export function TabelaExecucao({
   )
 
   const [mostrarOrcado, setMostrarOrcado] = useState(true)
+  // Orçado visível por mês: respeita o toggle global e oculta nos meses fechados.
+  const orcadoVisivel = (m: number) => mostrarOrcado && !mesesSemOrcado.includes(m)
 
   const umMes = meses.length === 1
+  const pendencias = umMes ? pendenciasPorGrupo(linhas, meses[0]) : {}
+
+  function BadgePend({ cod }: { cod: string }) {
+    const n = pendencias[cod] ?? 0
+    if (n === 0) return null
+    return (
+      <span aria-label={`${n} ${n === 1 ? "item" : "itens"} sem realizado`} title={`${n} sem realizado`}
+        className="num inline-grid h-4 min-w-4 place-items-center rounded-full px-1 text-[10px] font-semibold"
+        style={{ color: "rgb(var(--amber))", background: "rgb(var(--amber-soft))" }}>{n}</span>
+    )
+  }
 
   // ---------- MODO MÊS ÚNICO: cartões por bloco + accordion (igual Orçamentação) ----------
   function renderGrupoMes(e: No, nivel: number): ReactNode {
@@ -82,6 +104,7 @@ export function TabelaExecucao({
               : <span className="grid h-3.5 w-3.5 shrink-0 place-items-center"><span className="h-1 w-1 rounded-full" style={{ background: "rgb(var(--muted) / 0.55)" }} /></span>}
             <span className="num text-[11px]" style={{ color: "rgb(var(--muted) / 0.8)" }}>{e.codigo}</span>
             <span className={`truncate ${e.isGrupo ? "font-semibold" : ""}`}>{e.nome}</span>
+            {e.isGrupo && <BadgePend cod={e.codigo} />}
           </button>
           <div className={`orc-tot num text-[13px] ${e.isGrupo ? "font-semibold" : ""}`} style={e.isGrupo ? { color: accRgb(e.codigo) } : undefined}>
             {editavel && !e.isGrupo && e.itemId != null
@@ -92,11 +115,11 @@ export function TabelaExecucao({
             {editavel && !e.isGrupo && e.itemId != null ? (
               <CampoRealizado ano={ano} mes={mes} itemId={e.itemId} valorInicial={realizado} />
             ) : (
-              <span style={{ color: realizado == null ? "rgb(var(--muted) / 0.6)" : undefined }}>{realizado == null ? "pendente" : brl(realizado)}</span>
+              <span style={{ color: realizado == null ? (e.isGrupo ? "rgb(var(--muted) / 0.6)" : "rgb(var(--amber))") : undefined }}>{realizado == null ? (e.isGrupo ? "—" : "pendente") : brl(realizado)}</span>
             )}
           </div>
-          <div className="orc-tot num text-[13px] exec-hide-sm" style={{ color: corDesvio(realizado, c?.desvio ?? 0) }}>
-            {realizado == null ? "—" : brl(c?.desvio ?? 0)}
+          <div className="orc-tot num text-[13px] exec-hide-sm" style={{ color: corDesvio(realizado, c?.desvio ?? 0, e.codigo) }}>
+            {realizado == null ? "—" : `${setaDesvio(e.codigo, c?.desvio ?? 0)}${brl(c?.desvio ?? 0)}`}
           </div>
         </div>
         {expansivel && aberto(e.codigo) && <div>{filhos.map((f) => renderGrupoMes(f, nivel + 1))}</div>}
@@ -125,10 +148,11 @@ export function TabelaExecucao({
                     <Chevron aberto={aberto(b.codigo)} />
                     <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg font-display text-sm font-bold bg-card" style={{ color: accRgb(b.codigo) }}>{b.nome[0]}</span>
                     <span className="font-display truncate text-[14px] font-semibold">{b.nome}</span>
+                    <BadgePend cod={b.codigo} />
                   </button>
                   <div className="orc-tot num font-display text-[15px] font-semibold" style={{ color: accRgb(b.codigo) }}>{brl(c?.orcado ?? 0)}</div>
                   <div className="orc-tot num text-[13px] px-2 font-semibold">{c?.realizado == null ? "—" : brl(c.realizado)}</div>
-                  <div className="orc-tot num text-[13px] exec-hide-sm" style={{ color: corDesvio(c?.realizado ?? null, c?.desvio ?? 0) }}>{c?.realizado == null ? "—" : brl(c?.desvio ?? 0)}</div>
+                  <div className="orc-tot num text-[13px] exec-hide-sm" style={{ color: corDesvio(c?.realizado ?? null, c?.desvio ?? 0, b.codigo) }}>{c?.realizado == null ? "—" : `${setaDesvio(b.codigo, c?.desvio ?? 0)}${brl(c?.desvio ?? 0)}`}</div>
                 </div>
                 {aberto(b.codigo) && <div>{filhos.map((f) => renderGrupoMes(f, 0))}</div>}
               </div>
@@ -164,15 +188,15 @@ export function TabelaExecucao({
           <thead>
             <tr style={{ color: "rgb(var(--muted))" }}>
               <th rowSpan={2} className="sticky left-0 z-10 bg-card px-3 py-2 text-left align-bottom text-[11px] font-semibold uppercase tracking-wider">Conta</th>
-              {mesesVisiveis.map((m) => (
-                <th key={m} colSpan={mostrarOrcado ? 2 : 1} className="border-l border-border px-2 py-1.5 text-center text-[11px] font-semibold">{MESES[m - 1]}</th>
+              {meses.map((m) => (
+                <th key={m} colSpan={orcadoVisivel(m) ? 2 : 1} className="border-l border-border px-2 py-1.5 text-center text-[11px] font-semibold">{MESES[m - 1]}</th>
               ))}
             </tr>
             <tr className="text-[10px]" style={{ color: "rgb(var(--muted))" }}>
-              {mesesVisiveis.map((m) => (
+              {meses.map((m) => (
                 <Fragment key={m}>
-                  {mostrarOrcado && <th className="border-l border-border px-2 pb-1.5 text-right font-medium">Orçado</th>}
-                  <th className={`px-2 pb-1.5 text-right font-medium ${mostrarOrcado ? "" : "border-l border-border"}`}>Realiz.</th>
+                  {orcadoVisivel(m) && <th className="border-l border-border px-2 pb-1.5 text-right font-medium">Orçado</th>}
+                  <th className={`px-2 pb-1.5 text-right font-medium ${orcadoVisivel(m) ? "" : "border-l border-border"}`}>Realiz.</th>
                 </Fragment>
               ))}
             </tr>
@@ -194,19 +218,19 @@ export function TabelaExecucao({
                       <span className={`truncate ${e.isGrupo ? "font-semibold" : ""}`}>{e.nome}</span>
                     </button>
                   </td>
-                  {mesesVisiveis.map((m) => {
+                  {meses.map((m) => {
                     const c = e.porMes.get(m)
                     const realizado = c?.realizado ?? null
                     return (
                       <Fragment key={m}>
-                        {mostrarOrcado && (
+                        {orcadoVisivel(m) && (
                           <td className="num border-l border-border px-2 py-1.5 text-right whitespace-nowrap" style={{ color: "rgb(var(--muted))" }}>
                             {editavel && !e.isGrupo && e.itemId != null
                               ? <CampoOrcado ano={ano} mes={m} itemId={e.itemId} valorInicial={c?.orcado ?? null} />
                               : brl(c?.orcado ?? 0)}
                           </td>
                         )}
-                        <td className={`num px-2 py-1.5 text-right whitespace-nowrap ${mostrarOrcado ? "" : "border-l border-border"}`} style={editavel && !e.isGrupo && e.itemId != null ? undefined : { color: corDesvio(realizado, c?.desvio ?? 0) }}>
+                        <td className={`num px-2 py-1.5 text-right whitespace-nowrap ${orcadoVisivel(m) ? "" : "border-l border-border"}`} style={editavel && !e.isGrupo && e.itemId != null ? undefined : { color: corDesvio(realizado, c?.desvio ?? 0, e.codigo) }}>
                           {editavel && !e.isGrupo && e.itemId != null
                             ? <CampoRealizado ano={ano} mes={m} itemId={e.itemId} valorInicial={realizado} />
                             : realizado == null ? "—" : brl(realizado)}

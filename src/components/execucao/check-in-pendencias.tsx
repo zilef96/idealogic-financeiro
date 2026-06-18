@@ -4,24 +4,13 @@ import { contarPendencias } from "@/lib/services/execucao-service"
 
 export function CheckInPendencias({ linhas, mes }: { linhas: LinhaExecucao[]; mes: number }) {
   const n = contarPendencias(linhas, mes)
-  const pendentes = linhas.filter((l) => !l.isGrupo && l.mes === mes && l.orcado > 0 && l.realizado == null)
-  if (n === 0) {
-    return (
-      <div className="rounded-xl border border-border bg-card px-4 py-2 text-[13px]" style={{ color: "rgb(var(--pos))" }}>
-        ✓ Todos os itens com orçado têm realizado neste mês.
-      </div>
-    )
-  }
+  const ok = n === 0
   return (
-    <details className="rounded-xl border border-border bg-card px-4 py-2 text-[13px]">
-      <summary className="cursor-pointer font-medium" style={{ color: "rgb(var(--amber))" }}>
-        Faltam {n} {n === 1 ? "item" : "itens"} sem realizado neste mês
-      </summary>
-      <ul className="mt-2 space-y-1" style={{ color: "rgb(var(--muted))" }}>
-        {pendentes.map((l) => (
-          <li key={l.codigo}><span className="num text-[11px]">{l.codigo}</span> — {l.nome}</li>
-        ))}
-      </ul>
-    </details>
+    <div className="rounded-xl border border-border bg-card px-4 py-2 text-[13px]"
+      style={{ color: ok ? "rgb(var(--pos))" : "rgb(var(--amber))" }}>
+      {ok
+        ? "✓ Todos os itens com orçado têm realizado neste mês."
+        : `Faltam ${n} ${n === 1 ? "item" : "itens"} sem realizado neste mês — veja os badges nas categorias.`}
+    </div>
   )
 }

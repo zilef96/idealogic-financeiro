@@ -43,7 +43,8 @@ export function AbasExecucao({
   const meses = Array.from({ length: 12 }, (_, i) => i + 1)
   const fechado = statusPorMes[mesSel] === "concluido"
   const podeEditar = editavel && !fechado
-  const mesesOcultos = ocultarFechados ? meses.filter((m) => statusPorMes[m] === "concluido") : []
+  const mesesFechados = meses.filter((m) => statusPorMes[m] === "concluido")
+  const mesesSemOrcado = ocultarFechados ? mesesFechados : []
 
   return (
     <div className="space-y-4">
@@ -78,11 +79,11 @@ export function AbasExecucao({
             <BotaoCadeado editavel={editavel} onToggle={() => setEditavel((v) => !v)} />
             <label className="flex items-center gap-2 text-[12px]" style={{ color: "rgb(var(--muted))" }}>
               <input type="checkbox" checked={ocultarFechados} onChange={(e) => setOcultarFechados(e.target.checked)} />
-              Ocultar meses fechados
+              Ocultar orçado de meses fechados
             </label>
           </div>
-          <TabelaExecucao ano={ano} linhas={linhas} meses={meses} editavel={editavel} mesesOcultos={mesesOcultos} />
-          <TabelaIndicadores orcado={indicadoresOrcadoPorMes} realizado={indicadoresRealizadoPorMes} />
+          <TabelaExecucao ano={ano} linhas={linhas} meses={meses} editavel={editavel} mesesSemOrcado={mesesSemOrcado} />
+          <TabelaIndicadores orcado={indicadoresOrcadoPorMes} realizado={indicadoresRealizadoPorMes} mesesSemOrcado={mesesSemOrcado} />
         </div>
       )}
     </div>

@@ -125,3 +125,42 @@ export function formatarIndicador(i: Indicador): string {
     default: return i.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
   }
 }
+
+// Pendências (itens-folha sem realizado na vigência) agregadas por grupo, com rollup
+// pela hierarquia de codigoPai (cada pendência soma no grupo imediato e nos ancestrais).
+export function pendenciasPorGrupo(
+  linhas: { codigo: string; codigoPai: string; isGrupo: boolean; mes: number; orcado: number; realizado: number | null }[],
+  mes: number,
+): Record<string, number> {
+  const paiDe: Record<string, string> = {}
+  for (const l of linhas) if (l.isGrupo) paiDe[l.codigo] = l.codigoPai
+
+  const total: Record<string, number> = {}
+  for (const l of linhas) {
+    if (l.isGrupo || l.mes !== mes) continue
+    if (!(l.orcado > 0 && l.realizado == null)) continue
+    let atual: string | undefined = l.codigoPai
+    while (atual && atual !== "") {
+      total[atual] = (total[atual] ?? 0) + 1
+      atual = paiDe[atual]
+    }
+  }
+  return total
+}
+
+export type NaturezaConta = "R" | "C" | "D" | "E"
+
+// Natureza da conta pelo 1º dígito do código (1=Receita, 2=Custo, 3=Despesa, 4=Distribuição).
+export function naturezaPorCodigo(codigo: string): NaturezaConta {
+  return (({ "1": "R", "2": "C", "3": "D", "4": "E" } as const)[codigo[0]] ?? "D")
+}
+
+// Julgamento do desvio (realizado − orçado) pela natureza: para receita, acima do
+// orçado é bom; para custo/despesa, acima é ruim; distribuição e desvio zero = neutro.
+export function julgamentoDesvio(codigo: string, desvio: number): "bom" | "ruim" | "neutro" {
+  const nat = naturezaPorCodigo(codigo)
+  if (nat === "E" || desvio === 0) return "neutro"
+  const acima = desvio > 0
+  const acimaEhBom = nat === "R"
+  return acima === acimaEhBom ? "bom" : "ruim"
+}

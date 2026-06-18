@@ -5,7 +5,8 @@ import { formatarIndicador, type Indicador } from "@/lib/services/execucao-servi
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
 
 // orcado[mes][i] e realizado[mes][i] — mesma ordem de indicadores em todos os meses.
-export function TabelaIndicadores({ orcado, realizado }: { orcado: Indicador[][]; realizado: Indicador[][] }) {
+export function TabelaIndicadores({ orcado, realizado, mesesSemOrcado = [] }: { orcado: Indicador[][]; realizado: Indicador[][]; mesesSemOrcado?: number[] }) {
+  const mostrarOrc = (mi: number) => !mesesSemOrcado.includes(mi + 1)
   const [aberto, setAberto] = useState(false)
   const modelo = realizado[0] ?? []
   return (
@@ -25,15 +26,15 @@ export function TabelaIndicadores({ orcado, realizado }: { orcado: Indicador[][]
             <thead>
               <tr style={{ color: "rgb(var(--muted))" }}>
                 <th rowSpan={2} className="sticky left-0 z-10 bg-card px-3 py-2 text-left align-bottom text-[11px] font-semibold uppercase tracking-wider">Indicador</th>
-                {MESES.map((m) => (
-                  <th key={m} colSpan={2} className="border-l border-border px-2 py-1.5 text-center text-[11px] font-semibold">{m}</th>
+                {MESES.map((m, mi) => (
+                  <th key={m} colSpan={mostrarOrc(mi) ? 2 : 1} className="border-l border-border px-2 py-1.5 text-center text-[11px] font-semibold">{m}</th>
                 ))}
               </tr>
               <tr className="text-[10px]" style={{ color: "rgb(var(--muted))" }}>
-                {MESES.map((m) => (
+                {MESES.map((m, mi) => (
                   <Fragment key={m}>
-                    <th className="border-l border-border px-2 pb-1.5 text-right font-medium">Orçado</th>
-                    <th className="px-2 pb-1.5 text-right font-medium">Realiz.</th>
+                    {mostrarOrc(mi) && <th className="border-l border-border px-2 pb-1.5 text-right font-medium">Orçado</th>}
+                    <th className={`px-2 pb-1.5 text-right font-medium ${mostrarOrc(mi) ? "" : "border-l border-border"}`}>Realiz.</th>
                   </Fragment>
                 ))}
               </tr>
@@ -48,10 +49,12 @@ export function TabelaIndicadores({ orcado, realizado }: { orcado: Indicador[][]
                     const rNeg = !!r && r.formato === "moeda" && !r.pendente && r.valor != null && r.valor < 0
                     return (
                       <Fragment key={mi}>
-                        <td className="num border-l border-border px-2 py-1.5 text-right whitespace-nowrap" style={{ color: "rgb(var(--muted))" }}>
-                          {o ? formatarIndicador(o) : "—"}
-                        </td>
-                        <td className="num px-2 py-1.5 text-right whitespace-nowrap"
+                        {mostrarOrc(mi) && (
+                          <td className="num border-l border-border px-2 py-1.5 text-right whitespace-nowrap" style={{ color: "rgb(var(--muted))" }}>
+                            {o ? formatarIndicador(o) : "—"}
+                          </td>
+                        )}
+                        <td className={`num px-2 py-1.5 text-right whitespace-nowrap ${mostrarOrc(mi) ? "" : "border-l border-border"}`}
                           style={rNeg ? { color: "rgb(var(--danger))" } : r?.pendente ? { color: "rgb(var(--muted) / 0.6)" } : undefined}>
                           {r ? formatarIndicador(r) : "—"}
                         </td>

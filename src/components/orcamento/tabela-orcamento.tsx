@@ -2,7 +2,6 @@
 import { useState, type ReactNode } from "react"
 import type { LinhaOrcamento, GrupoOrcamento, Classificacao } from "@/lib/types"
 import { rollupGrupo, ehEssencial } from "@/lib/services/orcamento-service"
-import { NovoItem } from "@/components/orcamento/novo-item"
 
 const brl = (n: number) => (n === 0 ? "—" : n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
 const brlK = (n: number) => "R$ " + Math.round(n).toLocaleString("pt-BR")
@@ -44,7 +43,9 @@ function Cel({ v, cor }: { v: number; cor: string }) {
   return <div className="orc-tot num text-[13px]" style={{ color: v === 0 ? "rgb(var(--muted) / 0.5)" : cor }}>{brl(v)}</div>
 }
 
-export function TabelaOrcamento({ linhas, grupos, editavel }: { linhas: LinhaOrcamento[]; grupos: GrupoOrcamento[]; editavel: boolean }) {
+// `editavel` permanece na assinatura (a page passa conforme publicação), mas hoje a
+// tabela não tem mais ações de escrita (criação foi para a Execução).
+export function TabelaOrcamento({ linhas, grupos }: { linhas: LinhaOrcamento[]; grupos: GrupoOrcamento[]; editavel?: boolean }) {
   const raizes = grupos.filter((g) => g.codigoPai === null)
   const [abertos, setAbertos] = useState<Set<string>>(() => new Set<string>())
   const [tudo, setTudo] = useState(false)
@@ -144,7 +145,6 @@ export function TabelaOrcamento({ linhas, grupos, editavel }: { linhas: LinhaOrc
       <div className="mb-3 flex items-end justify-between">
         <h2 className="font-display text-[15px] font-semibold">Plano de contas</h2>
         <div className="flex items-center gap-2">
-          {editavel && <NovoItem grupos={grupos} />}
           <button type="button" onClick={toggleTudo}
             className="rounded-full border border-border px-4 py-1.5 text-[13px] font-medium hover:bg-faint">
             {tudo ? "Recolher tudo" : "Expandir tudo"}
