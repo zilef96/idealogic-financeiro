@@ -36,12 +36,36 @@ export async function concluir(ano: number, mes: number, responsavel: string) {
   `
 }
 
-export async function reabrir(ano: number, mes: number) {
+export async function reabrir(ano: number, mes: number, responsavel: string) {
   const comp = competencia(ano, mes)
   await prisma.$executeRaw`
-    UPDATE fechamento_mensal SET status='aberto', updated_at=now()
+    UPDATE fechamento_mensal
+    SET status='aberto', reaberto_por=${responsavel}, reaberto_em=now(), updated_at=now()
     WHERE competencia=${comp}::date AND exercicio_id=(SELECT id FROM exercicio WHERE ano=${ano})
   `
+}
+
+export async function getFechamentoDetalhe(ano: number, mes: number): Promise<{
+  status: StatusFechamento
+  concluidoPor: string | null; concluidoEm: string | null
+  reabertoPor: string | null; reabertoEm: string | null
+}> {
+  const rows = await prisma.$queryRaw<{
+    status: string; concluido_por: string | null; concluido_em: Date | null
+    reaberto_por: string | null; reaberto_em: Date | null
+  }[]>`
+    SELECT fm.status, fm.concluido_por, fm.concluido_em, fm.reaberto_por, fm.reaberto_em
+    FROM fechamento_mensal fm JOIN exercicio e ON e.id = fm.exercicio_id
+    WHERE e.ano = ${ano} AND EXTRACT(MONTH FROM fm.competencia) = ${mes} LIMIT 1
+  `
+  const r = rows[0]
+  return {
+    status: (r?.status as StatusFechamento) ?? "aberto",
+    concluidoPor: r?.concluido_por ?? null,
+    concluidoEm: r?.concluido_em ? r.concluido_em.toISOString() : null,
+    reabertoPor: r?.reaberto_por ?? null,
+    reabertoEm: r?.reaberto_em ? r.reaberto_em.toISOString() : null,
+  }
 }
 
 export interface EventoTesouraria { id: number; mes: number; tipo: "aplicacao" | "resgate"; valor: number; descricao: string | null }
