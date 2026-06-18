@@ -22,14 +22,17 @@ function BotaoCadeado({ editavel, onToggle }: { editavel: boolean; onToggle: () 
   )
 }
 
+type Auditoria = { concluidoPor: string | null; concluidoEm: string | null; reabertoPor: string | null; reabertoEm: string | null }
+
 export function AbasExecucao({
-  ano, mesAtual, linhas, statusPorMes, grupos, indicadoresOrcadoPorMes, indicadoresRealizadoPorMes,
+  ano, mesAtual, linhas, statusPorMes, grupos, auditoriaPorMes, indicadoresOrcadoPorMes, indicadoresRealizadoPorMes,
 }: {
   ano: number
   mesAtual: number
   linhas: LinhaExecucao[]
   statusPorMes: Record<number, StatusFechamento>
   grupos: GrupoOrcamento[]
+  auditoriaPorMes: Record<number, Auditoria>
   indicadoresOrcadoPorMes: Indicador[][]
   indicadoresRealizadoPorMes: Indicador[][]
 }) {
@@ -63,7 +66,7 @@ export function AbasExecucao({
             </select>
             <BotaoCadeado editavel={editavel} onToggle={() => setEditavel((v) => !v)} />
             {podeEditar && <NovoItem grupos={grupos} endpoint="/api/execucao/item" />}
-            <div className="ml-auto"><AcaoFechamento ano={ano} mes={mesSel} status={statusPorMes[mesSel]} /></div>
+            <div className="ml-auto"><AcaoFechamento ano={ano} mes={mesSel} status={statusPorMes[mesSel]} auditoria={auditoriaPorMes[mesSel]} /></div>
           </div>
           <CheckInPendencias linhas={linhas} mes={mesSel} />
           <CardsIndicadores indicadores={indicadoresRealizadoPorMes[mesSel - 1] ?? []} />
