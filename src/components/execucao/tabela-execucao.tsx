@@ -1,6 +1,7 @@
 "use client"
 import { Fragment, useState, type ReactNode } from "react"
 import type { LinhaExecucao } from "@/lib/repositories/execucao-repository"
+import { pendenciasPorGrupo } from "@/lib/services/execucao-service"
 import { CampoRealizado } from "./campo-realizado"
 import { CampoOrcado } from "./campo-orcado"
 
@@ -63,6 +64,17 @@ export function TabelaExecucao({
   const [mostrarOrcado, setMostrarOrcado] = useState(true)
 
   const umMes = meses.length === 1
+  const pendencias = umMes ? pendenciasPorGrupo(linhas, meses[0]) : {}
+
+  function BadgePend({ cod }: { cod: string }) {
+    const n = pendencias[cod] ?? 0
+    if (n === 0) return null
+    return (
+      <span aria-label={`${n} ${n === 1 ? "item" : "itens"} sem realizado`} title={`${n} sem realizado`}
+        className="num inline-grid h-4 min-w-4 place-items-center rounded-full px-1 text-[10px] font-semibold"
+        style={{ color: "rgb(var(--amber))", background: "rgb(var(--amber-soft))" }}>{n}</span>
+    )
+  }
 
   // ---------- MODO MÊS ÚNICO: cartões por bloco + accordion (igual Orçamentação) ----------
   function renderGrupoMes(e: No, nivel: number): ReactNode {
@@ -82,6 +94,7 @@ export function TabelaExecucao({
               : <span className="grid h-3.5 w-3.5 shrink-0 place-items-center"><span className="h-1 w-1 rounded-full" style={{ background: "rgb(var(--muted) / 0.55)" }} /></span>}
             <span className="num text-[11px]" style={{ color: "rgb(var(--muted) / 0.8)" }}>{e.codigo}</span>
             <span className={`truncate ${e.isGrupo ? "font-semibold" : ""}`}>{e.nome}</span>
+            {e.isGrupo && <BadgePend cod={e.codigo} />}
           </button>
           <div className={`orc-tot num text-[13px] ${e.isGrupo ? "font-semibold" : ""}`} style={e.isGrupo ? { color: accRgb(e.codigo) } : undefined}>
             {editavel && !e.isGrupo && e.itemId != null
@@ -92,7 +105,7 @@ export function TabelaExecucao({
             {editavel && !e.isGrupo && e.itemId != null ? (
               <CampoRealizado ano={ano} mes={mes} itemId={e.itemId} valorInicial={realizado} />
             ) : (
-              <span style={{ color: realizado == null ? "rgb(var(--muted) / 0.6)" : undefined }}>{realizado == null ? "pendente" : brl(realizado)}</span>
+              <span style={{ color: realizado == null ? (e.isGrupo ? "rgb(var(--muted) / 0.6)" : "rgb(var(--amber))") : undefined }}>{realizado == null ? (e.isGrupo ? "—" : "pendente") : brl(realizado)}</span>
             )}
           </div>
           <div className="orc-tot num text-[13px] exec-hide-sm" style={{ color: corDesvio(realizado, c?.desvio ?? 0) }}>
@@ -125,6 +138,7 @@ export function TabelaExecucao({
                     <Chevron aberto={aberto(b.codigo)} />
                     <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg font-display text-sm font-bold bg-card" style={{ color: accRgb(b.codigo) }}>{b.nome[0]}</span>
                     <span className="font-display truncate text-[14px] font-semibold">{b.nome}</span>
+                    <BadgePend cod={b.codigo} />
                   </button>
                   <div className="orc-tot num font-display text-[15px] font-semibold" style={{ color: accRgb(b.codigo) }}>{brl(c?.orcado ?? 0)}</div>
                   <div className="orc-tot num text-[13px] px-2 font-semibold">{c?.realizado == null ? "—" : brl(c.realizado)}</div>
