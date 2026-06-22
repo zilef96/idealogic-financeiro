@@ -33,6 +33,7 @@ export async function getOrcamento(ano: number): Promise<LinhaOrcamento[]> {
     JOIN conta_grupo cg ON cg.id = ci.grupo_id
     JOIN exercicio e ON e.id = cg.exercicio_id
     WHERE e.ano = ${ano}
+      AND ci.origem = 'orcamento'
     ORDER BY ci.codigo::numeric
   `
   return rows.map((r) => {
@@ -66,7 +67,7 @@ export async function getGrupos(ano: number): Promise<GrupoOrcamento[]> {
   }))
 }
 
-async function inserirItem(input: NovoItemInput): Promise<number> {
+async function inserirItem(input: NovoItemInput, origem: "orcamento" | "execucao" = "orcamento"): Promise<number> {
   const { valorOrcado, valorOrcadoMensal } = normalizarOrcado(input.valor, input.periodicidade)
   const prox = await prisma.$queryRaw<{ codigo: number }[]>`
     SELECT COALESCE(MAX(codigo)::int, (SELECT codigo::int FROM conta_grupo WHERE id = ${input.grupoId})) + 1 AS codigo
@@ -74,10 +75,10 @@ async function inserirItem(input: NovoItemInput): Promise<number> {
   `
   const rows = await prisma.$queryRaw<{ id: bigint }[]>`
     INSERT INTO conta_item (grupo_id, codigo, nome, periodicidade, valor_orcado, valor_orcado_mensal,
-                            classificacao, mes_inicio, mes_fim)
+                            classificacao, mes_inicio, mes_fim, origem)
     VALUES (${input.grupoId}, ${prox[0].codigo}, ${input.nome}, ${input.periodicidade},
             ${valorOrcado}::numeric, ${valorOrcadoMensal}::numeric,
-            ${input.classificacao ?? null}, ${input.mesInicio ?? null}, ${input.mesFim ?? null})
+            ${input.classificacao ?? null}, ${input.mesInicio ?? null}, ${input.mesFim ?? null}, ${origem})
     RETURNING id
   `
   return Number(rows[0].id)
@@ -88,9 +89,10 @@ export async function criarItem(input: NovoItemInput): Promise<number> {
   return inserirItem(input)
 }
 
-// Ajuste de meio de ano: cria item mesmo com o orçamento publicado.
+// Ajuste de meio de ano: cria item mesmo com o orçamento publicado. Nasce origem='execucao'
+// (não entra no orçamento congelado).
 export async function criarItemExecucao(input: NovoItemInput): Promise<number> {
-  return inserirItem(input)
+  return inserirItem(input, "execucao")
 }
 
 export async function atualizarItem(id: number, input: AtualizarItemInput): Promise<void> {
@@ -115,13 +117,16 @@ export async function atualizarItem(id: number, input: AtualizarItemInput): Prom
   `
 }
 
-export async function criarGrupo(input: { ano: number; codigoPai: string | null; tipo: TipoConta; nome: string; codigo: number }): Promise<number> {
+export async function criarGrupo(
+  input: { ano: number; codigoPai: string | null; tipo: TipoConta; nome: string; codigo: number },
+  origem: "orcamento" | "execucao" = "orcamento",
+): Promise<number> {
   await exigirRascunhoPorAno(input.ano)
   const rows = await prisma.$queryRaw<{ id: bigint }[]>`
-    INSERT INTO conta_grupo (exercicio_id, codigo, grupo_pai_id, tipo_conta_id, nome)
+    INSERT INTO conta_grupo (exercicio_id, codigo, grupo_pai_id, tipo_conta_id, nome, origem)
     SELECT e.id, ${input.codigo},
       (SELECT id FROM conta_grupo WHERE codigo = ${input.codigoPai ?? null}::numeric AND exercicio_id = e.id),
-      (SELECT id FROM tipo_conta WHERE sigla = ${input.tipo}), ${input.nome}
+      (SELECT id FROM tipo_conta WHERE sigla = ${input.tipo}), ${input.nome}, ${origem}
     FROM exercicio e WHERE e.ano = ${input.ano}
     RETURNING id
   `
