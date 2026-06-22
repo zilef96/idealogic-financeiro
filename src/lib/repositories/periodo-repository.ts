@@ -52,7 +52,40 @@ export async function getStatusExercicio(ano: number): Promise<StatusExercicio> 
 }
 
 export async function publicarExercicio(ano: number): Promise<void> {
-  await prisma.$executeRaw`UPDATE exercicio SET status = 'publicado', updated_at = now() WHERE ano = ${ano}`
+  await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`UPDATE exercicio SET status = 'publicado', updated_at = now() WHERE ano = ${ano}`
+
+    // Evento único: materializa só na 1ª publicação. Em republicações, pula por inteiro
+    // (nenhuma linha de execução é tocada — FC001 nunca dispara).
+    const marca = await tx.$queryRaw<{ ja: boolean }[]>`
+      SELECT (orcamento_materializado_em IS NOT NULL) AS ja FROM exercicio WHERE ano = ${ano}`
+    if (marca[0]?.ja) return
+
+    // Materializa o orçado nos 12 meses dos itens do plano (origem='orcamento').
+    // A → valor_orcado_mensal em 1..12 (ignora vigência); M → em mes_inicio..mes_fim, 0 fora.
+    await tx.$executeRaw`
+      INSERT INTO lancamento_realizado (conta_item_id, exercicio_id, competencia, valor_orcado)
+      SELECT ci.id,
+             cg.exercicio_id,
+             make_date(ex.ano, g.mes, 1),
+             CASE
+               WHEN ci.periodicidade = 'A' THEN ci.valor_orcado_mensal
+               WHEN g.mes BETWEEN COALESCE(ci.mes_inicio, 1) AND COALESCE(ci.mes_fim, 12)
+                    THEN ci.valor_orcado_mensal
+               ELSE 0
+             END
+      FROM conta_item ci
+      JOIN conta_grupo cg ON cg.id = ci.grupo_id
+      JOIN exercicio   ex ON ex.id = cg.exercicio_id
+      CROSS JOIN generate_series(1, 12) AS g(mes)
+      WHERE ex.ano = ${ano}
+        AND ci.origem = 'orcamento'
+      ON CONFLICT (conta_item_id, competencia) DO NOTHING`
+
+    await tx.$executeRaw`
+      UPDATE exercicio SET orcamento_materializado_em = now()
+       WHERE ano = ${ano} AND orcamento_materializado_em IS NULL`
+  })
 }
 
 export async function despublicarExercicio(ano: number): Promise<void> {
