@@ -2,7 +2,7 @@ import type { Periodicidade, Classificacao, GrupoOrcamento, LinhaOrcamento } fro
 
 export function normalizarOrcado(valor: number, periodicidade: Periodicidade) {
   if (periodicidade === "A") return { valorOrcado: valor, valorOrcadoMensal: valor / 12 }
-  return { valorOrcado: valor * 12, valorOrcadoMensal: valor }
+  return { valorOrcado: valor, valorOrcadoMensal: valor }
 }
 
 export function distribuirPorMes(item: {

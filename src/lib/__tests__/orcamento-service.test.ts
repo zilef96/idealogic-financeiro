@@ -3,10 +3,10 @@ import { normalizarOrcado, distribuirPorMes, somasPorClassificacao, rollupGrupo,
 import type { GrupoOrcamento, LinhaOrcamento } from "@/lib/types"
 
 describe("normalizarOrcado", () => {
-  it("mensal: mensal=valor, anual=valor*12", () => {
-    expect(normalizarOrcado(100, "M")).toEqual({ valorOrcado: 1200, valorOrcadoMensal: 100 })
+  it("mensal: valorOrcado = valor informado (não × 12)", () => {
+    expect(normalizarOrcado(100, "M")).toEqual({ valorOrcado: 100, valorOrcadoMensal: 100 })
   })
-  it("anual: mensal=valor/12, anual=valor", () => {
+  it("anual: valorOrcado = valor informado, mensal = valor/12", () => {
     expect(normalizarOrcado(1200, "A")).toEqual({ valorOrcado: 1200, valorOrcadoMensal: 100 })
   })
 })
