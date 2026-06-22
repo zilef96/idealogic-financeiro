@@ -30,11 +30,11 @@ describe("distribuirPorMes", () => {
 
 describe("somasPorClassificacao", () => {
   const itens = [
-    { valorOrcado: 100, classificacao: "C" as const },
-    { valorOrcado: 50,  classificacao: "P" as const },
-    { valorOrcado: 30,  classificacao: "C" as const },
+    { valorOrcadoMensal: 100, classificacao: "C" as const },
+    { valorOrcadoMensal: 50,  classificacao: "P" as const },
+    { valorOrcadoMensal: 30,  classificacao: "C" as const },
   ]
-  it("soma por classificação", () => {
+  it("soma valorOrcadoMensal por classificação", () => {
     expect(somasPorClassificacao(itens)).toEqual({ C: 130, P: 50, E: 0, S: 0 })
   })
 })

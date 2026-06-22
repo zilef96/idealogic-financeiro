@@ -20,10 +20,10 @@ export function distribuirPorMes(item: {
 }
 
 export function somasPorClassificacao(
-  itens: { valorOrcado: number; classificacao: Classificacao | null }[],
+  itens: { valorOrcadoMensal: number; classificacao: Classificacao | null }[],
 ): Record<"C" | "P" | "E" | "S", number> {
   const soma = { C: 0, P: 0, E: 0, S: 0 }
-  for (const i of itens) if (i.classificacao) soma[i.classificacao] += i.valorOrcado
+  for (const i of itens) if (i.classificacao) soma[i.classificacao] += i.valorOrcadoMensal
   return soma
 }
 
