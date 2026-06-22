@@ -22,6 +22,9 @@ export function mapErroPostgres(e: { code?: string; meta?: { code?: string }; me
   if (typeof e?.message === "string" && e.message.includes("GRUPO_NAO_VAZIO")) {
     return { status: 409, error: "Grupo não está vazio; remova itens e subgrupos antes de excluir." }
   }
+  if (typeof e?.message === "string" && e.message.includes("VIGENCIA_MES_FECHADO")) {
+    return { status: 409, error: "Período inclui mês concluído; ajuste a vigência." }
+  }
   return null
 }
 

@@ -32,3 +32,11 @@ describe("mapErroPostgres — orçamento publicado", () => {
     })
   })
 })
+
+describe("mapErroPostgres — vigência em mês fechado", () => {
+  it("mapeia VIGENCIA_MES_FECHADO para 409", () => {
+    expect(mapErroPostgres({ message: "VIGENCIA_MES_FECHADO" })).toEqual({
+      status: 409, error: "Período inclui mês concluído; ajuste a vigência.",
+    })
+  })
+})
