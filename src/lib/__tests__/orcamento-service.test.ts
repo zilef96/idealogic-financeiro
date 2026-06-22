@@ -3,10 +3,10 @@ import { normalizarOrcado, distribuirPorMes, somasPorClassificacao, rollupGrupo,
 import type { GrupoOrcamento, LinhaOrcamento } from "@/lib/types"
 
 describe("normalizarOrcado", () => {
-  it("mensal: mensal=valor, anual=valor*12", () => {
-    expect(normalizarOrcado(100, "M")).toEqual({ valorOrcado: 1200, valorOrcadoMensal: 100 })
+  it("mensal: valorOrcado = valor informado (não × 12)", () => {
+    expect(normalizarOrcado(100, "M")).toEqual({ valorOrcado: 100, valorOrcadoMensal: 100 })
   })
-  it("anual: mensal=valor/12, anual=valor", () => {
+  it("anual: valorOrcado = valor informado, mensal = valor/12", () => {
     expect(normalizarOrcado(1200, "A")).toEqual({ valorOrcado: 1200, valorOrcadoMensal: 100 })
   })
 })
@@ -30,11 +30,11 @@ describe("distribuirPorMes", () => {
 
 describe("somasPorClassificacao", () => {
   const itens = [
-    { valorOrcado: 100, classificacao: "C" as const },
-    { valorOrcado: 50,  classificacao: "P" as const },
-    { valorOrcado: 30,  classificacao: "C" as const },
+    { valorOrcadoMensal: 100, classificacao: "C" as const },
+    { valorOrcadoMensal: 50,  classificacao: "P" as const },
+    { valorOrcadoMensal: 30,  classificacao: "C" as const },
   ]
-  it("soma por classificação", () => {
+  it("soma valorOrcadoMensal por classificação", () => {
     expect(somasPorClassificacao(itens)).toEqual({ C: 130, P: 50, E: 0, S: 0 })
   })
 })
@@ -54,11 +54,11 @@ describe("rollupGrupo", () => {
     linha("110", 500, 50, "P"),   // condicionado (P)
     linha("100", 200, 20, "C"),   // item direto na raiz, essencial
   ]
-  it("soma recursivamente todos os descendentes", () => {
-    expect(rollupGrupo("100", grupos, linhas)).toEqual({ total: 1700, mensal: 170, ess: 1200, cond: 500, essMensal: 120, condMensal: 50 })
+  it("soma recursivamente todos os descendentes (mensal)", () => {
+    expect(rollupGrupo("100", grupos, linhas)).toEqual({ mensal: 170, essMensal: 120, condMensal: 50 })
   })
-  it("grupo folha soma só seus itens diretos", () => {
-    expect(rollupGrupo("110", grupos, linhas)).toEqual({ total: 1500, mensal: 150, ess: 1000, cond: 500, essMensal: 100, condMensal: 50 })
+  it("grupo folha soma só seus itens diretos (mensal)", () => {
+    expect(rollupGrupo("110", grupos, linhas)).toEqual({ mensal: 150, essMensal: 100, condMensal: 50 })
   })
   it("orçado mensal = essencial mensal + condicionado mensal", () => {
     const r = rollupGrupo("100", grupos, linhas)
