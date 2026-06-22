@@ -1,6 +1,8 @@
+import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
-import { normalizarOrcado, distribuirPorMes } from "@/lib/services/orcamento-service"
+import { normalizarOrcado, distribuirPorMes, vigenciaInvalidaPorFechamento } from "@/lib/services/orcamento-service"
 import { exigirRascunhoPorAno } from "@/lib/repositories/periodo-repository"
+import { getStatusTodos } from "@/lib/repositories/fechamento-repository"
 import type {
   LinhaOrcamento, GrupoOrcamento, NovoItemInput, AtualizarItemInput, TipoConta,
 } from "@/lib/types"
@@ -67,13 +69,19 @@ export async function getGrupos(ano: number): Promise<GrupoOrcamento[]> {
   }))
 }
 
-async function inserirItem(input: NovoItemInput, origem: "orcamento" | "execucao" = "orcamento"): Promise<number> {
+type DbClient = typeof prisma | Prisma.TransactionClient
+
+async function inserirItem(
+  input: NovoItemInput,
+  origem: "orcamento" | "execucao" = "orcamento",
+  db: DbClient = prisma,
+): Promise<number> {
   const { valorOrcado, valorOrcadoMensal } = normalizarOrcado(input.valor, input.periodicidade)
-  const prox = await prisma.$queryRaw<{ codigo: number }[]>`
+  const prox = await db.$queryRaw<{ codigo: number }[]>`
     SELECT COALESCE(MAX(codigo)::int, (SELECT codigo::int FROM conta_grupo WHERE id = ${input.grupoId})) + 1 AS codigo
     FROM conta_item WHERE grupo_id = ${input.grupoId}
   `
-  const rows = await prisma.$queryRaw<{ id: bigint }[]>`
+  const rows = await db.$queryRaw<{ id: bigint }[]>`
     INSERT INTO conta_item (grupo_id, codigo, nome, periodicidade, valor_orcado, valor_orcado_mensal,
                             classificacao, mes_inicio, mes_fim, origem)
     VALUES (${input.grupoId}, ${prox[0].codigo}, ${input.nome}, ${input.periodicidade},
@@ -84,15 +92,49 @@ async function inserirItem(input: NovoItemInput, origem: "orcamento" | "execucao
   return Number(rows[0].id)
 }
 
+// Materializa o orçado de UM item nos meses da vigência (insert-only).
+// M → mes_inicio..mes_fim; A → 1..12. Fora da vigência não cria linha (a view mostra 0).
+async function materializarOrcadoItem(db: DbClient, contaItemId: number): Promise<void> {
+  await db.$executeRaw`
+    INSERT INTO lancamento_realizado (conta_item_id, exercicio_id, competencia, valor_orcado)
+    SELECT ci.id, cg.exercicio_id, make_date(ex.ano, g.mes, 1), ci.valor_orcado_mensal
+    FROM conta_item ci
+    JOIN conta_grupo cg ON cg.id = ci.grupo_id
+    JOIN exercicio   ex ON ex.id = cg.exercicio_id
+    CROSS JOIN generate_series(1, 12) AS g(mes)
+    WHERE ci.id = ${contaItemId}
+      AND ( ci.periodicidade = 'A'
+            OR g.mes BETWEEN COALESCE(ci.mes_inicio, 1) AND COALESCE(ci.mes_fim, 12) )
+    ON CONFLICT (conta_item_id, competencia) DO NOTHING`
+}
+
 export async function criarItem(input: NovoItemInput): Promise<number> {
   await exigirRascunhoPorAno(await anoDoGrupo(input.grupoId))
   return inserirItem(input)
 }
 
-// Ajuste de meio de ano: cria item mesmo com o orçamento publicado. Nasce origem='execucao'
-// (não entra no orçamento congelado).
+// Ajuste de meio de ano: cria item mesmo com o orçamento publicado, nasce origem='execucao'
+// (não entra no orçamento congelado). Vigência não pode invadir mês concluído (→ 409).
 export async function criarItemExecucao(input: NovoItemInput): Promise<number> {
-  return inserirItem(input, "execucao")
+  const ano = await anoDoGrupo(input.grupoId)
+  const statusPorMes = await getStatusTodos(ano)
+  if (vigenciaInvalidaPorFechamento(input.periodicidade, input.mesInicio ?? null, input.mesFim ?? null, statusPorMes)) {
+    throw new Error("VIGENCIA_MES_FECHADO")
+  }
+  // Retry no conflito de código automático (conta_item_codigo_uq) — corrida rara (admin único).
+  for (let tentativa = 0; ; tentativa++) {
+    try {
+      return await prisma.$transaction(async (tx) => {
+        const id = await inserirItem(input, "execucao", tx)
+        await materializarOrcadoItem(tx, id)
+        return id
+      })
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      if (tentativa < 2 && msg.includes("conta_item_codigo_uq")) continue
+      throw e
+    }
+  }
 }
 
 export async function atualizarItem(id: number, input: AtualizarItemInput): Promise<void> {
