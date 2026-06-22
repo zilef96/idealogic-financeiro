@@ -61,3 +61,17 @@ export function rollupGrupo(
 export function podeEditarOrcamento(status: string): boolean {
   return status !== "publicado"
 }
+
+// Vigência inválida se algum mês do intervalo está concluído.
+// M usa [mesInicio..mesFim] (default 1..12); A usa 1..12 (ignora vigência).
+export function vigenciaInvalidaPorFechamento(
+  periodicidade: Periodicidade,
+  mesInicio: number | null,
+  mesFim: number | null,
+  statusPorMes: Record<number, "aberto" | "concluido">,
+): boolean {
+  const ini = periodicidade === "A" ? 1 : mesInicio ?? 1
+  const fim = periodicidade === "A" ? 12 : mesFim ?? 12
+  for (let m = ini; m <= fim; m++) if (statusPorMes[m] === "concluido") return true
+  return false
+}
