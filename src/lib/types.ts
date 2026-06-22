@@ -12,8 +12,8 @@ export interface LinhaOrcamento {
   classificacao: Classificacao | null
   mesInicio: number | null
   mesFim: number | null
-  valorOrcado: number        // total anual
-  valorOrcadoMensal: number  // por mês
+  valorOrcado: number        // valor informado (RN-OR-06; não-somável)
+  valorOrcadoMensal: number  // por mês (base de todo rollup)
   orcadoPorMes: number[]     // 12 posições
   comentarios: string | null
 }
