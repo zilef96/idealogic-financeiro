@@ -114,9 +114,15 @@ export function TabelaExecucao({
           <div className="orc-tot num text-[13px] px-2">
             {editavel && !e.isGrupo && e.itemId != null ? (
               <CampoRealizado ano={ano} mes={mes} itemId={e.itemId} valorInicial={realizado} />
-            ) : (
-              <span style={{ color: realizado == null ? (e.isGrupo ? "rgb(var(--muted) / 0.6)" : "rgb(var(--amber))") : undefined }}>{realizado == null ? (e.isGrupo ? "—" : "pendente") : brl(realizado)}</span>
-            )}
+            ) : (() => {
+              const ehFolhaPendente = e.itemId != null && filhos.length === 0
+              if (realizado != null) return <span>{brl(realizado)}</span>
+              return (
+                <span style={{ color: ehFolhaPendente ? "rgb(var(--amber))" : "rgb(var(--muted) / 0.6)" }}>
+                  {ehFolhaPendente ? "pendente" : "—"}
+                </span>
+              )
+            })()}
           </div>
           <div className="orc-tot num text-[13px] exec-hide-sm" style={{ color: corDesvio(realizado, c?.desvio ?? 0, e.codigo) }}>
             {realizado == null ? "—" : `${setaDesvio(e.codigo, c?.desvio ?? 0)}${brl(c?.desvio ?? 0)}`}

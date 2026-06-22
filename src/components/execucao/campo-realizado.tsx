@@ -1,6 +1,8 @@
 "use client"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/toast"
+import { useAlteracoesNaoSalvas } from "./alteracoes-nao-salvas"
 
 type Estado = "idle" | "salvando" | "salvo" | "erro"
 
@@ -8,6 +10,9 @@ export function CampoRealizado({
   ano, mes, itemId, valorInicial,
 }: { ano: number; mes: number; itemId: number; valorInicial: number | null }) {
   const { toast } = useToast()
+  const router = useRouter()
+  const { marcarAlterado, limparAlterado } = useAlteracoesNaoSalvas()
+  const alteradoId = `realizado:${itemId}:${mes}`
   const [estado, setEstado] = useState<Estado>("idle")
 
   async function salvar(valor: number) {
@@ -18,7 +23,9 @@ export function CampoRealizado({
         body: JSON.stringify({ ano, mes, contaItemId: itemId, valor }),
       })
       if (r.ok) {
+        limparAlterado(alteradoId)
         setEstado("salvo")
+        router.refresh()
         setTimeout(() => setEstado("idle"), 2000)
         return
       }
@@ -47,7 +54,8 @@ export function CampoRealizado({
         style={{ borderColor: cor }}
         type="number" step="0.01" defaultValue={valorInicial ?? undefined} placeholder="pendente"
         disabled={estado === "salvando"}
-        onBlur={(ev) => ev.target.value !== "" && salvar(Number(ev.target.value))}
+        onChange={() => marcarAlterado(alteradoId)}
+        onBlur={(ev) => ev.target.value !== "" ? salvar(Number(ev.target.value)) : limparAlterado(alteradoId)}
       />
       <span className="w-3 text-xs" style={{ color: cor }} aria-hidden>{icone}</span>
     </span>

@@ -10,6 +10,7 @@ import { TabelaIndicadores } from "./tabela-indicadores"
 import { AcaoFechamento } from "./acao-fechamento"
 import { CheckInPendencias } from "./check-in-pendencias"
 import { NovoItem } from "@/components/orcamento/novo-item"
+import { AlteracoesNaoSalvasProvider, useAlteracoesNaoSalvas } from "./alteracoes-nao-salvas"
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
 
@@ -24,7 +25,15 @@ function BotaoCadeado({ editavel, onToggle }: { editavel: boolean; onToggle: () 
 
 type Auditoria = { concluidoPor: string | null; concluidoEm: string | null; reabertoPor: string | null; reabertoEm: string | null }
 
-export function AbasExecucao({
+export function AbasExecucao(props: React.ComponentProps<typeof AbasExecucaoInterno>) {
+  return (
+    <AlteracoesNaoSalvasProvider>
+      <AbasExecucaoInterno {...props} />
+    </AlteracoesNaoSalvasProvider>
+  )
+}
+
+function AbasExecucaoInterno({
   ano, mesAtual, linhas, statusPorMes, grupos, auditoriaPorMes, indicadoresOrcadoPorMes, indicadoresRealizadoPorMes,
 }: {
   ano: number
@@ -40,6 +49,12 @@ export function AbasExecucao({
   const [mesSel, setMesSel] = useState(mesAtual)
   const [editavel, setEditavel] = useState(false)
   const [ocultarFechados, setOcultarFechados] = useState(true)
+  const { confirmarSeHaAlteracoes } = useAlteracoesNaoSalvas()
+  const trocarAba = (nova: "mes" | "periodo") => { if (aba !== nova && confirmarSeHaAlteracoes()) setAba(nova) }
+  const alternarCadeado = () => {
+    if (editavel && !confirmarSeHaAlteracoes("Há alterações não salvas. Travar a edição mesmo assim?")) return
+    setEditavel((v) => !v)
+  }
   const meses = Array.from({ length: 12 }, (_, i) => i + 1)
   const fechado = statusPorMes[mesSel] === "concluido"
   const podeEditar = editavel && !fechado
@@ -49,11 +64,11 @@ export function AbasExecucao({
   return (
     <div className="space-y-4">
       <div role="tablist" className="flex gap-2 border-b border-border">
-        <button role="tab" aria-selected={aba === "mes"} onClick={() => setAba("mes")}
+        <button role="tab" aria-selected={aba === "mes"} onClick={() => trocarAba("mes")}
           className={`px-3 py-2 text-sm ${aba === "mes" ? "border-b-2 border-foreground font-medium" : "text-muted"}`}>
           Visão mês
         </button>
-        <button role="tab" aria-selected={aba === "periodo"} onClick={() => setAba("periodo")}
+        <button role="tab" aria-selected={aba === "periodo"} onClick={() => trocarAba("periodo")}
           className={`px-3 py-2 text-sm ${aba === "periodo" ? "border-b-2 border-foreground font-medium" : "text-muted"}`}>
           Período (12 meses)
         </button>
@@ -65,7 +80,7 @@ export function AbasExecucao({
               className="rounded-full border border-border bg-card px-3 py-1 text-[12px] font-medium">
               {meses.map((m) => <option key={m} value={m}>{MESES[m - 1]}</option>)}
             </select>
-            <BotaoCadeado editavel={editavel} onToggle={() => setEditavel((v) => !v)} />
+            <BotaoCadeado editavel={editavel} onToggle={alternarCadeado} />
             {podeEditar && <NovoItem grupos={grupos} endpoint="/api/execucao/item" />}
             <div className="ml-auto"><AcaoFechamento ano={ano} mes={mesSel} status={statusPorMes[mesSel]} auditoria={auditoriaPorMes[mesSel]} /></div>
           </div>
@@ -76,7 +91,7 @@ export function AbasExecucao({
       ) : (
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
-            <BotaoCadeado editavel={editavel} onToggle={() => setEditavel((v) => !v)} />
+            <BotaoCadeado editavel={editavel} onToggle={alternarCadeado} />
             <label className="flex items-center gap-2 text-[12px]" style={{ color: "rgb(var(--muted))" }}>
               <input type="checkbox" checked={ocultarFechados} onChange={(e) => setOcultarFechados(e.target.checked)} />
               Ocultar orçado de meses fechados
