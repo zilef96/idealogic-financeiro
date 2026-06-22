@@ -175,6 +175,20 @@ export async function criarGrupo(
   return Number(rows[0].id)
 }
 
+// RF-10: cria subgrupo/categoria de meio de ano pela Execução. origem='execucao'
+// (não entra no orçamento). Código automático sob o pai; tipo herdado do pai.
+export async function criarGrupoExecucao(input: { grupoPaiId: number; nome: string }): Promise<number> {
+  const rows = await prisma.$queryRaw<{ id: bigint }[]>`
+    INSERT INTO conta_grupo (exercicio_id, codigo, grupo_pai_id, tipo_conta_id, nome, origem)
+    SELECT pai.exercicio_id,
+           COALESCE((SELECT MAX(f.codigo) FROM conta_grupo f WHERE f.grupo_pai_id = pai.id), pai.codigo) + 1,
+           pai.id, pai.tipo_conta_id, ${input.nome}, 'execucao'
+    FROM conta_grupo pai WHERE pai.id = ${input.grupoPaiId}
+    RETURNING id
+  `
+  return Number(rows[0].id)
+}
+
 export async function atualizarGrupo(id: number, nome: string): Promise<void> {
   await exigirRascunhoPorAno(await anoDoGrupo(id))
   await prisma.$executeRaw`UPDATE conta_grupo SET nome = ${nome}, updated_at = now() WHERE id = ${id}`
