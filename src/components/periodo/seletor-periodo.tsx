@@ -6,14 +6,32 @@ export function SeletorPeriodo({ ano, anos }: { ano: number; anos: number[] }) {
   const router = useRouter()
   const [criando, setCriando] = useState(false)
   const [novoAno, setNovoAno] = useState(ano + 1)
-  const [copiar, setCopiar] = useState(true)
+  const [doZero, setDoZero] = useState(false)
+  const [origem, setOrigem] = useState(ano)
+  const [erro, setErro] = useState<string | null>(null)
+  const [enviando, setEnviando] = useState(false)
+
+  function abrir() {
+    setNovoAno(ano + 1); setDoZero(false); setOrigem(ano); setErro(null); setCriando(true)
+  }
 
   async function criar() {
-    await fetch("/api/periodos", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ano: novoAno, copiarDe: copiar ? ano : null }),
-    })
-    setCriando(false); router.push(`/orcamento?ano=${novoAno}`); router.refresh()
+    setErro(null); setEnviando(true)
+    try {
+      const res = await fetch("/api/periodos", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ano: novoAno, copiarDe: doZero ? null : origem }),
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => null)
+        setErro(typeof body?.error === "string" ? body.error : "Falha ao criar período.")
+        return
+      }
+      setCriando(false)
+      router.push(`/orcamento?ano=${novoAno}`); router.refresh()
+    } finally {
+      setEnviando(false)
+    }
   }
 
   return (
@@ -22,7 +40,7 @@ export function SeletorPeriodo({ ano, anos }: { ano: number; anos: number[] }) {
         onChange={(e) => router.push(`/orcamento?ano=${e.target.value}`)}>
         {anos.map((a) => <option key={a} value={a}>{a}</option>)}
       </select>
-      <button className="rounded border border-border px-2 py-1.5 text-sm" onClick={() => setCriando(true)}>
+      <button className="rounded border border-border px-2 py-1.5 text-sm" onClick={abrir}>
         + Novo período
       </button>
       {criando && (
@@ -33,13 +51,25 @@ export function SeletorPeriodo({ ano, anos }: { ano: number; anos: number[] }) {
               <input type="number" className="mt-1 w-full rounded border border-border bg-background p-1.5"
                 value={novoAno} onChange={(e) => setNovoAno(Number(e.target.value))} />
             </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={copiar} onChange={(e) => setCopiar(e.target.checked)} />
-              Copiar do ano {ano} (desmarque para começar do zero)
-            </label>
+            <fieldset className="space-y-2 text-sm">
+              <label className="flex items-center gap-2">
+                <input type="radio" name="origem" checked={!doZero} onChange={() => setDoZero(false)} />
+                Copiar de
+                <select className="rounded border border-border bg-background p-1" disabled={doZero}
+                  value={origem} onChange={(e) => setOrigem(Number(e.target.value))}>
+                  {anos.map((a) => <option key={a} value={a}>{a}</option>)}
+                </select>
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="radio" name="origem" checked={doZero} onChange={() => setDoZero(true)} />
+                Começar do zero (só os blocos R/C/D/E)
+              </label>
+            </fieldset>
+            {erro && <p className="text-sm text-red-600 dark:text-red-400">{erro}</p>}
             <div className="flex justify-end gap-2">
               <button className="rounded border border-border px-3 py-1.5 text-sm" onClick={() => setCriando(false)}>Cancelar</button>
-              <button className="rounded bg-foreground px-3 py-1.5 text-sm text-background" onClick={criar}>Criar</button>
+              <button className="rounded bg-foreground px-3 py-1.5 text-sm text-background disabled:opacity-50"
+                disabled={enviando} onClick={criar}>Criar</button>
             </div>
           </div>
         </div>
