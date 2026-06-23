@@ -10,7 +10,7 @@ export default async function OrcamentoPage({ searchParams }: { searchParams: Pr
   const { ano } = await searchParams
   const anoNum = Number(ano) || new Date().getFullYear()
   const [linhas, grupos, anos, status] = await Promise.all([
-    getOrcamento(anoNum), getGrupos(anoNum), listarAnos(), getStatusExercicio(anoNum),
+    getOrcamento(anoNum), getGrupos(anoNum, true), listarAnos(), getStatusExercicio(anoNum),
   ])
   return (
     <div className="space-y-4">

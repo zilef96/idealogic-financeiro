@@ -9,7 +9,7 @@ export async function GET(req: Request) {
   const parsed = parseQuery(new URL(req.url).searchParams, z.object({ ano: anoSchema }))
   if (!parsed.ok) return parsed.response
   try {
-    const [linhas, grupos] = await Promise.all([getOrcamento(parsed.data.ano), getGrupos(parsed.data.ano)])
+    const [linhas, grupos] = await Promise.all([getOrcamento(parsed.data.ano), getGrupos(parsed.data.ano, true)])
     return NextResponse.json({ ano: parsed.data.ano, linhas, grupos })
   } catch (e) { return handleApiError(e, "Erro ao carregar orçamento.") }
 }

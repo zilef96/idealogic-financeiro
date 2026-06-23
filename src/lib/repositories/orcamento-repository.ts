@@ -53,7 +53,11 @@ export async function getOrcamento(ano: number): Promise<LinhaOrcamento[]> {
   })
 }
 
-export async function getGrupos(ano: number): Promise<GrupoOrcamento[]> {
+// `apenasOrcamento` filtra os grupos do plano congelado (origem='orcamento'), escondendo
+// categorias criadas na Execução (origem='execucao') — a Orçamentação publicada não deve
+// exibi-las. A Execução chama sem o flag (precisa de TODOS os grupos para a cascata de
+// novo item poder pendurar itens sob categorias de meio de ano).
+export async function getGrupos(ano: number, apenasOrcamento = false): Promise<GrupoOrcamento[]> {
   const rows = await prisma.$queryRaw<{ id: bigint; codigo: string; codigo_pai: string | null; tipo: string; nome: string }[]>`
     SELECT cg.id, cg.codigo::text AS codigo, pai.codigo::text AS codigo_pai, tc.sigla AS tipo, cg.nome
     FROM conta_grupo cg
@@ -61,6 +65,7 @@ export async function getGrupos(ano: number): Promise<GrupoOrcamento[]> {
     LEFT JOIN conta_grupo pai ON pai.id = cg.grupo_pai_id
     JOIN exercicio e ON e.id = cg.exercicio_id
     WHERE e.ano = ${ano}
+      AND (${apenasOrcamento} = false OR cg.origem = 'orcamento')
     ORDER BY cg.codigo::numeric
   `
   return rows.map((r) => ({
