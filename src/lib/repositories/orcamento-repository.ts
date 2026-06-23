@@ -177,11 +177,18 @@ export async function criarGrupo(
 
 // RF-10: cria subgrupo/categoria de meio de ano pela Execução. origem='execucao'
 // (não entra no orçamento). Código automático sob o pai; tipo herdado do pai.
+// O próximo código considera TANTO subgrupos QUANTO itens irmãos: o namespace de
+// código sob um pai é compartilhado (itens começam em pai.codigo+1), então olhar só
+// subgrupos colide com o 1º item quando o pai é uma folha com itens. GREATEST ignora
+// NULLs; só cai em pai.codigo quando o pai não tem nem subgrupos nem itens.
 export async function criarGrupoExecucao(input: { grupoPaiId: number; nome: string }): Promise<number> {
   const rows = await prisma.$queryRaw<{ id: bigint }[]>`
     INSERT INTO conta_grupo (exercicio_id, codigo, grupo_pai_id, tipo_conta_id, nome, origem)
     SELECT pai.exercicio_id,
-           COALESCE((SELECT MAX(f.codigo) FROM conta_grupo f WHERE f.grupo_pai_id = pai.id), pai.codigo) + 1,
+           COALESCE(GREATEST(
+             (SELECT MAX(f.codigo)  FROM conta_grupo f WHERE f.grupo_pai_id = pai.id),
+             (SELECT MAX(it.codigo) FROM conta_item  it WHERE it.grupo_id    = pai.id)
+           ), pai.codigo) + 1,
            pai.id, pai.tipo_conta_id, ${input.nome}, 'execucao'
     FROM conta_grupo pai WHERE pai.id = ${input.grupoPaiId}
     RETURNING id
