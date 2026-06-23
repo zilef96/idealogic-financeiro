@@ -34,6 +34,7 @@ export interface NovoItemInput {
   classificacao?: Classificacao | null
   mesInicio?: number | null
   mesFim?: number | null
+  comentarios?: string | null
 }
 
 export interface AtualizarItemInput {
@@ -43,4 +44,5 @@ export interface AtualizarItemInput {
   classificacao?: Classificacao | null
   mesInicio?: number | null
   mesFim?: number | null
+  comentarios?: string | null
 }

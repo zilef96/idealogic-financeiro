@@ -132,7 +132,7 @@ function TabelaOrcamentoInterno({ linhas, grupos, rascunho }: { linhas: LinhaOrc
     setItemEdit({
       id: it.id, tipo: tipoDoGrupo(it.grupoCodigo), grupoCodigo: it.grupoCodigo, grupoNome: nomeDoGrupo(it.grupoCodigo),
       nome: it.nome, periodicidade: it.periodicidade, valor: it.valorOrcado,
-      classificacao: it.classificacao, mesInicio: it.mesInicio, mesFim: it.mesFim,
+      classificacao: it.classificacao, mesInicio: it.mesInicio, mesFim: it.mesFim, comentarios: it.comentarios,
     })
   }
 

@@ -22,6 +22,7 @@ const novoItem = z.object({
   classificacao: z.enum(["C", "P", "E", "S"]).nullable().default(null),
   mesInicio: mesSchema.nullable().default(null),
   mesFim: mesSchema.nullable().default(null),
+  comentarios: z.string().trim().nullable().default(null),
 })
 
 export async function POST(req: Request) {

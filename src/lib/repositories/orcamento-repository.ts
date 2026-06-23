@@ -88,10 +88,11 @@ async function inserirItem(
   `
   const rows = await db.$queryRaw<{ id: bigint }[]>`
     INSERT INTO conta_item (grupo_id, codigo, nome, periodicidade, valor_orcado, valor_orcado_mensal,
-                            classificacao, mes_inicio, mes_fim, origem)
+                            classificacao, mes_inicio, mes_fim, comentarios, origem)
     VALUES (${input.grupoId}, ${prox[0].codigo}, ${input.nome}, ${input.periodicidade},
             ${valorOrcado}::numeric, ${valorOrcadoMensal}::numeric,
-            ${input.classificacao ?? null}, ${input.mesInicio ?? null}, ${input.mesFim ?? null}, ${origem})
+            ${input.classificacao ?? null}, ${input.mesInicio ?? null}, ${input.mesFim ?? null},
+            ${input.comentarios ?? null}, ${origem})
     RETURNING id
   `
   return Number(rows[0].id)
@@ -159,6 +160,7 @@ export async function atualizarItem(id: number, input: AtualizarItemInput): Prom
       classificacao = ${input.classificacao ?? atual.classificacao},
       mes_inicio = ${periodicidade === "A" ? null : (input.mesInicio ?? atual.mes_inicio)},
       mes_fim = ${periodicidade === "A" ? null : (input.mesFim ?? atual.mes_fim)},
+      comentarios = ${input.comentarios ?? atual.comentarios},
       updated_at = now()
     WHERE id = ${id}
   `

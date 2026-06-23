@@ -23,6 +23,7 @@ export type ItemEditar = {
   classificacao: Classificacao | null
   mesInicio: number | null
   mesFim: number | null
+  comentarios: string | null
 }
 
 export function NovoItem({
@@ -58,6 +59,7 @@ export function NovoItem({
     itemEditar?.mesInicio != null ? String(itemEditar.mesInicio) : (mesPadrao ? String(mesPadrao) : ""),
   )
   const [mesFim, setMesFim] = useState<string>(itemEditar?.mesFim != null ? String(itemEditar.mesFim) : "12")
+  const [comentarios, setComentarios] = useState(itemEditar?.comentarios ?? "")
 
   const blocos = blocosDisponiveis(grupos)
   const mesesAbertos = Array.from({ length: 12 }, (_, i) => i + 1).filter(
@@ -89,7 +91,7 @@ export function NovoItem({
 
   function reset() {
     setTipoSel(""); setCaminho([]); setNome(""); setPeriodicidade("M"); setValor("")
-    setClassificacao(""); setMesInicio(mesPadrao ? String(mesPadrao) : ""); setMesFim("12"); setErro("")
+    setClassificacao(""); setMesInicio(mesPadrao ? String(mesPadrao) : ""); setMesFim("12"); setComentarios(""); setErro("")
   }
   function fechar() {
     if (!editando) reset()
@@ -115,6 +117,7 @@ export function NovoItem({
     const comum = {
       nome: nome.trim(), periodicidade, valor: Number(valor) || 0,
       classificacao: classificacao || null, mesInicio: ini, mesFim: fim,
+      comentarios: comentarios.trim() || null,
     }
     const url = editando ? `${endpoint}/${itemEditar!.id}` : endpoint
     const metodo = editando ? "PATCH" : "POST"
@@ -210,6 +213,11 @@ export function NovoItem({
                 <option value="">— (sem classificação)</option>
                 {classifs.map((c) => <option key={c.v} value={c.v}>{c.v} — {c.nome}</option>)}
               </select>
+            </label>
+
+            <label className="block text-sm">Comentários (opcional)
+              <textarea className={inputCls} rows={2} value={comentarios}
+                onChange={(e) => setComentarios(e.target.value)} placeholder="Observações do item…" />
             </label>
 
             {periodicidade === "M" && (
