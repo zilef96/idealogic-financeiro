@@ -180,13 +180,12 @@ export async function criarGrupo(
   return Number(rows[0].id)
 }
 
-// RF-10: cria subgrupo/categoria de meio de ano pela Execução. origem='execucao'
-// (não entra no orçamento). Código automático sob o pai; tipo herdado do pai.
-// O próximo código considera TANTO subgrupos QUANTO itens irmãos: o namespace de
-// código sob um pai é compartilhado (itens começam em pai.codigo+1), então olhar só
-// subgrupos colide com o 1º item quando o pai é uma folha com itens. GREATEST ignora
-// NULLs; só cai em pai.codigo quando o pai não tem nem subgrupos nem itens.
-export async function criarGrupoExecucao(input: { grupoPaiId: number; nome: string }): Promise<number> {
+// Auto-código sob o pai: o namespace de código sob um pai é compartilhado entre subgrupos
+// e itens (itens começam em pai.codigo+1), então o próximo código é GREATEST(max subgrupo,
+// max item)+1; cai em pai.codigo+1 quando o pai não tem nem subgrupos nem itens. Tipo herdado.
+async function criarGrupoFilho(
+  grupoPaiId: number, nome: string, origem: "orcamento" | "execucao",
+): Promise<number> {
   const rows = await prisma.$queryRaw<{ id: bigint }[]>`
     INSERT INTO conta_grupo (exercicio_id, codigo, grupo_pai_id, tipo_conta_id, nome, origem)
     SELECT pai.exercicio_id,
@@ -194,11 +193,22 @@ export async function criarGrupoExecucao(input: { grupoPaiId: number; nome: stri
              (SELECT MAX(f.codigo)  FROM conta_grupo f WHERE f.grupo_pai_id = pai.id),
              (SELECT MAX(it.codigo) FROM conta_item  it WHERE it.grupo_id    = pai.id)
            ), pai.codigo) + 1,
-           pai.id, pai.tipo_conta_id, ${input.nome}, 'execucao'
-    FROM conta_grupo pai WHERE pai.id = ${input.grupoPaiId}
+           pai.id, pai.tipo_conta_id, ${nome}, ${origem}
+    FROM conta_grupo pai WHERE pai.id = ${grupoPaiId}
     RETURNING id
   `
   return Number(rows[0].id)
+}
+
+// RF-10: cria subgrupo/categoria de meio de ano pela Execução. origem='execucao'.
+export async function criarGrupoExecucao(input: { grupoPaiId: number; nome: string }): Promise<number> {
+  return criarGrupoFilho(input.grupoPaiId, input.nome, "execucao")
+}
+
+// Cria categoria no plano (tela de Orçamento). Só em rascunho; origem='orcamento'.
+export async function criarGrupoOrcamento(input: { grupoPaiId: number; nome: string }): Promise<number> {
+  await exigirRascunhoPorAno(await anoDoGrupo(input.grupoPaiId))
+  return criarGrupoFilho(input.grupoPaiId, input.nome, "orcamento")
 }
 
 export async function atualizarGrupo(id: number, nome: string): Promise<void> {
