@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { normalizarOrcado, distribuirPorMes, somasPorClassificacao, rollupGrupo, podeEditarOrcamento } from "@/lib/services/orcamento-service"
+import { normalizarOrcado, distribuirPorMes, somasPorClassificacao, rollupGrupo, podeEditarOrcamento, vigenciaInvalidaPorFechamento } from "@/lib/services/orcamento-service"
 import type { GrupoOrcamento, LinhaOrcamento } from "@/lib/types"
 
 describe("normalizarOrcado", () => {
@@ -72,5 +72,26 @@ describe("podeEditarOrcamento", () => {
   })
   it("publicado não é editável", () => {
     expect(podeEditarOrcamento("publicado")).toBe(false)
+  })
+})
+
+describe("vigenciaInvalidaPorFechamento", () => {
+  const status = (fechados: number[]) =>
+    Object.fromEntries(Array.from({ length: 12 }, (_, i) => [i + 1, fechados.includes(i + 1) ? "concluido" : "aberto"])) as Record<number, "aberto" | "concluido">
+
+  it("M intervalo todo aberto → false", () => {
+    expect(vigenciaInvalidaPorFechamento("M", 6, 12, status([]))).toBe(false)
+  })
+  it("M mês fechado no extremo inicial → true", () => {
+    expect(vigenciaInvalidaPorFechamento("M", 5, 7, status([5]))).toBe(true)
+  })
+  it("M mês fechado no meio → true", () => {
+    expect(vigenciaInvalidaPorFechamento("M", 4, 7, status([5]))).toBe(true)
+  })
+  it("A com qualquer mês fechado (usa 1..12) → true", () => {
+    expect(vigenciaInvalidaPorFechamento("A", null, null, status([3]))).toBe(true)
+  })
+  it("M sem vigência (nulls) trata como 1..12", () => {
+    expect(vigenciaInvalidaPorFechamento("M", null, null, status([1]))).toBe(true)
   })
 })
