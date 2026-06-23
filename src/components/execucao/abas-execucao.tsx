@@ -9,7 +9,7 @@ import { CardsIndicadores } from "./cards-indicadores"
 import { TabelaIndicadores } from "./tabela-indicadores"
 import { AcaoFechamento } from "./acao-fechamento"
 import { CheckInPendencias } from "./check-in-pendencias"
-import { NovoItem } from "@/components/orcamento/novo-item"
+import { MenuAdicionar } from "./menu-adicionar"
 import { AlteracoesNaoSalvasProvider, useAlteracoesNaoSalvas } from "./alteracoes-nao-salvas"
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
@@ -81,7 +81,7 @@ function AbasExecucaoInterno({
               {meses.map((m) => <option key={m} value={m}>{MESES[m - 1]}</option>)}
             </select>
             <BotaoCadeado editavel={editavel} onToggle={alternarCadeado} />
-            {podeEditar && <NovoItem grupos={grupos} endpoint="/api/execucao/item" />}
+            <MenuAdicionar grupos={grupos} statusPorMes={statusPorMes} mesPadrao={mesSel} />
             <div className="ml-auto"><AcaoFechamento ano={ano} mes={mesSel} status={statusPorMes[mesSel]} auditoria={auditoriaPorMes[mesSel]} /></div>
           </div>
           <CheckInPendencias linhas={linhas} mes={mesSel} />
@@ -92,6 +92,7 @@ function AbasExecucaoInterno({
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
             <BotaoCadeado editavel={editavel} onToggle={alternarCadeado} />
+            <MenuAdicionar grupos={grupos} statusPorMes={statusPorMes} mesPadrao={1} />
             <label className="flex items-center gap-2 text-[12px]" style={{ color: "rgb(var(--muted))" }}>
               <input type="checkbox" checked={ocultarFechados} onChange={(e) => setOcultarFechados(e.target.checked)} />
               Ocultar orçado de meses fechados
