@@ -16,7 +16,7 @@ export async function POST(req: Request) {
   const auth = await requirePerfil(["admin"]); if (!auth.ok) return auth.response
   const parsed = await parseBody(req, novoPeriodo); if (!parsed.ok) return parsed.response
   try {
-    await criarPeriodo(parsed.data.ano, parsed.data.copiarDe)
-    return NextResponse.json({ ok: true }, { status: 201 })
+    const periodo = await criarPeriodo(parsed.data.ano, parsed.data.copiarDe)
+    return NextResponse.json(periodo, { status: 201 })
   } catch (e) { return handleApiError(e, "Falha ao criar período.") }
 }
