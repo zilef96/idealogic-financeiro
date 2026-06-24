@@ -25,6 +25,12 @@ export function mapErroPostgres(e: { code?: string; meta?: { code?: string }; me
   if (typeof e?.message === "string" && e.message.includes("VIGENCIA_MES_FECHADO")) {
     return { status: 409, error: "Período inclui mês concluído; ajuste a vigência." }
   }
+  if (typeof e?.message === "string" && e.message.includes("PERIODO_DUPLICADO")) {
+    return { status: 409, error: "Período já existe para esse ano." }
+  }
+  if (typeof e?.message === "string" && e.message.includes("ORIGEM_INEXISTENTE")) {
+    return { status: 422, error: "Ano de origem inexistente." }
+  }
   return null
 }
 

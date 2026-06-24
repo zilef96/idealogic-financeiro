@@ -8,10 +8,11 @@ import { blocosDisponiveis, raizDoBloco, filhosDe } from "@/lib/services/cascata
 const inputCls = "mt-1 w-full rounded border border-border bg-background p-2 text-sm"
 const ROTULO_BLOCO: Record<TipoConta, string> = { R: "Receita", C: "Custo", D: "Despesa", E: "Estrutura" }
 
-export function NovaCategoria({ grupos, aberto, onClose }: {
+export function NovaCategoria({ grupos, aberto, onClose, endpoint = "/api/execucao/grupo" }: {
   grupos: GrupoOrcamento[]
   aberto: boolean
   onClose: () => void
+  endpoint?: string
 }) {
   const router = useRouter()
   const { toast } = useToast()
@@ -50,7 +51,7 @@ export function NovaCategoria({ grupos, aberto, onClose }: {
     if (!grupoPai) { setErro("Selecione o grupo pai."); return }
     if (!nome.trim()) { setErro("Informe o nome da categoria."); return }
     setSalvando(true)
-    const r = await fetch("/api/execucao/grupo", {
+    const r = await fetch(endpoint, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ grupoPaiId: grupoPai.id, nome: nome.trim() }),
     })

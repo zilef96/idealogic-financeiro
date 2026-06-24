@@ -40,3 +40,16 @@ describe("mapErroPostgres — vigência em mês fechado", () => {
     })
   })
 })
+
+describe("mapErroPostgres — criar período (frente 5)", () => {
+  it("mapeia PERIODO_DUPLICADO para 409", () => {
+    expect(mapErroPostgres({ message: "PERIODO_DUPLICADO" })).toEqual({
+      status: 409, error: "Período já existe para esse ano.",
+    })
+  })
+  it("mapeia ORIGEM_INEXISTENTE para 422", () => {
+    expect(mapErroPostgres({ message: "ORIGEM_INEXISTENTE" })).toEqual({
+      status: 422, error: "Ano de origem inexistente.",
+    })
+  })
+})

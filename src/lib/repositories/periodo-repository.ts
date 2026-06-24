@@ -1,46 +1,75 @@
 import { prisma } from "@/lib/prisma"
+import { planejarCopiaGrupos, BLOCOS_BASE, type GrupoCopia } from "@/lib/services/periodo-service"
 
 export async function listarAnos(): Promise<number[]> {
   const rows = await prisma.$queryRaw<{ ano: number }[]>`SELECT ano FROM exercicio ORDER BY ano DESC`
   return rows.map((r) => r.ano)
 }
 
-// Cria novo exercício. Se copiarDe informado, duplica grupos (remapeando pai) e itens.
-export async function criarPeriodo(ano: number, copiarDe: number | null): Promise<void> {
+// Cria novo exercício (sempre nasce em rascunho).
+// copiarDe != null: duplica só o PLANO (origem='orcamento') de grupos e itens, remapeando pai por código.
+// copiarDe == null: nasce com os 4 blocos-raiz (BLOCOS_BASE).
+export async function criarPeriodo(
+  ano: number,
+  copiarDe: number | null,
+): Promise<{ ano: number; status: "rascunho" }> {
+  // G1: ano duplicado vira sentinela (mapeada para 409), não 23505 cru.
+  const existe = await prisma.$queryRaw<{ id: bigint }[]>`SELECT id FROM exercicio WHERE ano = ${ano}`
+  if (existe[0]) throw new Error("PERIODO_DUPLICADO")
+
   await prisma.$transaction(async (tx) => {
     const ex = await tx.$queryRaw<{ id: bigint }[]>`
       INSERT INTO exercicio (ano) VALUES (${ano}) RETURNING id`
     const novoId = ex[0].id
 
-    if (copiarDe == null) return
+    // "Do zero": só os 4 blocos-raiz, tipo resolvido por sigla, origem='orcamento'.
+    if (copiarDe == null) {
+      for (const b of BLOCOS_BASE) {
+        await tx.$executeRaw`
+          INSERT INTO conta_grupo (exercicio_id, codigo, grupo_pai_id, tipo_conta_id, nome, origem)
+          SELECT ${novoId}, ${b.codigo}, NULL,
+            (SELECT id FROM tipo_conta WHERE sigla = ${b.sigla}), ${b.nome}, 'orcamento'`
+      }
+      return
+    }
 
+    // Cópia: G2 — origem inexistente vira sentinela (mapeada para 422).
     const orig = await tx.$queryRaw<{ id: bigint }[]>`SELECT id FROM exercicio WHERE ano = ${copiarDe}`
-    if (!orig[0]) throw new Error(`Exercício de origem ${copiarDe} não existe.`)
+    if (!orig[0]) throw new Error("ORIGEM_INEXISTENTE")
 
-    // grupos do exercício origem, em ordem topológica (pais antes dos filhos)
-    const grupos = await tx.$queryRaw<{ id: bigint; codigo: number; pai_codigo: number | null; tipo_conta_id: number; nome: string }[]>`
-      SELECT cg.id, cg.codigo::int AS codigo, pai.codigo::int AS pai_codigo, cg.tipo_conta_id, cg.nome
+    // Grupos do plano (origem='orcamento') ordenados topologicamente (pais antes dos filhos).
+    const grupos = await tx.$queryRaw<{ codigo: number; pai_codigo: number | null; tipo_conta_id: number; nome: string }[]>`
+      SELECT cg.codigo::int AS codigo, pai.codigo::int AS pai_codigo, cg.tipo_conta_id, cg.nome
       FROM conta_grupo cg LEFT JOIN conta_grupo pai ON pai.id = cg.grupo_pai_id
-      WHERE cg.exercicio_id = ${orig[0].id}
-      ORDER BY cg.codigo::numeric`
-    for (const g of grupos) {
+      WHERE cg.exercicio_id = ${orig[0].id} AND cg.origem = 'orcamento'`
+
+    const ordenados = planejarCopiaGrupos(
+      grupos.map<GrupoCopia>((g) => ({
+        codigo: g.codigo, paiCodigo: g.pai_codigo, tipoContaId: g.tipo_conta_id, nome: g.nome,
+      })),
+    )
+    for (const g of ordenados) {
       await tx.$executeRaw`
-        INSERT INTO conta_grupo (exercicio_id, codigo, grupo_pai_id, tipo_conta_id, nome)
+        INSERT INTO conta_grupo (exercicio_id, codigo, grupo_pai_id, tipo_conta_id, nome, origem)
         VALUES (${novoId}, ${g.codigo},
-          ${g.pai_codigo === null ? null : await (async () => {
-            const r = await tx.$queryRaw<{ id: bigint }[]>`SELECT id FROM conta_grupo WHERE exercicio_id = ${novoId} AND codigo = ${g.pai_codigo}`
+          ${g.paiCodigo === null ? null : await (async () => {
+            const r = await tx.$queryRaw<{ id: bigint }[]>`SELECT id FROM conta_grupo WHERE exercicio_id = ${novoId} AND codigo = ${g.paiCodigo}`
             return r[0].id
           })()},
-          ${g.tipo_conta_id}, ${g.nome})`
+          ${g.tipoContaId}, ${g.nome}, 'orcamento')`
     }
-    // itens (copiando por código de grupo)
+
+    // Itens do plano (origem='orcamento'), join por código de grupo. Não copia Execução.
     await tx.$executeRaw`
-      INSERT INTO conta_item (grupo_id, codigo, nome, periodicidade, valor_orcado, valor_orcado_mensal, classificacao, is_fixo, comentarios, mes_inicio, mes_fim)
-      SELECT ng.id, ci.codigo, ci.nome, ci.periodicidade, ci.valor_orcado, ci.valor_orcado_mensal, ci.classificacao, ci.is_fixo, ci.comentarios, ci.mes_inicio, ci.mes_fim
+      INSERT INTO conta_item (grupo_id, codigo, nome, periodicidade, valor_orcado, valor_orcado_mensal, classificacao, is_fixo, comentarios, mes_inicio, mes_fim, origem)
+      SELECT ng.id, ci.codigo, ci.nome, ci.periodicidade, ci.valor_orcado, ci.valor_orcado_mensal, ci.classificacao, ci.is_fixo, ci.comentarios, ci.mes_inicio, ci.mes_fim, 'orcamento'
       FROM conta_item ci
       JOIN conta_grupo og ON og.id = ci.grupo_id AND og.exercicio_id = ${orig[0].id}
-      JOIN conta_grupo ng ON ng.exercicio_id = ${novoId} AND ng.codigo = og.codigo`
+      JOIN conta_grupo ng ON ng.exercicio_id = ${novoId} AND ng.codigo = og.codigo
+      WHERE ci.origem = 'orcamento'`
   })
+
+  return { ano, status: "rascunho" }
 }
 
 export type StatusExercicio = "rascunho" | "publicado"
