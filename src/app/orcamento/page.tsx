@@ -21,7 +21,7 @@ export default async function OrcamentoPage({ searchParams }: { searchParams: Pr
           <SeletorPeriodo ano={anoNum} anos={anos} />
         </div>
       </div>
-      <TabelaOrcamento linhas={linhas} grupos={grupos} editavel={status !== "publicado"} />
+      <TabelaOrcamento linhas={linhas} grupos={grupos} rascunho={status !== "publicado"} />
     </div>
   )
 }

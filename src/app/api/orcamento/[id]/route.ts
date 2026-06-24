@@ -11,6 +11,7 @@ const patch = z.object({
   classificacao: z.enum(["C", "P", "E", "S"]).nullable().optional(),
   mesInicio: mesSchema.nullable().optional(),
   mesFim: mesSchema.nullable().optional(),
+  comentarios: z.string().trim().nullable().optional(),
 })
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
