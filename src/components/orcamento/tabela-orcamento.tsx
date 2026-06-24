@@ -274,7 +274,7 @@ function TabelaOrcamentoInterno({ linhas, grupos, rascunho }: { linhas: LinhaOrc
 
       {/* Modais */}
       {itemEdit && (
-        <NovoItem grupos={grupos} endpoint="/api/orcamento" itemEditar={itemEdit}
+        <NovoItem grupos={grupos} endpoint="/api/orcamento" itemEditar={itemEdit} mostrarComentarios
           aberto={true} onClose={() => setItemEdit(null)} />
       )}
       {grupoEdit && (

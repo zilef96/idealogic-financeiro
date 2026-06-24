@@ -27,7 +27,7 @@ export function MenuAdicionarOrcamento({ grupos }: { grupos: GrupoOrcamento[] })
         </>
       )}
 
-      <NovoItem grupos={grupos} endpoint="/api/orcamento"
+      <NovoItem grupos={grupos} endpoint="/api/orcamento" mostrarComentarios
         aberto={modal === "item"} onClose={() => setModal(null)} />
       <NovaCategoria grupos={grupos} endpoint="/api/orcamento/grupo"
         aberto={modal === "categoria"} onClose={() => setModal(null)} />

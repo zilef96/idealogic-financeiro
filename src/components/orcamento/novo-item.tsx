@@ -28,6 +28,7 @@ export type ItemEditar = {
 
 export function NovoItem({
   grupos, endpoint = "/api/orcamento", statusPorMes, mesPadrao, aberto, onClose, itemEditar,
+  mostrarComentarios = false,
 }: {
   grupos: GrupoOrcamento[]
   endpoint?: string
@@ -36,6 +37,7 @@ export function NovoItem({
   aberto?: boolean
   onClose?: () => void
   itemEditar?: ItemEditar
+  mostrarComentarios?: boolean
 }) {
   const router = useRouter()
   const { toast } = useToast()
@@ -117,7 +119,7 @@ export function NovoItem({
     const comum = {
       nome: nome.trim(), periodicidade, valor: Number(valor) || 0,
       classificacao: classificacao || null, mesInicio: ini, mesFim: fim,
-      comentarios: comentarios.trim() || null,
+      ...(mostrarComentarios ? { comentarios: comentarios.trim() || null } : {}),
     }
     const url = editando ? `${endpoint}/${itemEditar!.id}` : endpoint
     const metodo = editando ? "PATCH" : "POST"
@@ -215,10 +217,12 @@ export function NovoItem({
               </select>
             </label>
 
-            <label className="block text-sm">Comentários (opcional)
-              <textarea className={inputCls} rows={2} value={comentarios}
-                onChange={(e) => setComentarios(e.target.value)} placeholder="Observações do item…" />
-            </label>
+            {mostrarComentarios && (
+              <label className="block text-sm">Comentários (opcional)
+                <textarea className={inputCls} rows={2} value={comentarios}
+                  onChange={(e) => setComentarios(e.target.value)} placeholder="Observações do item…" />
+              </label>
+            )}
 
             {periodicidade === "M" && (
               <div className="flex gap-3">
