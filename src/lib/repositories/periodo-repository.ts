@@ -61,8 +61,8 @@ export async function criarPeriodo(
 
     // Itens do plano (origem='orcamento'), join por código de grupo. Não copia Execução.
     await tx.$executeRaw`
-      INSERT INTO conta_item (grupo_id, codigo, nome, periodicidade, valor_orcado, valor_orcado_mensal, classificacao, is_fixo, comentarios, mes_inicio, mes_fim, origem)
-      SELECT ng.id, ci.codigo, ci.nome, ci.periodicidade, ci.valor_orcado, ci.valor_orcado_mensal, ci.classificacao, ci.is_fixo, ci.comentarios, ci.mes_inicio, ci.mes_fim, 'orcamento'
+      INSERT INTO conta_item (grupo_id, nome, periodicidade, valor_orcado, valor_orcado_mensal, classificacao, is_fixo, comentarios, mes_inicio, mes_fim, origem)
+      SELECT ng.id, ci.nome, ci.periodicidade, ci.valor_orcado, ci.valor_orcado_mensal, ci.classificacao, ci.is_fixo, ci.comentarios, ci.mes_inicio, ci.mes_fim, 'orcamento'
       FROM conta_item ci
       JOIN conta_grupo og ON og.id = ci.grupo_id AND og.exercicio_id = ${orig[0].id}
       JOIN conta_grupo ng ON ng.exercicio_id = ${novoId} AND ng.codigo = og.codigo

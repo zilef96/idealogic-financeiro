@@ -15,9 +15,9 @@ model conta_grupo {
   grupo_pai_id      BigInt?
   tipo_conta_id     Int           @db.SmallInt
   nome              String        @db.VarChar(150)
-  origem            String        @default("orcamento") @db.VarChar(10)
   created_at        DateTime      @default(now()) @db.Timestamptz(6)
   updated_at        DateTime      @default(now()) @db.Timestamptz(6)
+  origem            String        @default("orcamento") @db.VarChar(10)
   exercicio         exercicio     @relation(fields: [exercicio_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   conta_grupo       conta_grupo?  @relation("conta_grupoToconta_grupo", fields: [grupo_pai_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   other_conta_grupo conta_grupo[] @relation("conta_grupoToconta_grupo")
@@ -33,7 +33,6 @@ model conta_grupo {
 model conta_item {
   id                   BigInt                 @id @default(autoincrement())
   grupo_id             BigInt
-  codigo               Decimal                @db.Decimal(8, 0)
   nome                 String                 @db.VarChar(150)
   periodicidade        String                 @db.Char(1)
   valor_orcado         Decimal                @db.Decimal(18, 2)
@@ -43,13 +42,12 @@ model conta_item {
   comentarios          String?
   mes_inicio           Int?                   @db.SmallInt
   mes_fim              Int?                   @db.SmallInt
-  origem               String                 @default("orcamento") @db.VarChar(10)
   created_at           DateTime               @default(now()) @db.Timestamptz(6)
   updated_at           DateTime               @default(now()) @db.Timestamptz(6)
+  origem               String                 @default("orcamento") @db.VarChar(10)
   conta_grupo          conta_grupo            @relation(fields: [grupo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   lancamento_realizado lancamento_realizado[]
 
-  @@unique([grupo_id, codigo], map: "conta_item_codigo_uq")
   @@index([classificacao], map: "ix_conta_item_class")
   @@index([grupo_id], map: "ix_conta_item_grupo")
 }
@@ -69,18 +67,18 @@ model evento_tesouraria {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model exercicio {
-  id                   BigInt                 @id @default(autoincrement())
-  ano                  Int                    @unique @db.SmallInt
-  descricao            String?                @db.VarChar(60)
-  status               String                 @default("rascunho") @db.VarChar(12)
-  orcamento_materializado_em DateTime?         @db.Timestamptz(6)
-  created_at           DateTime               @default(now()) @db.Timestamptz(6)
-  updated_at           DateTime               @default(now()) @db.Timestamptz(6)
-  conta_grupo          conta_grupo[]
-  evento_tesouraria    evento_tesouraria[]
-  fechamento_mensal    fechamento_mensal[]
-  lancamento_realizado lancamento_realizado[]
-  parametro_mensal     parametro_mensal[]
+  id                         BigInt                 @id @default(autoincrement())
+  ano                        Int                    @unique @db.SmallInt
+  descricao                  String?                @db.VarChar(60)
+  created_at                 DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at                 DateTime               @default(now()) @db.Timestamptz(6)
+  status                     String                 @default("rascunho") @db.VarChar(12)
+  orcamento_materializado_em DateTime?              @db.Timestamptz(6)
+  conta_grupo                conta_grupo[]
+  evento_tesouraria          evento_tesouraria[]
+  fechamento_mensal          fechamento_mensal[]
+  lancamento_realizado       lancamento_realizado[]
+  parametro_mensal           parametro_mensal[]
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -92,10 +90,10 @@ model fechamento_mensal {
   concluido_por String?   @db.VarChar(120)
   concluido_em  DateTime? @db.Timestamptz(6)
   observacao    String?
-  reaberto_por  String?   @db.VarChar(120)
-  reaberto_em   DateTime? @db.Timestamptz(6)
   created_at    DateTime  @default(now()) @db.Timestamptz(6)
   updated_at    DateTime  @default(now()) @db.Timestamptz(6)
+  reaberto_por  String?   @db.VarChar(120)
+  reaberto_em   DateTime? @db.Timestamptz(6)
   exercicio     exercicio @relation(fields: [exercicio_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([exercicio_id, competencia], map: "fechamento_mensal_uq")

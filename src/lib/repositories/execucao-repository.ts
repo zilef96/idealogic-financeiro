@@ -16,7 +16,7 @@ export interface LinhaExecucao {
 }
 
 interface Row {
-  codigo_pai: string; codigo: string; nome: string; mes: number
+  codigo_pai: string; codigo: string | null; nome: string; mes: number
   orcado: unknown; orcado_projetado: unknown; realizado: unknown | null; is_grupo: boolean; item_id: bigint | null
 }
 
@@ -32,7 +32,7 @@ export async function getExecucao(ano: number): Promise<LinhaExecucao[]> {
     const { desvio, desvioPercentual } = calcDesvio(realizado ?? 0, orcado)
     return {
       itemId: r.item_id === null ? null : Number(r.item_id),
-      codigoPai: r.codigo_pai, codigo: r.codigo, nome: r.nome,
+      codigoPai: r.codigo_pai, codigo: r.codigo ?? "", nome: r.nome,
       isGrupo: r.is_grupo,
       mes: r.mes, orcadoProjetado: Number(r.orcado_projetado), orcado, realizado, desvio, desvioPercentual,
     }
