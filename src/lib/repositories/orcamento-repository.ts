@@ -21,14 +21,14 @@ async function anoDoItem(itemId: number): Promise<number> {
 }
 
 interface ItemRow {
-  id: bigint; grupo_id: bigint; grupo_codigo: string; codigo: string; nome: string
+  id: bigint; grupo_id: bigint; grupo_codigo: string; nome: string
   periodicidade: string; classificacao: string | null; mes_inicio: number | null; mes_fim: number | null
   valor_orcado: unknown; valor_orcado_mensal: unknown; comentarios: string | null
 }
 
 export async function getOrcamento(ano: number): Promise<LinhaOrcamento[]> {
   const rows = await prisma.$queryRaw<ItemRow[]>`
-    SELECT ci.id, ci.grupo_id, cg.codigo::text AS grupo_codigo, ci.codigo::text AS codigo,
+    SELECT ci.id, ci.grupo_id, cg.codigo::text AS grupo_codigo,
            ci.nome, ci.periodicidade, ci.classificacao, ci.mes_inicio, ci.mes_fim,
            ci.valor_orcado, ci.valor_orcado_mensal, ci.comentarios
     FROM conta_item ci
@@ -36,14 +36,14 @@ export async function getOrcamento(ano: number): Promise<LinhaOrcamento[]> {
     JOIN exercicio e ON e.id = cg.exercicio_id
     WHERE e.ano = ${ano}
       AND ci.origem = 'orcamento'
-    ORDER BY ci.codigo::numeric
+    ORDER BY ci.id
   `
   return rows.map((r) => {
     const periodicidade = r.periodicidade === "A" ? "A" : "M"
     const valorOrcadoMensal = Number(r.valor_orcado_mensal)
     return {
       id: Number(r.id), grupoId: Number(r.grupo_id), grupoCodigo: r.grupo_codigo,
-      codigo: r.codigo, nome: r.nome, periodicidade,
+      nome: r.nome, periodicidade,
       classificacao: (r.classificacao as LinhaOrcamento["classificacao"]) ?? null,
       mesInicio: r.mes_inicio, mesFim: r.mes_fim,
       valorOrcado: Number(r.valor_orcado), valorOrcadoMensal,
@@ -82,14 +82,10 @@ async function inserirItem(
   db: DbClient = prisma,
 ): Promise<number> {
   const { valorOrcado, valorOrcadoMensal } = normalizarOrcado(input.valor, input.periodicidade)
-  const prox = await db.$queryRaw<{ codigo: number }[]>`
-    SELECT COALESCE(MAX(codigo)::int, (SELECT codigo::int FROM conta_grupo WHERE id = ${input.grupoId})) + 1 AS codigo
-    FROM conta_item WHERE grupo_id = ${input.grupoId}
-  `
   const rows = await db.$queryRaw<{ id: bigint }[]>`
-    INSERT INTO conta_item (grupo_id, codigo, nome, periodicidade, valor_orcado, valor_orcado_mensal,
+    INSERT INTO conta_item (grupo_id, nome, periodicidade, valor_orcado, valor_orcado_mensal,
                             classificacao, mes_inicio, mes_fim, comentarios, origem)
-    VALUES (${input.grupoId}, ${prox[0].codigo}, ${input.nome}, ${input.periodicidade},
+    VALUES (${input.grupoId}, ${input.nome}, ${input.periodicidade},
             ${valorOrcado}::numeric, ${valorOrcadoMensal}::numeric,
             ${input.classificacao ?? null}, ${input.mesInicio ?? null}, ${input.mesFim ?? null},
             ${input.comentarios ?? null}, ${origem})
@@ -127,20 +123,11 @@ export async function criarItemExecucao(input: NovoItemInput): Promise<number> {
   if (vigenciaInvalidaPorFechamento(input.periodicidade, input.mesInicio ?? null, input.mesFim ?? null, statusPorMes)) {
     throw new Error("VIGENCIA_MES_FECHADO")
   }
-  // Retry no conflito de código automático (conta_item_codigo_uq) — corrida rara (admin único).
-  for (let tentativa = 0; ; tentativa++) {
-    try {
-      return await prisma.$transaction(async (tx) => {
-        const id = await inserirItem(input, "execucao", tx)
-        await materializarOrcadoItem(tx, id)
-        return id
-      })
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e)
-      if (tentativa < 2 && msg.includes("conta_item_codigo_uq")) continue
-      throw e
-    }
-  }
+  return prisma.$transaction(async (tx) => {
+    const id = await inserirItem(input, "execucao", tx)
+    await materializarOrcadoItem(tx, id)
+    return id
+  })
 }
 
 export async function atualizarItem(id: number, input: AtualizarItemInput): Promise<void> {
@@ -182,19 +169,19 @@ export async function criarGrupo(
   return Number(rows[0].id)
 }
 
-// Auto-código sob o pai: o namespace de código sob um pai é compartilhado entre subgrupos
-// e itens (itens começam em pai.codigo+1), então o próximo código é GREATEST(max subgrupo,
-// max item)+1; cai em pai.codigo+1 quando o pai não tem nem subgrupos nem itens. Tipo herdado.
+// Auto-código sob o pai: itens não têm mais código, então o namespace de código sob um pai
+// é só dos subgrupos. Próximo código = MAX(subgrupo irmão)+1; cai em pai.codigo+1 quando o
+// pai ainda não tem subgrupos. Tipo herdado do pai.
 async function criarGrupoFilho(
   grupoPaiId: number, nome: string, origem: "orcamento" | "execucao",
 ): Promise<number> {
   const rows = await prisma.$queryRaw<{ id: bigint }[]>`
     INSERT INTO conta_grupo (exercicio_id, codigo, grupo_pai_id, tipo_conta_id, nome, origem)
     SELECT pai.exercicio_id,
-           COALESCE(GREATEST(
-             (SELECT MAX(f.codigo)  FROM conta_grupo f WHERE f.grupo_pai_id = pai.id),
-             (SELECT MAX(it.codigo) FROM conta_item  it WHERE it.grupo_id    = pai.id)
-           ), pai.codigo) + 1,
+           COALESCE(
+             (SELECT MAX(f.codigo) FROM conta_grupo f WHERE f.grupo_pai_id = pai.id),
+             pai.codigo
+           ) + 1,
            pai.id, pai.tipo_conta_id, ${nome}, ${origem}
     FROM conta_grupo pai WHERE pai.id = ${grupoPaiId}
     RETURNING id

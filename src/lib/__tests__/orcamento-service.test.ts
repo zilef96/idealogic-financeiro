@@ -46,7 +46,7 @@ describe("rollupGrupo", () => {
     { id: 2, codigo: "110", codigoPai: "100", tipo: "R", nome: "Filho" },
   ]
   const linha = (grupoCodigo: string, valorOrcado: number, valorOrcadoMensal: number, classificacao: LinhaOrcamento["classificacao"]): LinhaOrcamento => ({
-    id: Math.random(), grupoId: 0, grupoCodigo, codigo: "x", nome: "i", periodicidade: "M",
+    id: Math.random(), grupoId: 0, grupoCodigo, nome: "i", periodicidade: "M",
     classificacao, mesInicio: null, mesFim: null, valorOrcado, valorOrcadoMensal, orcadoPorMes: [], comentarios: null,
   })
   const linhas: LinhaOrcamento[] = [

@@ -26,7 +26,7 @@ export function CategoriasChart({ raizes }: { raizes: CategoriaNode[] }) {
           início
         </button>
         {caminho.map((n, i) => (
-          <span key={n.codigo}>
+          <span key={n.chave}>
             / <button type="button" className="underline" onClick={() => setCaminho(caminho.slice(0, i + 1))}>{n.nome}</button>
           </span>
         ))}
