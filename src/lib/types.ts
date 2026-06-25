@@ -6,7 +6,6 @@ export interface LinhaOrcamento {
   id: number
   grupoId: number
   grupoCodigo: string
-  codigo: string
   nome: string
   periodicidade: Periodicidade
   classificacao: Classificacao | null

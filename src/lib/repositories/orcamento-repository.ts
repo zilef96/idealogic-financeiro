@@ -21,14 +21,14 @@ async function anoDoItem(itemId: number): Promise<number> {
 }
 
 interface ItemRow {
-  id: bigint; grupo_id: bigint; grupo_codigo: string; codigo: string; nome: string
+  id: bigint; grupo_id: bigint; grupo_codigo: string; nome: string
   periodicidade: string; classificacao: string | null; mes_inicio: number | null; mes_fim: number | null
   valor_orcado: unknown; valor_orcado_mensal: unknown; comentarios: string | null
 }
 
 export async function getOrcamento(ano: number): Promise<LinhaOrcamento[]> {
   const rows = await prisma.$queryRaw<ItemRow[]>`
-    SELECT ci.id, ci.grupo_id, cg.codigo::text AS grupo_codigo, ci.codigo::text AS codigo,
+    SELECT ci.id, ci.grupo_id, cg.codigo::text AS grupo_codigo,
            ci.nome, ci.periodicidade, ci.classificacao, ci.mes_inicio, ci.mes_fim,
            ci.valor_orcado, ci.valor_orcado_mensal, ci.comentarios
     FROM conta_item ci
@@ -36,14 +36,14 @@ export async function getOrcamento(ano: number): Promise<LinhaOrcamento[]> {
     JOIN exercicio e ON e.id = cg.exercicio_id
     WHERE e.ano = ${ano}
       AND ci.origem = 'orcamento'
-    ORDER BY ci.codigo::numeric
+    ORDER BY ci.id
   `
   return rows.map((r) => {
     const periodicidade = r.periodicidade === "A" ? "A" : "M"
     const valorOrcadoMensal = Number(r.valor_orcado_mensal)
     return {
       id: Number(r.id), grupoId: Number(r.grupo_id), grupoCodigo: r.grupo_codigo,
-      codigo: r.codigo, nome: r.nome, periodicidade,
+      nome: r.nome, periodicidade,
       classificacao: (r.classificacao as LinhaOrcamento["classificacao"]) ?? null,
       mesInicio: r.mes_inicio, mesFim: r.mes_fim,
       valorOrcado: Number(r.valor_orcado), valorOrcadoMensal,
