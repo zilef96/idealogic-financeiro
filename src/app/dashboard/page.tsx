@@ -22,6 +22,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   const linhas: LinhaDash[] = linhasExec.map((l) => ({
     codigo: l.codigo, codigoPai: l.codigoPai, nome: l.nome, isGrupo: l.isGrupo,
+    itemId: l.itemId,
     mes: l.mes, orcado: l.orcado, realizado: l.realizado,
   }))
 

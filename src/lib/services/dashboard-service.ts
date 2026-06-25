@@ -10,6 +10,7 @@ export interface LinhaDash {
   codigoPai: string
   nome: string
   isGrupo: boolean
+  itemId: number | null
   mes: number
   orcado: number
   realizado: number | null
@@ -24,9 +25,14 @@ export function construirTotais(linhas: LinhaDash[], campo: Campo, mes: number):
     return (campo === "orcado" ? l.orcado : l.realizado) ?? 0
   }
   const vg = (cod: string) => val(cod, true)
-  const vi = (cod: string) => val(cod, false)
+  // Item de tributo identificado pelo grupo pai (10200) + nome (item não tem mais código).
+  const viNome = (codigoPai: string, nome: string) => {
+    const l = linhas.find((x) => !x.isGrupo && x.codigoPai === codigoPai && x.nome === nome && x.mes === mes)
+    if (!l) return 0
+    return (campo === "orcado" ? l.orcado : l.realizado) ?? 0
+  }
   return {
-    faturamento: vg("10000"), cotas: vg("10100"), tributosFat: vg("10200"), tributacaoLucro: vi("10204"),
+    faturamento: vg("10000"), cotas: vg("10100"), tributosFat: vg("10200"), tributacaoLucro: viNome("10200", "CSLL e IRPJ"),
     custos: vg("20000"), despesas: vg("30000"), dividendos: vg("40000"),
     custosOperacionais: vg("33000"),
     despAdmFinComl: vg("31000") + vg("32000") + vg("33000") + vg("34000"),
@@ -119,12 +125,13 @@ export interface PontoTributo {
 }
 
 export function serieTributos(linhas: LinhaDash[]): PontoTributo[] {
-  const itemReal = (cod: string, mes: number) =>
-    linhas.find((l) => l.codigo === cod && l.mes === mes && !l.isGrupo)?.realizado ?? 0
+  // Tributos identificados pelo grupo pai (10200) + nome (item não tem mais código).
+  const itemReal = (nome: string, mes: number) =>
+    linhas.find((l) => !l.isGrupo && l.codigoPai === "10200" && l.nome === nome && l.mes === mes)?.realizado ?? 0
   return MESES.map((mes) => {
     const pend = !temRealizadoNoMes(linhas, mes)
     if (pend) return { mes, pis: null, cofins: null, issqn: null, cargaPercentual: null, pendente: true }
-    const pis = itemReal("10201", mes), cofins = itemReal("10202", mes), issqn = itemReal("10203", mes)
+    const pis = itemReal("PIS", mes), cofins = itemReal("COFINS", mes), issqn = itemReal("ISSQN", mes)
     const fat = faturamentoServicos(construirTotais(linhas, "realizado", mes))
     const carga = fat === 0 ? null : ((pis + cofins + issqn) / fat) * 100
     return { mes, pis, cofins, issqn, cargaPercentual: carga, pendente: false }
@@ -132,27 +139,33 @@ export function serieTributos(linhas: LinhaDash[]): PontoTributo[] {
 }
 
 export interface CategoriaNode {
-  codigo: string; nome: string; tipo: "R" | "C" | "D" | "E" | "?"; valor: number; filhos: CategoriaNode[]
+  chave: string; codigo: string; nome: string; tipo: "R" | "C" | "D" | "E" | "?"; valor: number; filhos: CategoriaNode[]
 }
 
 function tipoPorCodigo(codigo: string): CategoriaNode["tipo"] {
   switch (codigo[0]) { case "1": return "R"; case "2": return "C"; case "3": return "D"; case "4": return "E"; default: return "?" }
 }
 
+// Chave estável: grupo por código, item por id (item não tem código próprio).
+function chaveDash(l: { isGrupo: boolean; codigo: string; itemId: number | null }): string {
+  return l.isGrupo ? `g:${l.codigo}` : `i:${l.itemId}`
+}
+
 export function arvoreCategorias(linhas: LinhaDash[]): CategoriaNode[] {
-  // Acumula realizado no ano por código (mantém nome/pai/isGrupo do primeiro encontro).
-  const acc = new Map<string, { nome: string; pai: string; isGrupo: boolean; valor: number }>()
+  // Acumula realizado no ano por nó; item chaveado por id, tipo/hierarquia pelo pai (grupo).
+  const acc = new Map<string, { codigo: string; nome: string; pai: string; tipoCod: string; valor: number }>()
   for (const l of linhas) {
-    const e = acc.get(l.codigo) ?? { nome: l.nome, pai: l.codigoPai, isGrupo: l.isGrupo, valor: 0 }
+    const k = chaveDash(l)
+    const e = acc.get(k) ?? { codigo: l.codigo, nome: l.nome, pai: l.codigoPai, tipoCod: l.isGrupo ? l.codigo : l.codigoPai, valor: 0 }
     e.valor += l.realizado ?? 0
-    acc.set(l.codigo, e)
+    acc.set(k, e)
   }
   const nodes = new Map<string, CategoriaNode>()
-  for (const [codigo, e] of acc) nodes.set(codigo, { codigo, nome: e.nome, tipo: tipoPorCodigo(codigo), valor: e.valor, filhos: [] })
+  for (const [k, e] of acc) nodes.set(k, { chave: k, codigo: e.codigo, nome: e.nome, tipo: tipoPorCodigo(e.tipoCod), valor: e.valor, filhos: [] })
   const raizes: CategoriaNode[] = []
-  for (const [codigo, e] of acc) {
-    const node = nodes.get(codigo)!
-    const pai = e.pai && nodes.get(e.pai)
+  for (const [k, e] of acc) {
+    const node = nodes.get(k)!
+    const pai = e.pai ? nodes.get(`g:${e.pai}`) : undefined   // pai é sempre um grupo
     if (pai) pai.filhos.push(node)
     else raizes.push(node)
   }
@@ -164,7 +177,7 @@ export function arvoreCategorias(linhas: LinhaDash[]): CategoriaNode[] {
     return n.valor
   }
   raizes.forEach(rollup)
-  const ordena = (ns: CategoriaNode[]) => { ns.sort((a, b) => a.codigo.localeCompare(b.codigo)); ns.forEach((n) => ordena(n.filhos)) }
+  const ordena = (ns: CategoriaNode[]) => { ns.sort((a, b) => a.chave.localeCompare(b.chave)); ns.forEach((n) => ordena(n.filhos)) }
   ordena(raizes)
   return raizes
 }
@@ -172,14 +185,15 @@ export function arvoreCategorias(linhas: LinhaDash[]): CategoriaNode[] {
 export function topDespesas(linhas: LinhaDash[], n: number): { nome: string; valor: number }[] {
   const acc = new Map<string, number>()
   for (const l of linhas) {
-    if (l.isGrupo || l.codigo[0] !== "3") continue
+    if (l.isGrupo) continue
+    if ((l.codigoPai[0] ?? "") !== "3") continue      // folha de despesa (bloco 3) pelo pai
     acc.set(l.nome, (acc.get(l.nome) ?? 0) + (l.realizado ?? 0))
   }
   return [...acc.entries()].map(([nome, valor]) => ({ nome, valor }))
     .filter((d) => d.valor > 0).sort((a, b) => b.valor - a.valor).slice(0, n)
 }
 
-export interface ClientePareto { codigo: string; nome: string; receita: number; percentual: number; acumulado: number }
+export interface ClientePareto { id: number; nome: string; receita: number; percentual: number; acumulado: number }
 
 export function paretoClientes(clientes: ReceitaCliente[]): ClientePareto[] {
   const ordenado = [...clientes].sort((a, b) => b.realizado - a.realizado)
@@ -188,7 +202,7 @@ export function paretoClientes(clientes: ReceitaCliente[]): ClientePareto[] {
   return ordenado.map((c) => {
     const percentual = total === 0 ? 0 : (c.realizado / total) * 100
     acc += percentual
-    return { codigo: c.codigo, nome: c.nome, receita: c.realizado, percentual, acumulado: total === 0 ? 0 : acc }
+    return { id: c.id, nome: c.nome, receita: c.realizado, percentual, acumulado: total === 0 ? 0 : acc }
   })
 }
 

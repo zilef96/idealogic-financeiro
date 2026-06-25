@@ -7,9 +7,15 @@ import {
 } from "@/lib/services/dashboard-service"
 
 // Helper: cria linhas para um único mês. `vals` mapeia codigo→{orcado,realizado}.
+// Itens (grupo:false) não têm código próprio: ganham itemId (derivado do rótulo) e codigo vazio.
 function linhas(mes: number, vals: Record<string, { o: number; r: number | null; grupo?: boolean; pai?: string }>): LinhaDash[] {
   return Object.entries(vals).map(([codigo, v]) => ({
-    codigo, codigoPai: v.pai ?? "", nome: codigo, isGrupo: v.grupo ?? true, mes,
+    codigo: v.grupo === false ? "" : codigo,
+    codigoPai: v.pai ?? "",
+    nome: codigo,
+    isGrupo: v.grupo ?? true,
+    itemId: v.grupo === false ? Number(codigo) : null,
+    mes,
     orcado: v.o, realizado: v.r,
   }))
 }
@@ -19,7 +25,7 @@ describe("construirTotais", () => {
     "10000": { o: 100, r: 90 }, "10100": { o: 10, r: 8 }, "10200": { o: 5, r: 4 },
     "20000": { o: 30, r: 25 }, "30000": { o: 20, r: 18 }, "40000": { o: 10, r: 9 },
     "31000": { o: 5, r: 4 }, "32000": { o: 3, r: 2 }, "33000": { o: 4, r: 3 }, "34000": { o: 2, r: 1 },
-    "10204": { o: 1, r: 1, grupo: false },
+    "CSLL e IRPJ": { o: 1, r: 1, grupo: false, pai: "10200" },
   })
   it("monta TotaisMes do realizado", () => {
     const t = construirTotais(ls, "realizado", 1)
@@ -139,7 +145,7 @@ describe("serieCaixa", () => {
 describe("serieTributos", () => {
   const ls = linhas(1, {
     "10000": { o: 1000, r: 1000 }, "10100": { o: 0, r: 0 }, "10200": { o: 0, r: 0 },
-    "10201": { o: 0, r: 16.5, grupo: false }, "10202": { o: 0, r: 76, grupo: false }, "10203": { o: 0, r: 25, grupo: false },
+    "PIS": { o: 0, r: 16.5, grupo: false, pai: "10200" }, "COFINS": { o: 0, r: 76, grupo: false, pai: "10200" }, "ISSQN": { o: 0, r: 25, grupo: false, pai: "10200" },
   })
   it("soma os três tributos e calcula carga % sobre faturamento de serviços", () => {
     const s = serieTributos(ls)
@@ -165,8 +171,8 @@ describe("arvoreCategorias", () => {
     expect(bloco.tipo).toBe("D")
     expect(bloco.valor).toBe(60) // 30+20+10
     const grupo = bloco.filhos.find((n) => n.codigo === "31000")!
-    expect(grupo.filhos.map((f) => f.codigo).sort()).toEqual(["31100", "31200"])
-    expect(grupo.filhos.find((f) => f.codigo === "31100")!.valor).toBe(40)
+    expect(grupo.filhos.map((f) => f.nome).sort()).toEqual(["31100", "31200"])
+    expect(grupo.filhos.find((f) => f.nome === "31100")!.valor).toBe(40)
   })
 })
 
@@ -184,16 +190,16 @@ describe("topDespesas", () => {
 describe("paretoClientes", () => {
   it("calcula percentual individual e acumulado, ordenado desc", () => {
     const p = paretoClientes([
-      { codigo: "a", nome: "A", realizado: 60, orcado: 0 },
-      { codigo: "b", nome: "B", realizado: 30, orcado: 0 },
-      { codigo: "c", nome: "C", realizado: 10, orcado: 0 },
+      { id: 1, nome: "A", realizado: 60, orcado: 0 },
+      { id: 2, nome: "B", realizado: 30, orcado: 0 },
+      { id: 3, nome: "C", realizado: 10, orcado: 0 },
     ])
     expect(p[0]).toMatchObject({ nome: "A", receita: 60, percentual: 60, acumulado: 60 })
     expect(p[1].acumulado).toBe(90)
     expect(p[2].acumulado).toBe(100)
   })
   it("lida com total zero sem dividir por zero", () => {
-    const p = paretoClientes([{ codigo: "a", nome: "A", realizado: 0, orcado: 0 }])
+    const p = paretoClientes([{ id: 1, nome: "A", realizado: 0, orcado: 0 }])
     expect(p[0]).toMatchObject({ percentual: 0, acumulado: 0 })
   })
 })
