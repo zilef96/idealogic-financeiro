@@ -1,7 +1,7 @@
 "use client"
 import { useState } from "react"
 import { usePathname } from "next/navigation"
-import { Calculator, FileCog, LayoutDashboard, ListTodo, type LucideIcon } from "lucide-react"
+import { Calculator, FileCog, LayoutDashboard, ListTodo, Menu, type LucideIcon } from "lucide-react"
 import { ThemeToggle } from "@/components/theme/theme-toggle"
 import { UserMenu } from "@/components/shell/user-menu"
 import { Logo } from "@/components/brand/logo"
@@ -30,11 +30,11 @@ export function AppShell({
   const pathname = usePathname()
   const itens = usuario?.perfil === "admin" ? ITENS_ADMIN : ITENS_SOCIO
   return (
-    <div className="min-h-screen md:grid md:grid-cols-[16rem_1fr]">
-      {/* Sidebar: drawer no mobile, fixa no desktop */}
+    <div className="min-h-screen xl:grid xl:grid-cols-[16rem_1fr]">
+      {/* Sidebar: drawer no mobile/tablet, fixa só no desktop largo (≥xl) para dar largura total à tabela */}
       <aside
         className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-border bg-background
-          transition-transform md:static md:translate-x-0
+          transition-transform xl:static xl:translate-x-0
           ${aberto ? "translate-x-0" : "-translate-x-full"}`}
       >
         {/* Cabeçalho da marca */}
@@ -67,14 +67,14 @@ export function AppShell({
         </nav>
       </aside>
       {aberto && (
-        <div className="fixed inset-0 z-30 bg-black/40 md:hidden" onClick={() => setAberto(false)} />
+        <div className="fixed inset-0 z-30 bg-black/40 xl:hidden" onClick={() => setAberto(false)} />
       )}
       <div className="flex min-h-screen min-w-0 flex-col">
         <header className="flex items-center justify-between border-b border-border p-3">
           <button
-            type="button" className="md:hidden rounded-md border border-border px-2 py-1"
+            type="button" className="xl:hidden rounded-md border border-border p-2"
             aria-label="Abrir menu" onClick={() => setAberto(true)}
-          >☰</button>
+          ><Menu size={18} strokeWidth={2} aria-hidden /></button>
           <span className="font-semibold">Dashboard Financeiro</span>
           <div className="flex items-center gap-2">
             <ThemeToggle />

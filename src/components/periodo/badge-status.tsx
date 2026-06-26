@@ -1,8 +1,22 @@
 "use client"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { Send, Undo2 } from "lucide-react"
+import { btn, btnPrimary } from "@/components/ui/botao"
 
-export function BadgeStatus({ ano, status }: { ano: number; status: "rascunho" | "publicado" }) {
+// Rótulo de estado do exercício (pertence ao título).
+export function BadgeStatus({ status }: { status: "rascunho" | "publicado" }) {
+  const publicado = status === "publicado"
+  return (
+    <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
+      style={{ color: publicado ? "rgb(var(--pos))" : "rgb(var(--amber))", background: publicado ? "rgb(var(--pos-soft))" : "rgb(var(--amber-soft))" }}>
+      {publicado ? "Publicado" : "Rascunho"}
+    </span>
+  )
+}
+
+// Ação de publicar/despublicar o exercício.
+export function BotaoPublicar({ ano, status }: { ano: number; status: "rascunho" | "publicado" }) {
   const router = useRouter()
   const [salvando, setSalvando] = useState(false)
   const publicado = status === "publicado"
@@ -17,15 +31,11 @@ export function BadgeStatus({ ano, status }: { ano: number; status: "rascunho" |
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
-        style={{ color: publicado ? "rgb(var(--pos))" : "rgb(var(--amber))", background: publicado ? "rgb(var(--pos-soft))" : "rgb(var(--amber-soft))" }}>
-        {publicado ? "Publicado" : "Rascunho"}
-      </span>
-      <button type="button" onClick={alternar} disabled={salvando}
-        className="rounded-full border border-border bg-card px-3 py-1 text-[12px] font-medium hover:bg-faint disabled:opacity-60">
-        {publicado ? "Despublicar" : "Publicar orçamento"}
-      </button>
-    </div>
+    <button type="button" onClick={alternar} disabled={salvando}
+      className={publicado ? btn : btnPrimary}>
+      {publicado
+        ? <><Undo2 size={16} strokeWidth={2} aria-hidden /> Despublicar</>
+        : <><Send size={16} strokeWidth={2} aria-hidden /> Publicar orçamento</>}
+    </button>
   )
 }

@@ -8,7 +8,7 @@ import { vigenciaInvalidaPorFechamento } from "@/lib/services/orcamento-service"
 
 const inputCls = "mt-1 w-full rounded border border-border bg-background p-2 text-sm"
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
-const ROTULO_BLOCO: Record<TipoConta, string> = { R: "Receita", C: "Custo", D: "Despesa", E: "Estrutura" }
+const ROTULO_BLOCO: Record<TipoConta, string> = { R: "Receita", C: "Custo", D: "Despesa", E: "Dividendos" }
 
 type StatusPorMes = Record<number, "aberto" | "concluido">
 
@@ -176,7 +176,7 @@ export function NovoItem({
                 {niveis.map((opcoes, d) => (
                   <label key={d} className="block text-sm">{d === 0 ? "Grupo (opcional)" : "Subgrupo (opcional)"}
                     <select className={inputCls} value={caminho[d] ?? ""} onChange={(e) => escolherNivel(d, e.target.value)}>
-                      <option value="">{d === 0 ? "— (direto no bloco)" : "— (parar aqui)"}</option>
+                      <option value="">{d === 0 ? "Nenhum (criar direto no bloco)" : "Nenhum (não aprofundar)"}</option>
                       {opcoes.map((g) => <option key={g.id} value={g.codigo}>{g.codigo} — {g.nome}</option>)}
                     </select>
                   </label>
@@ -192,7 +192,7 @@ export function NovoItem({
 
             <label className="block text-sm">Nome
               <input className={inputCls} value={nome} onChange={(e) => setNome(e.target.value)}
-                placeholder="Ex.: Cliente Exemplo — sustentação" />
+                placeholder="Ex.: Sustentação mensal" />
             </label>
 
             <div className="flex gap-3">

@@ -24,7 +24,7 @@ export function EditarCategoria({ grupo, aberto, onClose }: {
     })
     setSalvando(false)
     if (r.ok) { onClose(); router.refresh(); toast({ tipo: "sucesso", texto: "Categoria renomeada." }); return }
-    if (r.status === 401 || r.status === 403) setErro("Sem permissão.")
+    if (r.status === 401 || r.status === 403) setErro("Você não tem permissão para esta ação.")
     else if (r.status === 409) setErro("Orçamento publicado; despublique para editar.")
     else setErro("Não foi possível renomear.")
   }
