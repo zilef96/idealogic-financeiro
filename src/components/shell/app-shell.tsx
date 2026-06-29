@@ -30,57 +30,56 @@ export function AppShell({
   const pathname = usePathname()
   const itens = usuario?.perfil === "admin" ? ITENS_ADMIN : ITENS_SOCIO
   return (
-    <div className="min-h-screen xl:grid xl:grid-cols-[16rem_1fr]">
-      {/* Sidebar: drawer no mobile/tablet, fixa só no desktop largo (≥xl) para dar largura total à tabela */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-border bg-background
-          transition-transform xl:static xl:translate-x-0
-          ${aberto ? "translate-x-0" : "-translate-x-full"}`}
-      >
-        {/* Cabeçalho da marca */}
-        <div className="flex items-center gap-2.5 border-b border-border px-4 py-4">
-          <Logo size={28} />
-          <span className="font-display text-base font-semibold tracking-tight">Idealogic</span>
+    <div className="flex min-h-screen flex-col">
+      {/* Barra do topo (largura total): marca à esquerda; tema + perfil à direita.
+          O botão de menu (hambúrguer) só aparece no mobile, para abrir a sidebar em drawer. */}
+      <header className="sticky top-0 z-20 flex items-center gap-2.5 border-b border-border bg-background px-4 py-3">
+        <button
+          type="button" className="xl:hidden rounded-md border border-border p-2"
+          aria-label="Abrir menu" onClick={() => setAberto(true)}
+        ><Menu size={18} strokeWidth={2} aria-hidden /></button>
+        <Logo size={28} />
+        <span className="font-display text-base font-semibold tracking-tight">Idealogic</span>
+        <div className="ml-auto flex items-center gap-2">
+          <ThemeToggle />
+          {usuario && <UserMenu usuario={usuario} />}
         </div>
-        <nav className="flex-1 space-y-1 p-3 text-sm" aria-label="Navegação principal">
-          {itens.map((item) => {
-            const ativo = pathname === item.href || pathname.startsWith(`${item.href}/`)
-            const Icone = item.icon
-            return (
-              <a
-                key={item.href}
-                href={item.href}
-                aria-current={ativo ? "page" : undefined}
-                onClick={() => setAberto(false)}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 font-medium transition-colors
-                  ${
-                    ativo
-                      ? "bg-foreground text-background"
-                      : "text-muted hover:bg-muted/10 hover:text-foreground"
-                  }`}
-              >
-                <Icone size={18} strokeWidth={2} aria-hidden />
-                {item.label}
-              </a>
-            )
-          })}
-        </nav>
-      </aside>
-      {aberto && (
-        <div className="fixed inset-0 z-30 bg-black/40 xl:hidden" onClick={() => setAberto(false)} />
-      )}
-      <div className="flex min-h-screen min-w-0 flex-col">
-        <header className="flex items-center justify-between border-b border-border p-3">
-          <button
-            type="button" className="xl:hidden rounded-md border border-border p-2"
-            aria-label="Abrir menu" onClick={() => setAberto(true)}
-          ><Menu size={18} strokeWidth={2} aria-hidden /></button>
-          <span className="font-semibold">Dashboard Financeiro</span>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            {usuario && <UserMenu usuario={usuario} />}
-          </div>
-        </header>
+      </header>
+
+      <div className="flex-1 xl:grid xl:grid-cols-[16rem_1fr]">
+        {/* Sidebar: drawer no mobile/tablet, fixa só no desktop largo (≥xl) para dar largura total à tabela */}
+        <aside
+          className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-border bg-background
+            transition-transform xl:static xl:translate-x-0
+            ${aberto ? "translate-x-0" : "-translate-x-full"}`}
+        >
+          <nav className="flex-1 space-y-1 p-3 text-sm" aria-label="Navegação principal">
+            {itens.map((item) => {
+              const ativo = pathname === item.href || pathname.startsWith(`${item.href}/`)
+              const Icone = item.icon
+              return (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  aria-current={ativo ? "page" : undefined}
+                  onClick={() => setAberto(false)}
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2 font-medium transition-colors
+                    ${
+                      ativo
+                        ? "bg-foreground text-background"
+                        : "text-muted hover:bg-muted/10 hover:text-foreground"
+                    }`}
+                >
+                  <Icone size={18} strokeWidth={2} aria-hidden />
+                  {item.label}
+                </a>
+              )
+            })}
+          </nav>
+        </aside>
+        {aberto && (
+          <div className="fixed inset-0 z-30 bg-black/40 xl:hidden" onClick={() => setAberto(false)} />
+        )}
         <main className="min-w-0 flex-1 p-4">{children}</main>
       </div>
     </div>
