@@ -4,7 +4,7 @@ import type { LinhaOrcamento, GrupoOrcamento, Classificacao } from "@/lib/types"
 import { rollupGrupo, ehEssencial } from "@/lib/services/orcamento-service"
 import { AlteracoesNaoSalvasProvider, useAlteracoesNaoSalvas } from "@/components/execucao/alteracoes-nao-salvas"
 import { Lock, LockOpen, Pencil, Trash2, ChevronsUpDown, ChevronsDownUp } from "lucide-react"
-import { btn, btnGhost } from "@/components/ui/botao"
+import { btn } from "@/components/ui/botao"
 import { CampoValorOrcado } from "./campo-valor-orcado"
 import { EditarCategoria } from "./editar-categoria"
 import { ConfirmarExclusao } from "./confirmar-exclusao"
@@ -305,7 +305,7 @@ function TabelaOrcamentoInterno({ linhas, grupos, rascunho }: { linhas: LinhaOrc
         <div className="flex flex-wrap items-center gap-2">
           {rascunho && <BotaoCadeado editando={editando} onToggle={alternarCadeado} />}
           {rascunho && <MenuAdicionarOrcamento grupos={grupos} />}
-          <button type="button" onClick={toggleTudo} className={btnGhost}
+          <button type="button" onClick={toggleTudo} className={btn}
             title={tudo ? "Recolher tudo" : "Expandir tudo"} aria-label={tudo ? "Recolher tudo" : "Expandir tudo"}>
             {tudo
               ? <><ChevronsDownUp size={16} strokeWidth={2} aria-hidden /> <span className="hidden sm:inline">Recolher tudo</span></>
