@@ -105,7 +105,10 @@ body {
   grid-template-columns: minmax(200px, 1fr) 130px 150px 110px;
   align-items: center;
 }
-@media (max-width: 820px) {
-  .exec-row { grid-template-columns: minmax(150px, 1fr) 110px 130px; }
-  .exec-hide-sm { display: none; }
+/* Abaixo de 900px a grade vira lista (igual à Orçamentação): nome em cima, valores empilhados.
+   A grade some e as .exec-mobile-row assumem. */
+.exec-mobile-row { display: none; }
+@media (max-width: 900px) {
+  .exec-row { display: none; }
+  .exec-mobile-row { display: flex; }
 }
