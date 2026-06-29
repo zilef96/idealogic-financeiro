@@ -6,7 +6,7 @@ import { useToast } from "@/components/ui/toast"
 import { blocosDisponiveis, raizDoBloco, filhosDe } from "@/lib/services/cascata-grupos"
 
 const inputCls = "mt-1 w-full rounded border border-border bg-background p-2 text-sm"
-const ROTULO_BLOCO: Record<TipoConta, string> = { R: "Receita", C: "Custo", D: "Despesa", E: "Estrutura" }
+const ROTULO_BLOCO: Record<TipoConta, string> = { R: "Receita", C: "Custo", D: "Despesa", E: "Dividendos" }
 
 export function NovaCategoria({ grupos, aberto, onClose, endpoint = "/api/execucao/grupo" }: {
   grupos: GrupoOrcamento[]
@@ -85,7 +85,7 @@ export function NovaCategoria({ grupos, aberto, onClose, endpoint = "/api/execuc
         {niveis.map((opcoes, d) => (
           <label key={d} className="block text-sm">{d === 0 ? "Grupo pai" : "Subgrupo pai"}
             <select className={inputCls} value={caminho[d] ?? ""} onChange={(e) => escolherNivel(d, e.target.value)}>
-              <option value="">{d === 0 ? "Selecione…" : "— (parar aqui)"}</option>
+              <option value="">{d === 0 ? "Selecione…" : "Nenhum (não aprofundar)"}</option>
               {opcoes.map((g) => <option key={g.id} value={g.codigo}>{g.codigo} — {g.nome}</option>)}
             </select>
           </label>

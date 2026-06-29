@@ -1,6 +1,8 @@
 "use client"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { CalendarPlus, ChevronDown } from "lucide-react"
+import { btn } from "@/components/ui/botao"
 
 export function SeletorPeriodo({ ano, anos }: { ano: number; anos: number[] }) {
   const router = useRouter()
@@ -35,13 +37,18 @@ export function SeletorPeriodo({ ano, anos }: { ano: number; anos: number[] }) {
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <select className="rounded border border-border bg-background p-1.5" value={ano}
-        onChange={(e) => router.push(`/orcamento?ano=${e.target.value}`)}>
-        {anos.map((a) => <option key={a} value={a}>{a}</option>)}
-      </select>
-      <button className="rounded border border-border px-2 py-1.5 text-sm" onClick={abrir}>
-        + Novo período
+    <div className="flex items-center gap-2 sm:border-l sm:border-border sm:pl-3">
+      <div className="relative">
+        <select
+          className="h-8 cursor-pointer appearance-none rounded-full border border-border bg-card pl-3 pr-8 text-[13px] font-medium hover:bg-faint"
+          value={ano} onChange={(e) => router.push(`/orcamento?ano=${e.target.value}`)}>
+          {anos.map((a) => <option key={a} value={a}>{a}</option>)}
+        </select>
+        <ChevronDown size={15} strokeWidth={2} aria-hidden
+          className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[color:rgb(var(--muted))]" />
+      </div>
+      <button className={btn} onClick={abrir} title="Novo período" aria-label="Novo período">
+        <CalendarPlus size={16} strokeWidth={2} aria-hidden /> <span className="hidden sm:inline">Novo período</span>
       </button>
       {criando && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setCriando(false)}>
@@ -62,7 +69,7 @@ export function SeletorPeriodo({ ano, anos }: { ano: number; anos: number[] }) {
               </label>
               <label className="flex items-center gap-2">
                 <input type="radio" name="origem" checked={doZero} onChange={() => setDoZero(true)} />
-                Começar do zero (só os blocos R/C/D/E)
+                Estrutura em branco (apenas os blocos R/C/D/E)
               </label>
             </fieldset>
             {erro && <p className="text-sm text-red-600 dark:text-red-400">{erro}</p>}

@@ -78,14 +78,26 @@ body {
 /* Grade única partilhada por banda/grupos/subgrupos/itens — garante que as colunas "batem" */
 .orc-row {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) 116px 116px 116px 116px minmax(150px, 210px);
+  grid-template-columns: minmax(200px, 1fr) 112px 124px 100px 100px minmax(130px, 200px) 60px;
   align-items: center;
 }
+/* Tablet/mobile (≤900px): troca a tabela por layout em lista (nome em cima, valores embaixo),
+   evitando colunas espremidas nos tablets em retrato. A grade some e as .orc-mobile-row assumem. */
+.orc-mobile-row { display: none; }
 @media (max-width: 900px) {
-  .orc-row { grid-template-columns: minmax(160px, 1fr) 96px 96px 96px 96px; }
-  .orc-col-com { display: none; }
+  .orc-row { display: none; }
+  .orc-mobile-row { display: flex; }
 }
 .orc-tot { text-align: right; padding-right: 14px; }
+.orc-col-acoes { padding-right: 10px; }
+
+/* Ações da linha: sempre visíveis no toque; só escondem/revelam no hover em quem tem mouse */
+.acoes-linha { opacity: 1; }
+@media (hover: hover) {
+  .acoes-linha { opacity: 0; transition: opacity 0.15s ease; }
+  .group:hover .acoes-linha,
+  .group:focus-within .acoes-linha { opacity: 1; }
+}
 
 /* Grade da execução no modo "mês único" (Conta | Orç. mensal | Realizado | Desvio) */
 .exec-row {
@@ -93,7 +105,10 @@ body {
   grid-template-columns: minmax(200px, 1fr) 130px 150px 110px;
   align-items: center;
 }
-@media (max-width: 820px) {
-  .exec-row { grid-template-columns: minmax(150px, 1fr) 110px 130px; }
-  .exec-hide-sm { display: none; }
+/* Abaixo de 900px a grade vira lista (igual à Orçamentação): nome em cima, valores empilhados.
+   A grade some e as .exec-mobile-row assumem. */
+.exec-mobile-row { display: none; }
+@media (max-width: 900px) {
+  .exec-row { display: none; }
+  .exec-mobile-row { display: flex; }
 }

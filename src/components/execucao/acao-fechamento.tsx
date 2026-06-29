@@ -66,7 +66,7 @@ export function AcaoFechamento({ ano, mes, status, auditoria }: { ano: number; m
               style={{ color: "rgb(var(--muted))" }}>i</button>
             {logAberto && (
               <div role="dialog" aria-label="Histórico da competência"
-                className="absolute right-0 top-6 z-20 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-card p-3 text-[12px] shadow-lg">
+                className="absolute left-1/2 top-6 z-50 w-72 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-xl border border-border bg-card p-3 text-[12px] shadow-lg">
                 <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "rgb(var(--muted))" }}>Histórico da competência</div>
                 <ul className="space-y-1.5">
                   {eventos.map((ev, i) => (

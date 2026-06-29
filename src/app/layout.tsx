@@ -2,9 +2,7 @@ import "./globals.css"
 import type { Metadata } from "next"
 import { Bricolage_Grotesque, Hanken_Grotesk, JetBrains_Mono } from "next/font/google"
 import { ThemeProvider } from "@/components/theme/theme-provider"
-import { AppShell } from "@/components/shell/app-shell"
 import { ToastProvider } from "@/components/ui/toast"
-import { getUsuario } from "@/lib/auth-server"
 
 const bricolage = Bricolage_Grotesque({ variable: "--font-bricolage", subsets: ["latin"] })
 const hanken = Hanken_Grotesk({ variable: "--font-hanken", subsets: ["latin"] })
@@ -12,11 +10,7 @@ const jetbrains = JetBrains_Mono({ variable: "--font-jetbrains", subsets: ["lati
 
 export const metadata: Metadata = { title: "Dashboard Financeiro Idealogic" }
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const sessao = await getUsuario()
-  const usuario = sessao
-    ? { nome: sessao.nome, email: sessao.email, perfil: sessao.perfil }
-    : null
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="pt-BR"
@@ -25,9 +19,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     >
       <body>
         <ThemeProvider>
-          <ToastProvider>
-            <AppShell usuario={usuario}>{children}</AppShell>
-          </ToastProvider>
+          <ToastProvider>{children}</ToastProvider>
         </ThemeProvider>
       </body>
     </html>
