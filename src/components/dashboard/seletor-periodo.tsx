@@ -4,7 +4,7 @@ import { NOMES_MES } from "./formatos"
 
 const MESES_LONGOS = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
 
-export function SeletorPeriodo({ ano, mes }: { ano: number; mes: number | null }) {
+export function SeletorPeriodo({ ano, mes, permitirTodos = true }: { ano: number; mes: number | null; permitirTodos?: boolean }) {
   const router = useRouter()
   const pathname = usePathname()
   const params = useSearchParams()
@@ -36,7 +36,7 @@ export function SeletorPeriodo({ ano, mes }: { ano: number; mes: number | null }
         value={mes ?? ""}
         onChange={(e) => navegar({ mes: e.target.value === "" ? null : Number(e.target.value) })}
       >
-        <option value="">Todos os meses</option>
+        {permitirTodos && <option value="">Todos os meses</option>}
         {MESES_LONGOS.map((nome, i) => (
           <option key={i} value={i + 1}>{nome}</option>
         ))}

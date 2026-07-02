@@ -36,3 +36,26 @@ export async function gravarParametroExercicio(ano: number, chave: ChaveParametr
     DO UPDATE SET valor = EXCLUDED.valor
   `
 }
+
+// Saldos bancários por competência (mensal) — usados pelo Relatório de Informação.
+// Chaves fixas no MVP; contas Sicredi (CC + aplicação) e Banrisul (CC).
+export async function gravarSaldosBancarios(
+  ano: number,
+  mes: number,
+  saldos: { sicrediCc: number; sicrediAplicacao: number; banrisulCc: number },
+): Promise<void> {
+  const comp = `${ano}-${String(mes).padStart(2, "0")}-01`
+  const pares: [string, number][] = [
+    ["saldo_sicredi_cc", saldos.sicrediCc],
+    ["saldo_sicredi_aplicacao", saldos.sicrediAplicacao],
+    ["saldo_banrisul_cc", saldos.banrisulCc],
+  ]
+  for (const [chave, valor] of pares) {
+    await prisma.$executeRaw`
+      INSERT INTO parametro_mensal (exercicio_id, competencia, chave, valor)
+      SELECT e.id, ${comp}::date, ${chave}, ${valor}::numeric FROM exercicio e WHERE e.ano = ${ano}
+      ON CONFLICT (exercicio_id, competencia, chave)
+      DO UPDATE SET valor = EXCLUDED.valor
+    `
+  }
+}

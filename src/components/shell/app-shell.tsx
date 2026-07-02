@@ -1,7 +1,7 @@
 "use client"
 import { useState } from "react"
 import { usePathname } from "next/navigation"
-import { Calculator, FileCog, LayoutDashboard, ListTodo, Menu, type LucideIcon } from "lucide-react"
+import { Calculator, FileCog, FileText, LayoutDashboard, ListTodo, Menu, type LucideIcon } from "lucide-react"
 import { ThemeToggle } from "@/components/theme/theme-toggle"
 import { UserMenu } from "@/components/shell/user-menu"
 import { Logo } from "@/components/brand/logo"
@@ -14,10 +14,14 @@ const ITENS_ADMIN: ItemMenu[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/orcamento", label: "Orçamentação", icon: Calculator },
   { href: "/execucao", label: "Execução", icon: ListTodo },
+  { href: "/relatorio", label: "Relatório", icon: FileText },
   { href: "/parametros", label: "Parâmetros", icon: FileCog },
 ]
 
-const ITENS_SOCIO: ItemMenu[] = [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }]
+const ITENS_SOCIO: ItemMenu[] = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/relatorio", label: "Relatório", icon: FileText },
+]
 
 export function AppShell({
   children,
