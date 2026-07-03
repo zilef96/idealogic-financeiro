@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { PARAMETROS_EXERCICIO, valorExercicio, type ChaveParametro } from "@/lib/services/parametros-service"
+import { type ChaveParametro } from "@/lib/services/parametros-service"
 
 export type SeriesParametros = Record<string, { mes: number; valor: number }[]>
 
@@ -18,17 +18,8 @@ export async function getSeriesParametros(ano: number): Promise<SeriesParametros
   return out
 }
 
-export async function getParametrosExercicio(ano: number): Promise<Record<ChaveParametro, number>> {
-  const series = await getSeriesParametros(ano)
-  const out = {} as Record<ChaveParametro, number>
-  for (const def of PARAMETROS_EXERCICIO) {
-    out[def.chave] = valorExercicio(series[def.chave] ?? [], def.padrao)
-  }
-  return out
-}
-
-export async function gravarParametroExercicio(ano: number, chave: ChaveParametro, valor: number): Promise<void> {
-  const comp = `${ano}-01-01`
+export async function gravarParametroMensal(ano: number, mes: number, chave: ChaveParametro, valor: number): Promise<void> {
+  const comp = `${ano}-${String(mes).padStart(2, "0")}-01`
   await prisma.$executeRaw`
     INSERT INTO parametro_mensal (exercicio_id, competencia, chave, valor)
     SELECT e.id, ${comp}::date, ${chave}, ${valor}::numeric FROM exercicio e WHERE e.ano = ${ano}
