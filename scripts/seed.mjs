@@ -13,6 +13,4 @@ for (const f of [".env.local", ".env"]) {
 const url = process.env.DATABASE_URL
 if (!url) throw new Error("DATABASE_URL ausente")
 execFileSync("psql", [url, "-v", "ON_ERROR_STOP=1", "-f", "prisma/seed.sql"], { stdio: "inherit" })
-// orçado mensal por item (importado da planilha) — depende do seed principal
-execFileSync("psql", [url, "-v", "ON_ERROR_STOP=1", "-f", "prisma/seed-orcado-mensal.sql"], { stdio: "inherit" })
-console.log("Seed aplicado (incl. orçado mensal).")
+console.log("Seed (fictício) aplicado.")
