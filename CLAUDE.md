@@ -51,6 +51,15 @@ node scripts/seed.mjs                  # carrega o seed (espera DATABASE_URL)
 Variáveis de ambiente mínimas (`.env`): `DATABASE_URL` (PostgreSQL) e `AUTH_SECRET`
 (≥ 32 chars, segredo do JWT).
 
+## Banco no Supabase (gerenciado)
+
+Postgres roda no **Supabase**. `.env` tem **duas conexões**: `DATABASE_URL` (pooled 6543,
+`?pgbouncer=true&connection_limit=1`, app) e `DIRECT_URL` (direta 5432, `migrate`/`db pull`).
+
+**Ao mergear alterações de `prisma/migrations/**`, propague ao Supabase** com
+`npx prisma migrate deploy` — senão o banco fica dessincronizado do código (views inclusas,
+pois vivem no SQL das migrations).
+
 ## Arquitetura alvo
 
 **Monólito Next.js 16 (App Router) + React 19 + TypeScript + PostgreSQL.** Backend
