@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server"
-import bcrypt from "bcryptjs"
 import { z } from "zod"
 import { parseBody, handleApiError } from "@/lib/api-helpers"
-import { buscarUsuarioPorEmail } from "@/lib/repositories/usuario-repository"
-import { assinarSessao, COOKIE } from "@/lib/session"
-import type { Perfil } from "@/lib/auth"
+import { criarSupabaseServer } from "@/lib/supabase/server"
+import { buscarUsuarioPorAuthId } from "@/lib/repositories/usuario-repository"
 
 const schema = z.object({ email: z.email(), senha: z.string().min(1) })
 
@@ -12,19 +10,22 @@ export async function POST(req: Request) {
   const parsed = await parseBody(req, schema)
   if (!parsed.ok) return parsed.response
   try {
-    const u = await buscarUsuarioPorEmail(parsed.data.email)
-    if (!u || !(await bcrypt.compare(parsed.data.senha, u.senha_hash))) {
+    const supabase = await criarSupabaseServer()
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: parsed.data.email,
+      password: parsed.data.senha,
+    })
+    if (error || !data.user) {
       return NextResponse.json({ error: "Credenciais inválidas." }, { status: 401 })
     }
-    const token = await assinarSessao({
-      sub: String(u.id), email: u.email, perfil: u.perfil as Perfil, nome: u.nome,
-    })
-    const res = NextResponse.json({ perfil: u.perfil, nome: u.nome })
-    res.cookies.set(COOKIE, token, {
-      httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production",
-      path: "/", maxAge: 60 * 60 * 8,
-    })
-    return res
+    const perfilRow = await buscarUsuarioPorAuthId(data.user.id)
+    if (!perfilRow) {
+      // autenticou no Supabase mas não tem perfil no app → sem acesso.
+      await supabase.auth.signOut()
+      return NextResponse.json({ error: "Usuário sem perfil ativo." }, { status: 403 })
+    }
+    // signInWithPassword já gravou os cookies de sessão via o adaptador do server client.
+    return NextResponse.json({ perfil: perfilRow.perfil, nome: perfilRow.nome })
   } catch (e) {
     return handleApiError(e, "Falha no login.")
   }
