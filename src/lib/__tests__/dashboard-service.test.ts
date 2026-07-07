@@ -253,7 +253,7 @@ describe("montarDashboard", () => {
   it("monta o payload completo com a competência de referência", () => {
     const p = montarDashboard({
       ano: 2026, linhas: ls, series: {}, tesouraria: [],
-      receitaClientes: [{ codigo: "a", nome: "A", realizado: 100, orcado: 80 }],
+      receitaClientes: [{ id: 1, nome: "A", realizado: 100, orcado: 80 }],
       saldoInicial: 1000, caixaMinimo: 500, horasPadrao: 3200,
     })
     expect(p.ano).toBe(2026)

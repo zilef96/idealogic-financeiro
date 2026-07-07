@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
-import { getUsuario } from "@/lib/auth-server"
+import { getUsuario, type Sessao } from "@/lib/auth-server"
 import { podeAcessar, type Perfil } from "@/lib/auth"
-import type { Sessao } from "@/lib/session"
 
 type Resultado = { ok: true; usuario: Sessao } | { ok: false; response: NextResponse }
 

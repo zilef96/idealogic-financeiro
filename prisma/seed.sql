@@ -70,9 +70,9 @@ SELECT e.id, DATE '2026-01-01', 'caixa_minimo', 20000.0000 FROM exercicio e WHER
 INSERT INTO parametro_mensal (exercicio_id, competencia, chave, valor)
 SELECT e.id, DATE '2026-01-01', 'horas_faturaveis', 2000 FROM exercicio e WHERE e.ano=2026;
 
--- usuario (dev — senha: dev123456) ----------------------------
-INSERT INTO usuario (nome, email, perfil, senha_hash) VALUES
-  ('Admin Dev', 'admin@example.com', 'admin', '$2b$10$JWwbygqjiZ.G5mAwje4FreIpOGuPNDRqK/whjaqhqNmBDqwQZVl4.'),
-  ('Sócio Dev', 'socio@example.com', 'socio', '$2b$10$JWwbygqjiZ.G5mAwje4FreIpOGuPNDRqK/whjaqhqNmBDqwQZVl4.');
+-- usuario (perfis de dev — credencial fica no Supabase Auth) ---
+INSERT INTO usuario (nome, email, perfil) VALUES
+  ('Admin Dev', 'admin@example.com', 'admin'),
+  ('Sócio Dev', 'socio@example.com', 'socio');
 
 COMMIT;
