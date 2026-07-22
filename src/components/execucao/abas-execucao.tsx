@@ -5,7 +5,9 @@ import type { LinhaExecucao } from "@/lib/repositories/execucao-repository"
 import type { Indicador } from "@/lib/services/execucao-service"
 import type { StatusFechamento } from "@/lib/repositories/fechamento-repository"
 import type { GrupoOrcamento } from "@/lib/types"
+import type { SeriesParametros } from "@/lib/repositories/parametro-repository"
 import { btn } from "@/components/ui/botao"
+import { ModalParametros } from "./modal-parametros"
 import { TabelaExecucao } from "./tabela-execucao"
 import { CardsIndicadores } from "./cards-indicadores"
 import { AcaoFechamento } from "./acao-fechamento"
@@ -36,11 +38,12 @@ export function AbasExecucao(props: React.ComponentProps<typeof AbasExecucaoInte
 }
 
 function AbasExecucaoInterno({
-  ano, mesAtual, linhas, statusPorMes, grupos, auditoriaPorMes, indicadoresOrcadoPorMes, indicadoresRealizadoPorMes,
+  ano, mesAtual, linhas, series, statusPorMes, grupos, auditoriaPorMes, indicadoresOrcadoPorMes, indicadoresRealizadoPorMes,
 }: {
   ano: number
   mesAtual: number
   linhas: LinhaExecucao[]
+  series: SeriesParametros
   statusPorMes: Record<number, StatusFechamento>
   grupos: GrupoOrcamento[]
   auditoriaPorMes: Record<number, Auditoria>
@@ -90,6 +93,7 @@ function AbasExecucaoInterno({
               className="h-8 rounded-full border border-border bg-card px-3 text-[13px] font-medium">
               {meses.map((m) => <option key={m} value={m}>{MESES[m - 1]}</option>)}
             </select>
+            <ModalParametros ano={ano} mesInicial={mesSel} series={series} />
           </div>
           {/* Ação de ciclo de vida do mês (concluir/reabrir) — destacada e separada dos CRUDs por ser irreversível. */}
           <AcaoFechamento ano={ano} mes={mesSel} status={statusPorMes[mesSel]} auditoria={auditoriaPorMes[mesSel]} />
@@ -107,6 +111,7 @@ function AbasExecucaoInterno({
           <div className="flex flex-wrap items-center gap-3">
             <BotaoCadeado editavel={editavel} onToggle={alternarCadeado} />
             <MenuAdicionar grupos={grupos} statusPorMes={statusPorMes} mesPadrao={1} />
+            <ModalParametros ano={ano} mesInicial={mesAtual} series={series} />
             {mesesFechados.length > 0 && (
               <button type="button" onClick={() => setMostrarOrcadoFechados((v) => !v)} className={btn}>
                 {mostrarOrcadoFechados
