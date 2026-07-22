@@ -13,15 +13,6 @@ export function custoHora(custosOperacionais: number, despesasAdm: number, horas
   return (custosOperacionais + despesasAdm) / horas
 }
 
-// (Decisão 17/06/2026) Na Execução, tributos são lançados manualmente; esta função
-// fica disponível para projeção/simulação futura, não sobrescreve o realizado.
-export function tributosSobreFaturamento(
-  receitaRealizada: number,
-  aliquotas: { pis: number; cofins: number; issqn: number },
-): number {
-  return receitaRealizada * (aliquotas.pis + aliquotas.cofins + aliquotas.issqn)
-}
-
 export function valorVigente(
   serie: { mes: number; valor: number }[],
   mes: number,
@@ -74,7 +65,7 @@ export function superavitMensal(t: TotaisMes): number {
 
 export type FormatoIndicador = "moeda" | "percent" | "numero" | "fator"
 export interface Indicador { rotulo: string; valor: number | null; formato: FormatoIndicador; pendente?: boolean }
-export interface ParametrosMes { pis: number; cofins: number; issqn: number; horasFaturaveis: number; fatorReajuste: number }
+export interface ParametrosMes { horasFaturaveis: number; fatorReajuste: number }
 export interface TesourariaMes { aplicacoes: number; resgates: number }
 
 export function calcularIndicadoresMes(input: {
