@@ -47,9 +47,6 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
   const projecaoOrc = projDe(totaisOrc)
 
   const parametrosDe = (mes: number) => ({
-    pis: valorVigente(series["aliquota_pis"] ?? [], mes, 0),
-    cofins: valorVigente(series["aliquota_cofins"] ?? [], mes, 0),
-    issqn: valorVigente(series["aliquota_issqn"] ?? [], mes, 0),
     horasFaturaveis: valorVigente(series["horas_faturaveis"] ?? [], mes, 3200),
     fatorReajuste: valorVigente(series["fator_reajuste"] ?? [], mes, 1),
   })
@@ -72,7 +69,7 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
   return (
     <div className="space-y-4">
       <h1 className="font-display text-xl font-semibold">Execução Orçamentária {anoNum}</h1>
-      <AbasExecucao ano={anoNum} mesAtual={mesAtual} linhas={linhas}
+      <AbasExecucao ano={anoNum} mesAtual={mesAtual} linhas={linhas} series={series}
         statusPorMes={statusPorMes} grupos={grupos} auditoriaPorMes={auditoriaPorMes}
         indicadoresOrcadoPorMes={indicadoresOrcadoPorMes}
         indicadoresRealizadoPorMes={indicadoresRealizadoPorMes} />

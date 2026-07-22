@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { calcDesvio, margemContribuicao, custoHora, tributosSobreFaturamento, projecaoCaixa, valorVigente, superavitMensal, calcularIndicadoresMes, contarPendencias, naturezaPorCodigo, julgamentoDesvio, pendenciasPorGrupo, type TotaisMes } from "@/lib/services/execucao-service"
+import { calcDesvio, margemContribuicao, custoHora, projecaoCaixa, valorVigente, superavitMensal, calcularIndicadoresMes, contarPendencias, naturezaPorCodigo, julgamentoDesvio, pendenciasPorGrupo, type TotaisMes } from "@/lib/services/execucao-service"
 
 describe("calcDesvio", () => {
   it("desvio e percentual", () => {
@@ -25,13 +25,6 @@ describe("custoHora", () => {
   })
   it("horas zero → null", () => {
     expect(custoHora(1, 1, 0)).toBeNull()
-  })
-})
-
-describe("tributosSobreFaturamento", () => {
-  it("soma pis+cofins+issqn sobre receita realizada", () => {
-    expect(tributosSobreFaturamento(10000, { pis: 0.0165, cofins: 0.076, issqn: 0.025 }))
-      .toBeCloseTo(1175)
   })
 })
 
@@ -90,7 +83,7 @@ describe("superavitMensal", () => {
 
 const baseInput = {
   totais: baseTotais,
-  parametros: { pis: 0.0165, cofins: 0.076, issqn: 0.025, horasFaturaveis: 3200, fatorReajuste: 1.05 },
+  parametros: { horasFaturaveis: 3200, fatorReajuste: 1.05 },
   tesouraria: { aplicacoes: 0, resgates: 43618.55 },
   caixaDoMes: 150000,
   temRealizado: true,

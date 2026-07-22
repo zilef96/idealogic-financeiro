@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { PARAMETROS_EXERCICIO, valorExercicio, type ChaveParametro } from "@/lib/services/parametros-service"
+import { type ChaveParametro } from "@/lib/services/parametros-service"
 
 export type SeriesParametros = Record<string, { mes: number; valor: number }[]>
 
@@ -18,21 +18,35 @@ export async function getSeriesParametros(ano: number): Promise<SeriesParametros
   return out
 }
 
-export async function getParametrosExercicio(ano: number): Promise<Record<ChaveParametro, number>> {
-  const series = await getSeriesParametros(ano)
-  const out = {} as Record<ChaveParametro, number>
-  for (const def of PARAMETROS_EXERCICIO) {
-    out[def.chave] = valorExercicio(series[def.chave] ?? [], def.padrao)
-  }
-  return out
-}
-
-export async function gravarParametroExercicio(ano: number, chave: ChaveParametro, valor: number): Promise<void> {
-  const comp = `${ano}-01-01`
+export async function gravarParametroMensal(ano: number, mes: number, chave: ChaveParametro, valor: number): Promise<void> {
+  const comp = `${ano}-${String(mes).padStart(2, "0")}-01`
   await prisma.$executeRaw`
     INSERT INTO parametro_mensal (exercicio_id, competencia, chave, valor)
     SELECT e.id, ${comp}::date, ${chave}, ${valor}::numeric FROM exercicio e WHERE e.ano = ${ano}
     ON CONFLICT (exercicio_id, competencia, chave)
     DO UPDATE SET valor = EXCLUDED.valor
   `
+}
+
+// Saldos bancários por competência (mensal) — usados pelo Relatório de Informação.
+// Chaves fixas no MVP; contas Sicredi (CC + aplicação) e Banrisul (CC).
+export async function gravarSaldosBancarios(
+  ano: number,
+  mes: number,
+  saldos: { sicrediCc: number; sicrediAplicacao: number; banrisulCc: number },
+): Promise<void> {
+  const comp = `${ano}-${String(mes).padStart(2, "0")}-01`
+  const pares: [string, number][] = [
+    ["saldo_sicredi_cc", saldos.sicrediCc],
+    ["saldo_sicredi_aplicacao", saldos.sicrediAplicacao],
+    ["saldo_banrisul_cc", saldos.banrisulCc],
+  ]
+  for (const [chave, valor] of pares) {
+    await prisma.$executeRaw`
+      INSERT INTO parametro_mensal (exercicio_id, competencia, chave, valor)
+      SELECT e.id, ${comp}::date, ${chave}, ${valor}::numeric FROM exercicio e WHERE e.ano = ${ano}
+      ON CONFLICT (exercicio_id, competencia, chave)
+      DO UPDATE SET valor = EXCLUDED.valor
+    `
+  }
 }
