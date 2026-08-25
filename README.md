@@ -1,36 +1,129 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Gestão Financeira — Idealogic
 
-## Getting Started
+Plataforma web interna para planejar e acompanhar o orçamento anual da Idealogic.
 
-First, run the development server:
+Telas do MVP:
+
+- **Orçamentação** — planeja o orçamento do exercício; a publicação congela a referência.
+- **Execução Orçamentária** — lança o realizado mês a mês, com orçado mensal editável,
+  desvio e fechamento de competência.
+- **Dashboard** — indicadores e gráficos sobre os dados de execução.
+- **Relatório** — relatório de informação mensal, com saldos bancários.
+- **Parâmetros** — variáveis do exercício, editáveis por ano.
+
+Fora de escopo (fase 2): precificação, cadastro de clientes/colaboradores e
+sincronização com Conta Azul.
+
+## Stack
+
+Next.js 16 (App Router) · React 19 · TypeScript · Tailwind v4 · Prisma 6 ·
+PostgreSQL no Supabase (banco + Auth) · Vitest.
+
+Requer **Node >= 20.17**.
+
+## Setup
+
+Você precisa de acesso a um projeto Supabase ou de um Postgres próprio.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm ci
+
+cp .env.example .env      # preencha com as credenciais do seu projeto Supabase
+
+npx prisma migrate deploy # cria as 9 tabelas, as 2 views e o trigger de fechamento
+npx prisma generate       # gera o Prisma Client
+
+psql "$DIRECT_URL" -f prisma/seed.sql   # seed fictício (opcional, só para dev)
+
+npm run dev               # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+O seed é **fictício** — poucos itens por bloco, valores arbitrários, nenhum dado real.
+Ele cria dois usuários: `admin@example.com` e `socio@example.com`, senha `dev123456`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> Use `DIRECT_URL` (porta 5432) para migrations e seed. A `DATABASE_URL` passa pelo
+> pooler em modo transaction e não é adequada para scripts com transação explícita.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Comandos
 
-## Learn More
+```bash
+npm run dev      # servidor de desenvolvimento
+npm run build    # build de produção (valida TypeScript)
+npm run lint     # ESLint
+npm test         # Vitest (suíte completa)
+npm run start    # serve o build
 
-To learn more about Next.js, take a look at the following resources:
+npx vitest run src/lib/__tests__/execucao-service.test.ts   # um arquivo só
+npx prisma migrate deploy   # aplica migrations pendentes
+npx prisma db pull && npx prisma generate   # introspecta o banco e regenera o client
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Arquitetura
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Monólito Next.js com backend em camadas. **Toda requisição mutável atravessa as três
+camadas — não pule etapas:**
 
-## Deploy on Vercel
+```
+Route Handler (controller)  →  Service (regra pura)  →  Repository  →  PostgreSQL
+  auth/RBAC, Zod, status HTTP   cálculos, sem I/O      Prisma (escrita) + views (leitura)
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Controller** (`src/app/api/*/route.ts`) — autentica, autoriza, valida com Zod,
+  chama o service e mapeia o status HTTP. Fino, sem regra de negócio.
+- **Service** (`src/lib/services/*`) — regra de negócio pura e testável, sem acesso a
+  banco. É onde mora a maior parte dos testes.
+- **Repository** (`src/lib/repositories/*`) — único ponto de acesso a dados. Escrita
+  nas tabelas via Prisma; leitura nas views via `$queryRaw`. Componentes e controllers
+  nunca usam Prisma direto.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Status HTTP por convenção: `400` JSON malformado · `422` falha de schema Zod ·
+`401` não autenticado · `403` sem perfil · `409` competência fechada · `201` criação.
+
+Perfis: **admin** (único que edita) e **socio** (visualizador). O papel vem sempre da
+tabela `usuario`, nunca de claim do token. A guarda existe em três pontos: menu,
+página (Server Component) e controller.
+
+### Detalhes de domínio que costumam pegar quem chega
+
+- **Hierarquia de contas**: bloco (R/C/D/E) → grupo → subgrupo → item. `conta_grupo` é
+  auto-relacionada; o item é a folha orçada. Total de grupo é sempre a soma dos filhos
+  (rollup feito na view, por CTE recursiva).
+- **Item anual ÷ 12**: item com periodicidade `A` distribui `valor/12` em cada mês.
+  Não existe "mês de pagamento".
+- **Orçado projetado × orçado mensal**: o projetado é a referência travada na
+  Orçamentação publicada; o orçado mensal é ajustável por competência e é a base de
+  desvio e indicadores. A Execução mostra 3 colunas: orçado mensal, realizado, desvio.
+- **Leitura via views** (`vw_orcamentacao`, `vw_execucao_mensal`): são o modelo de
+  leitura estável. Para mudar a leitura, edite o SQL da migration da view — não só o
+  `schema.prisma`.
+- **Trava de fechamento**: um trigger no Postgres bloqueia escrita em
+  `lancamento_realizado` de competência concluída, com `ERRCODE FC001`, que o
+  `handleApiError` mapeia para HTTP 409. A integridade vive no banco, não na UI.
+- **Valores monetários**: `Decimal` no banco; converta para `number` só na borda de
+  apresentação.
+
+## Banco
+
+O Postgres roda no Supabase e o `.env` tem **duas conexões**: `DATABASE_URL` (pooled,
+6543, usada pela aplicação) e `DIRECT_URL` (direta, 5432, usada por `migrate` e
+`db pull`).
+
+Ao mergear qualquer alteração em `prisma/migrations/**`, propague com
+`npx prisma migrate deploy` — senão o banco fica dessincronizado do código. Isso inclui
+as views, que vivem no SQL das migrations.
+
+## Testes
+
+Vitest com `fileParallelism: false`. O foco é nos services, que são regra pura. Testes
+de controller mockam o guard de perfil.
+
+```bash
+npm test
+```
+
+## Fluxo de trabalho
+
+`dev` é a branch de integração; `main` é o que vai para produção. Crie a feature branch
+a partir de `dev` e faça merge com `--no-ff`.
+
+Código, comentários, commits e UI em **pt-BR**.

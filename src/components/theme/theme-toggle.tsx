@@ -1,21 +1,20 @@
 "use client"
 import { useTheme } from "next-themes"
-import { useEffect, useState } from "react"
 
+// O ícone visível é escolhido pelo CSS a partir da classe `.dark` que o
+// next-themes aplica no <html>. Assim o markup do servidor e o do cliente são
+// idênticos — sem estado de montagem e sem descompasso de hidratação.
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme()
-  const [montado, setMontado] = useState(false)
-  useEffect(() => setMontado(true), [])
-  if (!montado) return <div className="h-9 w-9" aria-hidden />
-  const escuro = resolvedTheme === "dark"
   return (
     <button
       type="button"
-      onClick={() => setTheme(escuro ? "light" : "dark")}
-      aria-label={escuro ? "Mudar para tema claro" : "Mudar para tema escuro"}
+      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+      aria-label="Alternar entre tema claro e escuro"
       className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border"
     >
-      {escuro ? "☀" : "☾"}
+      <span aria-hidden className="dark:hidden">☾</span>
+      <span aria-hidden className="hidden dark:inline">☀</span>
     </button>
   )
 }
