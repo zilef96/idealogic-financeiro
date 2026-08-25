@@ -1,8 +1,9 @@
 -- =====================================================================
 --  SEED FICTÍCIO — apenas para teste inicial em desenvolvimento.
 --  NÃO contém dados reais. Poucos itens por bloco, valores arbitrários.
---  Usuários de dev: admin@example.com / socio@example.com (senha: dev123456)
---  Pré-requisito: schema (migrations 0001–0007) já aplicado.
+--  Cria as linhas de usuario, mas NÃO cria credencial: a senha vive no Supabase
+--  Auth e o auth_user_id fica NULL. Veja "Provisionar um banco novo" no README.
+--  Pré-requisito: migrations já aplicadas (npx prisma migrate deploy).
 -- =====================================================================
 BEGIN;
 

@@ -19,30 +19,55 @@ sincronização com Conta Azul.
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind v4 · Prisma 6 ·
 PostgreSQL no Supabase (banco + Auth) · Vitest.
 
-Requer **Node >= 20.17**.
+Requer **Node 22 ou superior** — o client do Supabase precisa do `WebSocket`
+global, que não existe no Node 20.
 
 ## Setup
 
-Você precisa de acesso a um projeto Supabase ou de um Postgres próprio.
+Peça a quem já está no projeto as credenciais do Supabase — o banco normalmente já
+existe. Para criar um do zero, veja [Provisionar um banco novo](#provisionar-um-banco-novo).
 
 ```bash
 npm ci
 
-cp .env.example .env      # preencha com as credenciais do seu projeto Supabase
+cp .env.example .env   # preencha com as credenciais recebidas
 
-npx prisma migrate deploy # cria as 9 tabelas, as 2 views e o trigger de fechamento
-npx prisma generate       # gera o Prisma Client
+npx prisma generate    # gera o Prisma Client a partir do schema
 
-psql "$DIRECT_URL" -f prisma/seed.sql   # seed fictício (opcional, só para dev)
-
-npm run dev               # http://localhost:3000
+npm run dev            # http://localhost:3000
 ```
 
-O seed é **fictício** — poucos itens por bloco, valores arbitrários, nenhum dado real.
-Ele cria dois usuários: `admin@example.com` e `socio@example.com`, senha `dev123456`.
+## Provisionar um banco novo
 
-> Use `DIRECT_URL` (porta 5432) para migrations e seed. A `DATABASE_URL` passa pelo
-> pooler em modo transaction e não é adequada para scripts com transação explícita.
+**Só é necessário ao criar um projeto Supabase do zero.** Com um banco já provisionado,
+pule esta seção.
+
+```bash
+npx prisma migrate deploy   # 9 tabelas, 2 views e o trigger de fechamento
+
+# seed fictício: poucos itens por bloco, valores arbitrários, nenhum dado real
+npx prisma db execute --url "$DIRECT_URL" --file prisma/seed.sql
+```
+
+Use a `DIRECT_URL` (porta 5432) para migrations e seed — a `DATABASE_URL` passa pelo
+pooler em modo transaction. Se preferir, `psql "$DIRECT_URL" -f prisma/seed.sql` faz o
+mesmo.
+
+Falta criar o primeiro administrador. O seed grava as linhas de `usuario`, mas **não
+cria credencial**: a senha vive no Supabase Auth e o `auth_user_id` fica `NULL`.
+
+1. No painel do Supabase, em **Authentication → Users → Add user**, crie o usuário com
+   e-mail e senha, marque o e-mail como confirmado e copie o UUID gerado.
+2. Case o UUID com a linha correspondente:
+
+   ```sql
+   UPDATE usuario SET auth_user_id = '<uuid-copiado>' WHERE email = 'admin@example.com';
+   ```
+
+O passo 2 é obrigatório porque a sessão só é aceita quando existe um `usuario` com
+`auth_user_id` casado (`src/lib/auth-server.ts`). Feito isso, você entra em `/login`
+com esse e-mail e senha — e os demais usuários já saem por **Admin → Usuários** dentro
+da aplicação, que gera o link de convite.
 
 ## Comandos
 
