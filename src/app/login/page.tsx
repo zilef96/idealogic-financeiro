@@ -16,8 +16,7 @@ export default function LoginPage() {
       body: JSON.stringify({ email, senha }),
     })
     if (r.ok) {
-      const { perfil } = await r.json()
-      router.replace(perfil === "admin" ? "/orcamento" : "/dashboard")
+      router.replace("/")
       router.refresh()
     } else {
       setErro("Credenciais inválidas.")
