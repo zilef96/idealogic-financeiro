@@ -85,7 +85,7 @@ export function AcaoFechamento({ ano, mes, status, auditoria }: { ano: number; m
         )}
       </span>
       <button type="button" onClick={acionar} disabled={carregando}
-        className="rounded-full border border-border bg-card px-4 py-1.5 text-[13px] font-medium hover:bg-faint disabled:opacity-60">
+        className="rounded-[10px] border border-border bg-card px-4 py-1.5 text-[13px] font-medium hover:bg-faint disabled:opacity-60">
         {carregando ? "Processando…" : label}
       </button>
     </div>

@@ -2,7 +2,7 @@
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { CalendarPlus, ChevronDown } from "lucide-react"
-import { btn } from "@/components/ui/botao"
+import { btn, btnPrimary } from "@/components/ui/botao"
 
 export function SeletorPeriodo({ ano, anos }: { ano: number; anos: number[] }) {
   const router = useRouter()
@@ -40,7 +40,7 @@ export function SeletorPeriodo({ ano, anos }: { ano: number; anos: number[] }) {
     <div className="flex items-center gap-2 sm:border-l sm:border-border sm:pl-3">
       <div className="relative">
         <select
-          className="h-8 cursor-pointer appearance-none rounded-full border border-border bg-card pl-3 pr-8 text-[13px] font-medium hover:bg-faint"
+          className="h-8 cursor-pointer appearance-none rounded-[10px] border border-border bg-card pl-3 pr-8 text-[13px] font-medium hover:bg-faint"
           value={ano} onChange={(e) => router.push(`/orcamento?ano=${e.target.value}`)}>
           {anos.map((a) => <option key={a} value={a}>{a}</option>)}
         </select>
@@ -52,17 +52,17 @@ export function SeletorPeriodo({ ano, anos }: { ano: number; anos: number[] }) {
       </button>
       {criando && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setCriando(false)}>
-          <div className="w-80 space-y-3 rounded-lg border border-border bg-background p-4" onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-semibold">Novo período</h2>
+          <div className="w-80 space-y-3 rounded-2xl border border-border bg-card p-5" onClick={(e) => e.stopPropagation()}>
+            <h2 className="font-display text-base font-semibold">Novo período</h2>
             <label className="block text-sm">Ano
-              <input type="number" className="mt-1 w-full rounded border border-border bg-background p-1.5"
+              <input type="number" className="mt-1 w-full rounded-[10px] border border-border bg-background p-1.5"
                 value={novoAno} onChange={(e) => setNovoAno(Number(e.target.value))} />
             </label>
             <fieldset className="space-y-2 text-sm">
               <label className="flex items-center gap-2">
                 <input type="radio" name="origem" checked={!doZero} onChange={() => setDoZero(false)} />
                 Copiar de
-                <select className="rounded border border-border bg-background p-1" disabled={doZero}
+                <select className="rounded-[10px] border border-border bg-background p-1" disabled={doZero}
                   value={origem} onChange={(e) => setOrigem(Number(e.target.value))}>
                   {anos.map((a) => <option key={a} value={a}>{a}</option>)}
                 </select>
@@ -72,11 +72,10 @@ export function SeletorPeriodo({ ano, anos }: { ano: number; anos: number[] }) {
                 Estrutura em branco (apenas os blocos R/C/D/E)
               </label>
             </fieldset>
-            {erro && <p className="text-sm text-red-600 dark:text-red-400">{erro}</p>}
-            <div className="flex justify-end gap-2">
-              <button className="rounded border border-border px-3 py-1.5 text-sm" onClick={() => setCriando(false)}>Cancelar</button>
-              <button className="rounded bg-foreground px-3 py-1.5 text-sm text-background disabled:opacity-50"
-                disabled={enviando} onClick={criar}>Criar</button>
+            {erro && <p className="text-sm" style={{ color: "rgb(var(--danger))" }}>{erro}</p>}
+            <div className="flex justify-end gap-2 pt-1">
+              <button className={btn} onClick={() => setCriando(false)}>Cancelar</button>
+              <button className={btnPrimary} disabled={enviando} onClick={criar}>Criar</button>
             </div>
           </div>
         </div>

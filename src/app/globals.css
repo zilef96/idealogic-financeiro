@@ -5,46 +5,50 @@
 
 /* Tokens de tema — claro (padrão). Valores em RGB separados por espaço. */
 :root {
-  --background: 250 249 246;
+  --background: 249 249 246;
   --card: 255 255 255;
   --foreground: 26 26 28;
-  --muted: 118 116 110;
-  --faint: 243 241 236;
-  --border: 230 227 219;
+  --muted: 110 110 122;
+  --faint: 241 241 238;
+  --border: 228 226 218;
   --ink: 24 28 36;
-  --pos: 17 124 96;
-  --pos-soft: 224 240 233;
-  --neg: 192 60 50;
-  --neg-soft: 247 230 227;
-  --amber: 196 122 24;
-  --amber-soft: 247 238 220;
-  --info: 46 99 168;
-  --info-soft: 226 235 248;
+  --pos: 18 138 103;
+  --pos-soft: 226 243 236;
+  --neg: 194 59 50;
+  --neg-soft: 251 234 232;
+  --amber: 185 121 14;
+  --amber-soft: 251 241 223;
+  --info: 0 151 217;
+  --info-soft: 228 244 252;
   --rose: 188 58 96;
   --rose-soft: 250 230 237;
   --rail: 222 219 211;
-  --danger: 192 60 50;
+  --danger: 194 59 50;
+  --teal: 0 200 192;
+  --blue: 0 151 217;
 }
 .dark {
-  --background: 18 19 22;
-  --card: 25 27 31;
-  --foreground: 232 230 226;
-  --muted: 150 148 142;
-  --faint: 31 33 38;
-  --border: 42 45 52;
-  --ink: 232 230 226;
-  --pos: 64 200 158;
-  --pos-soft: 19 43 37;
-  --neg: 244 116 106;
-  --neg-soft: 45 27 26;
-  --amber: 224 168 78;
-  --amber-soft: 46 38 22;
-  --info: 122 168 240;
-  --info-soft: 22 32 50;
+  --background: 7 12 15;
+  --card: 13 20 23;
+  --foreground: 243 246 245;
+  --muted: 124 139 138;
+  --faint: 16 26 29;
+  --border: 28 38 42;
+  --ink: 243 246 245;
+  --pos: 52 185 140;
+  --pos-soft: 14 37 30;
+  --neg: 232 105 92;
+  --neg-soft: 42 22 19;
+  --amber: 217 166 78;
+  --amber-soft: 42 32 17;
+  --info: 43 143 199;
+  --info-soft: 14 31 43;
   --rose: 230 130 168;
   --rose-soft: 46 24 33;
-  --rail: 52 55 62;
-  --danger: 244 116 106;
+  --rail: 42 45 52;
+  --danger: 232 105 92;
+  --teal: 23 169 156;
+  --blue: 43 143 199;
 }
 
 /* Expõe os tokens como cores do Tailwind (bg-background, text-foreground, etc.).
@@ -62,8 +66,10 @@
   --color-info: rgb(var(--info));
   --color-rose: rgb(var(--rose));
   --color-danger: rgb(var(--danger));
-  --font-sans: var(--font-hanken), system-ui, sans-serif;
-  --font-display: var(--font-bricolage), system-ui, sans-serif;
+  --color-teal: rgb(var(--teal));
+  --color-blue: rgb(var(--blue));
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-space-grotesk), system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 }
 

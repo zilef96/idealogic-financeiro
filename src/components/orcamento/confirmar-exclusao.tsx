@@ -1,5 +1,6 @@
 "use client"
 import { useState } from "react"
+import { btn } from "@/components/ui/botao"
 
 export function ConfirmarExclusao({ aberto, titulo, descricao, onConfirmar, onClose }: {
   aberto: boolean
@@ -28,10 +29,9 @@ export function ConfirmarExclusao({ aberto, titulo, descricao, onConfirmar, onCl
         <p className="text-sm" style={{ color: "rgb(var(--muted))" }}>{descricao}</p>
         {erro && <p className="text-sm" style={{ color: "rgb(var(--danger))" }}>{erro}</p>}
         <div className="flex justify-end gap-2 pt-1">
-          <button type="button" onClick={onClose}
-            className="rounded border border-border px-3 py-1.5 text-sm hover:bg-faint">Cancelar</button>
+          <button type="button" onClick={onClose} className={btn}>Cancelar</button>
           <button type="button" disabled={enviando} onClick={confirmar}
-            className="rounded px-3 py-1.5 text-sm font-medium text-background disabled:opacity-60"
+            className="inline-flex h-8 items-center gap-1.5 rounded-[10px] px-4 text-[13px] font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
             style={{ background: "rgb(var(--danger))" }}>{enviando ? "Excluindo…" : "Excluir"}</button>
         </div>
       </div>

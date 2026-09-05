@@ -157,7 +157,7 @@ export function ModalParametros({ ano, mesInicial, series }: {
             <div className="flex items-center justify-between gap-3 p-5 pb-3">
               <h2 className="font-display text-base font-semibold">Parâmetros mensais · {ano}</h2>
               <select value={mesSel} onChange={(e) => setMesSel(Number(e.target.value))}
-                className="h-8 rounded-full border border-border bg-card px-3 text-[13px] font-medium">
+                className="h-8 rounded-[10px] border border-border bg-card px-3 text-[13px] font-medium">
                 {MESES.map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
               </select>
             </div>

@@ -8,10 +8,10 @@ import { useChartTheme } from "../use-chart-theme"
 
 // Traduz a participação do maior cliente em nível de risco de dependência.
 function risco(pct: number): { rotulo: string; cor: string } {
-  if (pct >= 40) return { rotulo: "risco crítico", cor: "#dc2626" }
-  if (pct >= 25) return { rotulo: "risco alto", cor: "#d97706" }
+  if (pct >= 40) return { rotulo: "risco crítico", cor: "#c23b32" }
+  if (pct >= 25) return { rotulo: "risco alto", cor: "#b9790e" }
   if (pct >= 15) return { rotulo: "risco médio", cor: "#ca8a04" }
-  return { rotulo: "risco baixo", cor: "#16a34a" }
+  return { rotulo: "risco baixo", cor: "#128a67" }
 }
 
 export function ConcentracaoClientesChart({ dados }: { dados: ClientePareto[] }) {

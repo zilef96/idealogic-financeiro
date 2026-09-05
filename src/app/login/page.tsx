@@ -24,23 +24,41 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
-      <div className="w-full max-w-sm space-y-6">
-        <div className="flex flex-col items-center space-y-3 text-center">
-          {/* Espaço reservado para o logo oficial */}
-          <Logo size={56} />
-          <div className="space-y-1">
-            <h1 className="text-2xl font-semibold">Gestão Financeira</h1>
-            <p className="text-sm text-muted">Idealogic — Orçamento 2026</p>
+    <main className="flex min-h-screen items-center justify-center bg-background p-4">
+      <div className="w-full max-w-sm">
+        <div className="mb-7 flex items-center gap-2.5">
+          <Logo size={38} />
+          <div>
+            <p className="font-display text-lg font-bold leading-tight text-ink">Idealogic</p>
+            <p className="text-sm text-muted">Gestão Financeira</p>
           </div>
         </div>
-        <form onSubmit={entrar} className="space-y-3 rounded-lg border border-border p-6">
-          <input className="w-full rounded border border-border bg-background p-2" type="email"
-            placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <input className="w-full rounded border border-border bg-background p-2" type="password"
-            placeholder="Senha" value={senha} onChange={(e) => setSenha(e.target.value)} required />
-          {erro && <p className="text-sm text-danger">{erro}</p>}
-          <button className="w-full rounded bg-foreground p-2 text-background" type="submit">Entrar</button>
+
+        <form onSubmit={entrar} className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="email" className="text-sm font-medium text-ink">E-mail</label>
+            <input
+              id="email" type="email" required
+              className="rounded-[10px] border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-teal"
+              value={email} onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="senha" className="text-sm font-medium text-ink">Senha</label>
+            <input
+              id="senha" type="password" required
+              className="rounded-[10px] border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-teal"
+              value={senha} onChange={(e) => setSenha(e.target.value)}
+            />
+          </div>
+          {erro && <p className="text-sm text-danger" role="alert">{erro}</p>}
+          <button
+            type="submit"
+            className="mt-2 rounded-[10px] px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            style={{ background: "linear-gradient(135deg, rgb(var(--teal)), rgb(var(--blue)))" }}
+          >
+            Entrar
+          </button>
         </form>
       </div>
     </main>

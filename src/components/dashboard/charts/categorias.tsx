@@ -6,7 +6,7 @@ import { fmtMoedaTip } from "../formatos"
 import { ChartTitulo } from "../chart-ui"
 import { useChartTheme, tooltipEstilo } from "../use-chart-theme"
 
-const COR_TIPO: Record<string, string> = { R: "#16a34a", C: "#ea580c", D: "#dc2626", E: "#7c3aed", "?": "#64748b" }
+const COR_TIPO: Record<string, string> = { R: "#128a67", C: "#ea580c", D: "#c23b32", E: "#7c3aed", "?": "#64748b" }
 const TIPO_ROTULO: { tipo: string; nome: string }[] = [
   { tipo: "R", nome: "Receita" }, { tipo: "C", nome: "Custo" }, { tipo: "D", nome: "Despesa" }, { tipo: "E", nome: "Distribuição" },
 ]

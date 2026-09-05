@@ -3,10 +3,11 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import type { GrupoOrcamento, Periodicidade, Classificacao, TipoConta } from "@/lib/types"
 import { useToast } from "@/components/ui/toast"
+import { btn, btnPrimary } from "@/components/ui/botao"
 import { blocosDisponiveis, raizDoBloco, filhosDe, classificacoesDoTipo } from "@/lib/services/cascata-grupos"
 import { vigenciaInvalidaPorFechamento } from "@/lib/services/orcamento-service"
 
-const inputCls = "mt-1 w-full rounded border border-border bg-background p-2 text-sm"
+const inputCls = "mt-1 w-full rounded-[10px] border border-border bg-background p-2 text-sm"
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
 const ROTULO_BLOCO: Record<TipoConta, string> = { R: "Receita", C: "Custo", D: "Despesa", E: "Dividendos" }
 
@@ -142,7 +143,7 @@ export function NovoItem({
     <>
       {!controlado && (
         <button type="button" onClick={() => setAbertoInterno(true)}
-          className="rounded-full border border-border bg-card px-4 py-1.5 text-[13px] font-medium hover:bg-faint">
+          className="rounded-[10px] border border-border bg-card px-4 py-1.5 text-[13px] font-medium hover:bg-faint">
           + Novo item
         </button>
       )}
@@ -244,11 +245,8 @@ export function NovoItem({
             {erro && <p className="text-sm" style={{ color: "rgb(var(--danger))" }}>{erro}</p>}
 
             <div className="flex justify-end gap-2 pt-1">
-              <button type="button" onClick={fechar}
-                className="rounded border border-border px-3 py-1.5 text-sm hover:bg-faint">Cancelar</button>
-              <button type="submit" disabled={salvando}
-                className="rounded px-3 py-1.5 text-sm font-medium text-background disabled:opacity-60"
-                style={{ background: "rgb(var(--foreground))" }}>
+              <button type="button" onClick={fechar} className={btn}>Cancelar</button>
+              <button type="submit" disabled={salvando} className={btnPrimary}>
                 {salvando ? "Salvando…" : editando ? "Salvar" : "Criar item"}
               </button>
             </div>

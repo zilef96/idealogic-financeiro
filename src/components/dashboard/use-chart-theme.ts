@@ -17,24 +17,24 @@ export interface ChartTheme {
 }
 
 const DARK: ChartTheme = {
-  grid: "#2a2d34",
-  axis: "#a7a59f",
-  label: "#d2d0cb",
-  refLine: "#96948e",
-  tooltipBg: "#191b1f",
-  tooltipBorder: "#2a2d34",
-  tooltipText: "#e8e6e2",
-  tributos: ["#cbd5e1", "#94a3b8", "#64748b"],
+  grid: "#1c262a",
+  axis: "#7c8b8a",
+  label: "#c7d0cf",
+  refLine: "#5a6b6a",
+  tooltipBg: "#0d1417",
+  tooltipBorder: "#1c262a",
+  tooltipText: "#f3f6f5",
+  tributos: ["#b9c4c3", "#8b9998", "#5c6b6a"],
 }
 
 const LIGHT: ChartTheme = {
-  grid: "#e6e3db",
-  axis: "#6b6961",
-  label: "#44403c",
-  refLine: "#76746e",
+  grid: "#e4e2da",
+  axis: "#6e6e7a",
+  label: "#2b2b3d",
+  refLine: "#8a8a94",
   tooltipBg: "#ffffff",
-  tooltipBorder: "#e6e3db",
-  tooltipText: "#1a1a1c",
+  tooltipBorder: "#e4e2da",
+  tooltipText: "#14142b",
   tributos: ["#94a3b8", "#64748b", "#475569"],
 }
 

@@ -2,6 +2,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/toast"
+import { btn, btnPrimary } from "@/components/ui/botao"
 
 export function EditarCategoria({ grupo, aberto, onClose }: {
   grupo: { id: number; nome: string }
@@ -36,16 +37,13 @@ export function EditarCategoria({ grupo, aberto, onClose }: {
         className="w-full max-w-sm space-y-3 rounded-2xl border border-border bg-card p-5">
         <h2 className="font-display text-base font-semibold">Renomear categoria</h2>
         <label className="block text-sm">Nome
-          <input className="mt-1 w-full rounded border border-border bg-background p-2 text-sm" autoFocus
+          <input className="mt-1 w-full rounded-[10px] border border-border bg-background p-2 text-sm" autoFocus
             value={nome} onChange={(e) => setNome(e.target.value)} />
         </label>
         {erro && <p className="text-sm" style={{ color: "rgb(var(--danger))" }}>{erro}</p>}
         <div className="flex justify-end gap-2 pt-1">
-          <button type="button" onClick={onClose}
-            className="rounded border border-border px-3 py-1.5 text-sm hover:bg-faint">Cancelar</button>
-          <button type="submit" disabled={salvando}
-            className="rounded px-3 py-1.5 text-sm font-medium text-background disabled:opacity-60"
-            style={{ background: "rgb(var(--foreground))" }}>{salvando ? "Salvando…" : "Salvar"}</button>
+          <button type="button" onClick={onClose} className={btn}>Cancelar</button>
+          <button type="submit" disabled={salvando} className={btnPrimary}>{salvando ? "Salvando…" : "Salvar"}</button>
         </div>
       </form>
     </div>

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation"
 import { btnPrimary } from "@/components/ui/botao"
 import { useToast } from "@/components/ui/toast"
 
-const inputCls = "mt-1 w-full rounded border border-border bg-background p-2 text-sm"
+const inputCls = "mt-1 w-full rounded-[10px] border border-border bg-background p-2 text-sm"
 
 // Cria a conta (sem enviar e-mail) e devolve o link de acesso.
 export function ModalAdicionarUsuario({

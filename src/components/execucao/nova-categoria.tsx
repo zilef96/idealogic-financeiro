@@ -3,9 +3,10 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import type { GrupoOrcamento, TipoConta } from "@/lib/types"
 import { useToast } from "@/components/ui/toast"
+import { btn, btnPrimary } from "@/components/ui/botao"
 import { blocosDisponiveis, raizDoBloco, filhosDe } from "@/lib/services/cascata-grupos"
 
-const inputCls = "mt-1 w-full rounded border border-border bg-background p-2 text-sm"
+const inputCls = "mt-1 w-full rounded-[10px] border border-border bg-background p-2 text-sm"
 const ROTULO_BLOCO: Record<TipoConta, string> = { R: "Receita", C: "Custo", D: "Despesa", E: "Dividendos" }
 
 export function NovaCategoria({ grupos, aberto, onClose, endpoint = "/api/execucao/grupo" }: {
@@ -101,11 +102,8 @@ export function NovaCategoria({ grupos, aberto, onClose, endpoint = "/api/execuc
         {erro && <p className="text-sm" style={{ color: "rgb(var(--danger))" }}>{erro}</p>}
 
         <div className="flex justify-end gap-2 pt-1">
-          <button type="button" onClick={fechar}
-            className="rounded border border-border px-3 py-1.5 text-sm hover:bg-faint">Cancelar</button>
-          <button type="submit" disabled={salvando}
-            className="rounded px-3 py-1.5 text-sm font-medium text-background disabled:opacity-60"
-            style={{ background: "rgb(var(--foreground))" }}>
+          <button type="button" onClick={fechar} className={btn}>Cancelar</button>
+          <button type="submit" disabled={salvando} className={btnPrimary}>
             {salvando ? "Salvando…" : "Criar categoria"}
           </button>
         </div>

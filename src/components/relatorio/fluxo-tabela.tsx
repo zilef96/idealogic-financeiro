@@ -13,7 +13,7 @@ const COLUNAS: { chave: "receitas" | "cotas" | "tributos" | "custos" | "despesas
 
 function celulaResultado(valor: number) {
   const negativo = valor < 0
-  return <span className="num" style={{ color: negativo ? "#dc2626" : undefined, fontWeight: negativo ? 600 : undefined }}>{fmtValor(valor, "moeda")}</span>
+  return <span className="num" style={{ color: negativo ? "#c23b32" : undefined, fontWeight: negativo ? 600 : undefined }}>{fmtValor(valor, "moeda")}</span>
 }
 
 export function FluxoTabela({ fluxo }: { fluxo: FluxoMensal }) {

@@ -20,15 +20,32 @@ export function FormDefinirSenha() {
   }
 
   return (
-    <form onSubmit={enviar} className="max-w-sm space-y-3 rounded-lg border border-border p-6">
-      <input className="w-full rounded border border-border bg-background p-2" type="password"
-        placeholder="Nova senha (mín. 8 caracteres)" value={senha}
-        onChange={(e) => setSenha(e.target.value)} required />
-      <input className="w-full rounded border border-border bg-background p-2" type="password"
-        placeholder="Confirmar a senha" value={confirmacao}
-        onChange={(e) => setConfirmacao(e.target.value)} required />
+    <form onSubmit={enviar} className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-6 shadow-sm">
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="nova-senha" className="text-sm font-medium text-ink">Nova senha</label>
+        <input
+          id="nova-senha" type="password" required minLength={8}
+          placeholder="Mín. 8 caracteres"
+          className="rounded-[10px] border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-teal"
+          value={senha} onChange={(e) => setSenha(e.target.value)}
+        />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="confirmar-senha" className="text-sm font-medium text-ink">Confirmar a senha</label>
+        <input
+          id="confirmar-senha" type="password" required
+          className="rounded-[10px] border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-teal"
+          value={confirmacao} onChange={(e) => setConfirmacao(e.target.value)}
+        />
+      </div>
       {msg && <p className="text-sm text-muted">{msg}</p>}
-      <button className="w-full rounded bg-foreground p-2 text-background" type="submit">Salvar senha</button>
+      <button
+        type="submit"
+        className="mt-2 rounded-[10px] px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+        style={{ background: "linear-gradient(135deg, rgb(var(--teal)), rgb(var(--blue)))" }}
+      >
+        Salvar senha
+      </button>
     </form>
   )
 }

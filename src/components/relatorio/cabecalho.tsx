@@ -8,7 +8,7 @@ function BadgeStatus({ status }: { status: StatusRelatorio }) {
   const consolidado = status === "concluido"
   const rotulo = consolidado ? "Consolidado" : "Em apuração"
   // Verde (sucesso) para consolidado; âmbar (atenção) para em apuração.
-  const cor = consolidado ? "#16a34a" : "#d97706"
+  const cor = consolidado ? "#128a67" : "#b9790e"
   return (
     <span
       className="shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-medium"

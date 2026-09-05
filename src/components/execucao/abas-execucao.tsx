@@ -90,7 +90,7 @@ function AbasExecucaoInterno({
           <div className="flex flex-wrap items-center gap-3">
             <h2 className="font-display text-[15px] font-semibold">Execução do mês</h2>
             <select value={mesSel} onChange={(e) => setMesSel(Number(e.target.value))}
-              className="h-8 rounded-full border border-border bg-card px-3 text-[13px] font-medium">
+              className="h-8 rounded-[10px] border border-border bg-card px-3 text-[13px] font-medium">
               {meses.map((m) => <option key={m} value={m}>{MESES[m - 1]}</option>)}
             </select>
             <ModalParametros ano={ano} mesInicial={mesSel} series={series} />

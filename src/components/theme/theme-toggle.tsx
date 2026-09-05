@@ -1,4 +1,5 @@
 "use client"
+import { Sun, Moon } from "lucide-react"
 import { useTheme } from "next-themes"
 
 // O ícone visível é escolhido pelo CSS a partir da classe `.dark` que o
@@ -11,10 +12,10 @@ export function ThemeToggle() {
       type="button"
       onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
       aria-label="Alternar entre tema claro e escuro"
-      className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border"
+      className="inline-flex h-8 w-8 items-center justify-center rounded-[10px] border border-border text-muted"
     >
-      <span aria-hidden className="dark:hidden">☾</span>
-      <span aria-hidden className="hidden dark:inline">☀</span>
+      <Sun size={15} strokeWidth={1.9} aria-hidden className="hidden dark:block" />
+      <Moon size={15} strokeWidth={1.9} aria-hidden className="dark:hidden" />
     </button>
   )
 }

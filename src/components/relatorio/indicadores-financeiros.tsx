@@ -47,7 +47,7 @@ export function IndicadoresFinanceiros({ dados }: { dados: RelatorioPayload }) {
   const dividendos = dados.dividendos
   const resultado = rl - custos - despesas - dividendos
   const deficit = resultado < 0
-  const corRes = deficit ? "#dc2626" : "#16a34a"
+  const corRes = deficit ? "#c23b32" : "#128a67"
 
   const mesNome = MESES_LONGOS[dados.mes - 1].toUpperCase()
   const dia = new Date(dados.ano, dados.mes, 0).getDate() // último dia do mês

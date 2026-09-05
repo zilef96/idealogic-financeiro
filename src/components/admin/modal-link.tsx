@@ -46,7 +46,7 @@ export function ModalLink({
 
         <div className="flex gap-2">
           <input readOnly value={link} onFocus={(e) => e.currentTarget.select()}
-            className="w-full rounded border border-border bg-background p-2 font-mono text-[12px]" />
+            className="w-full rounded-[10px] border border-border bg-background p-2 font-mono text-[12px]" />
           <button type="button" onClick={copiar} className={`${btnPrimary} shrink-0`}>Copiar</button>
         </div>
 
