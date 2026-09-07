@@ -1,5 +1,6 @@
 "use client"
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Calculator, FileText, LayoutDashboard, ListTodo, Menu, Users, Home, Share2, BarChart3, ChevronLeft, ChevronRight, type LucideIcon } from "lucide-react"
 import { ThemeToggle } from "@/components/theme/theme-toggle"
@@ -161,7 +162,7 @@ export function AppShell({
                 const ativo = pathname === item.href || pathname.startsWith(`${item.href}/`)
                 const Icone = item.icon
                 return (
-                  <a
+                  <Link
                     key={item.href}
                     href={item.href}
                     title={recolhido ? item.label : undefined}
@@ -178,7 +179,7 @@ export function AppShell({
                     {!recolhido && <Icone size={15} strokeWidth={1.75} aria-hidden />}
                     {!recolhido && item.label}
                     {recolhido && <Icone size={15} strokeWidth={1.75} aria-hidden />}
-                  </a>
+                  </Link>
                 )
               })}
             </div>
