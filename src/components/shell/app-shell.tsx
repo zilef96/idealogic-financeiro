@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Calculator, FileText, LayoutDashboard, ListTodo, Menu, Users, Home, Share2, BarChart3, ChevronLeft, ChevronRight, type LucideIcon } from "lucide-react"
+import { Calculator, FileText, LayoutDashboard, ListTodo, Menu, Home, Share2, BarChart3, ChevronLeft, ChevronRight, type LucideIcon } from "lucide-react"
 import { ThemeToggle } from "@/components/theme/theme-toggle"
 import { UserMenu } from "@/components/shell/user-menu"
 import { Logo } from "@/components/brand/logo"
@@ -27,7 +27,6 @@ const ITENS_ADMIN: ItemMenu[] = [
   { href: "/orcamento", label: "Orçamentação", icon: Calculator },
   { href: "/execucao", label: "Execução", icon: ListTodo },
   { href: "/relatorio", label: "Relatório", icon: FileText },
-  { href: "/admin/usuarios", label: "Usuários", icon: Users },
 ]
 
 const ITENS_SOCIO: ItemMenu[] = [
@@ -129,7 +128,7 @@ export function AppShell({
             type="button"
             onClick={alternarRecolhido}
             aria-label={recolhido ? "Expandir menu" : "Recolher menu"}
-            className="absolute top-1/2 z-30 hidden h-[22px] w-[22px] -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card text-muted xl:flex"
+            className="fixed top-1/2 z-30 hidden h-[22px] w-[22px] -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card text-muted xl:flex"
             style={{ left: recolhido ? 52 : 228 }}
           >
             {recolhido ? <ChevronRight size={12} strokeWidth={2.2} /> : <ChevronLeft size={12} strokeWidth={2.2} />}
