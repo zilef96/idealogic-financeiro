@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/toast"
 import { btn, btnPrimary } from "@/components/ui/botao"
 import { blocosDisponiveis, raizDoBloco, filhosDe, classificacoesDoTipo } from "@/lib/services/cascata-grupos"
 import { vigenciaInvalidaPorFechamento } from "@/lib/services/orcamento-service"
+import { API_BASE } from "@/lib/api-base"
 
 const inputCls = "mt-1 w-full rounded-[10px] border border-border bg-background p-2 text-sm"
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
@@ -28,7 +29,7 @@ export type ItemEditar = {
 }
 
 export function NovoItem({
-  grupos, endpoint = "/api/orcamento", statusPorMes, mesPadrao, aberto, onClose, itemEditar,
+  grupos, endpoint = `${API_BASE}/orcamento`, statusPorMes, mesPadrao, aberto, onClose, itemEditar,
   mostrarComentarios = false,
 }: {
   grupos: GrupoOrcamento[]

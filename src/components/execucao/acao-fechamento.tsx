@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/toast"
+import { API_BASE } from "@/lib/api-base"
 
 type Status = "aberto" | "concluido"
 type Auditoria = { concluidoPor: string | null; concluidoEm: string | null; reabertoPor: string | null; reabertoEm: string | null }
@@ -22,7 +23,7 @@ export function AcaoFechamento({ ano, mes, status, auditoria }: { ano: number; m
   }, [logAberto])
 
   const concluido = status === "concluido"
-  const rota = concluido ? "/api/fechamento/reabrir" : "/api/fechamento/concluir"
+  const rota = concluido ? `${API_BASE}/fechamento/reabrir` : `${API_BASE}/fechamento/concluir`
   const label = concluido ? "Reabrir mês" : "Concluir mês"
 
   async function acionar() {

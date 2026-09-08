@@ -5,6 +5,7 @@ import type { GrupoOrcamento } from "@/lib/types"
 import { btn } from "@/components/ui/botao"
 import { NovoItem } from "@/components/orcamento/novo-item"
 import { NovaCategoria } from "./nova-categoria"
+import { API_BASE } from "@/lib/api-base"
 
 export function MenuAdicionar({ grupos, statusPorMes, mesPadrao }: {
   grupos: GrupoOrcamento[]
@@ -36,7 +37,7 @@ export function MenuAdicionar({ grupos, statusPorMes, mesPadrao }: {
 
       <NovoItem
         grupos={grupos}
-        endpoint="/api/execucao/item"
+        endpoint={`${API_BASE}/execucao/item`}
         statusPorMes={statusPorMes}
         mesPadrao={mesPadrao}
         aberto={modal === "item"}

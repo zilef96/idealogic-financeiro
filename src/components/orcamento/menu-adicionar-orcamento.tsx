@@ -5,6 +5,7 @@ import type { GrupoOrcamento } from "@/lib/types"
 import { btn } from "@/components/ui/botao"
 import { NovoItem } from "@/components/orcamento/novo-item"
 import { NovaCategoria } from "@/components/execucao/nova-categoria"
+import { API_BASE } from "@/lib/api-base"
 
 export function MenuAdicionarOrcamento({ grupos }: { grupos: GrupoOrcamento[] }) {
   const [menuAberto, setMenuAberto] = useState(false)
@@ -30,9 +31,9 @@ export function MenuAdicionarOrcamento({ grupos }: { grupos: GrupoOrcamento[] })
         </>
       )}
 
-      <NovoItem grupos={grupos} endpoint="/api/orcamento" mostrarComentarios
+      <NovoItem grupos={grupos} endpoint={`${API_BASE}/orcamento`} mostrarComentarios
         aberto={modal === "item"} onClose={() => setModal(null)} />
-      <NovaCategoria grupos={grupos} endpoint="/api/orcamento/grupo"
+      <NovaCategoria grupos={grupos} endpoint={`${API_BASE}/orcamento/grupo`}
         aberto={modal === "categoria"} onClose={() => setModal(null)} />
     </div>
   )

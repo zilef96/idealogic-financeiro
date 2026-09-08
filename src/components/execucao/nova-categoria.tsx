@@ -5,11 +5,12 @@ import type { GrupoOrcamento, TipoConta } from "@/lib/types"
 import { useToast } from "@/components/ui/toast"
 import { btn, btnPrimary } from "@/components/ui/botao"
 import { blocosDisponiveis, raizDoBloco, filhosDe } from "@/lib/services/cascata-grupos"
+import { API_BASE } from "@/lib/api-base"
 
 const inputCls = "mt-1 w-full rounded-[10px] border border-border bg-background p-2 text-sm"
 const ROTULO_BLOCO: Record<TipoConta, string> = { R: "Receita", C: "Custo", D: "Despesa", E: "Dividendos" }
 
-export function NovaCategoria({ grupos, aberto, onClose, endpoint = "/api/execucao/grupo" }: {
+export function NovaCategoria({ grupos, aberto, onClose, endpoint = `${API_BASE}/execucao/grupo` }: {
   grupos: GrupoOrcamento[]
   aberto: boolean
   onClose: () => void

@@ -10,6 +10,7 @@ import { EditarCategoria } from "./editar-categoria"
 import { ConfirmarExclusao } from "./confirmar-exclusao"
 import { MenuAdicionarOrcamento } from "./menu-adicionar-orcamento"
 import { NovoItem, type ItemEditar } from "./novo-item"
+import { API_BASE } from "@/lib/api-base"
 
 const brl = (n: number) => (n === 0 ? "—" : n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
 const brlK = (n: number) => "R$ " + Math.round(n).toLocaleString("pt-BR")
@@ -157,7 +158,7 @@ function TabelaOrcamentoInterno({ linhas, grupos, rascunho }: { linhas: LinhaOrc
 
   async function confirmarExclusao(): Promise<string | null> {
     if (!excluir) return null
-    const url = excluir.tipo === "item" ? `/api/orcamento/${excluir.id}` : `/api/grupos/${excluir.id}`
+    const url = excluir.tipo === "item" ? `${API_BASE}/orcamento/${excluir.id}` : `${API_BASE}/grupos/${excluir.id}`
     const r = await fetch(url, { method: "DELETE" })
     if (r.ok) { window.location.reload(); return null }
     if (r.status === 409) {
@@ -383,7 +384,7 @@ function TabelaOrcamentoInterno({ linhas, grupos, rascunho }: { linhas: LinhaOrc
 
       {/* Modais */}
       {itemEdit && (
-        <NovoItem grupos={grupos} endpoint="/api/orcamento" itemEditar={itemEdit} mostrarComentarios
+        <NovoItem grupos={grupos} endpoint={`${API_BASE}/orcamento`} itemEditar={itemEdit} mostrarComentarios
           aberto={true} onClose={() => setItemEdit(null)} />
       )}
       {grupoEdit && (
