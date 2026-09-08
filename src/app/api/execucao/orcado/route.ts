@@ -4,12 +4,15 @@ import { requirePerfil } from "@/lib/route-auth"
 import { parseBody, handleApiError, anoSchema, mesSchema, idPositivoSchema, valorNaoNegativoSchema } from "@/lib/api-helpers"
 import { gravarOrcado } from "@/lib/repositories/execucao-repository"
 
-const schema = z.object({ ano: anoSchema, mes: mesSchema, contaItemId: idPositivoSchema, valor: valorNaoNegativoSchema })
+const schema = z.object({
+  ano: anoSchema, mes: mesSchema, contaItemId: idPositivoSchema, valor: valorNaoNegativoSchema,
+  replicarAteFim: z.boolean().optional(),
+})
 
 export async function PATCH(req: Request) {
   const auth = await requirePerfil(["admin"]); if (!auth.ok) return auth.response
   const parsed = await parseBody(req, schema); if (!parsed.ok) return parsed.response
-  const { ano, mes, contaItemId, valor } = parsed.data
-  try { await gravarOrcado(ano, mes, contaItemId, valor); return NextResponse.json({ ok: true }) }
+  const { ano, mes, contaItemId, valor, replicarAteFim } = parsed.data
+  try { await gravarOrcado(ano, mes, contaItemId, valor, replicarAteFim); return NextResponse.json({ ok: true }) }
   catch (e) { return handleApiError(e, "Falha ao gravar orçado.") }
 }

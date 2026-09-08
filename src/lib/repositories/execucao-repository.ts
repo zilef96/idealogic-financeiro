@@ -54,12 +54,15 @@ export async function gravarRealizado(ano: number, mes: number, contaItemId: num
   `
 }
 
-export async function gravarOrcado(ano: number, mes: number, contaItemId: number, valor: number) {
-  const comp = competencia(ano, mes)
+// replicarAteFim grava o mesmo valor de `mes` até dezembro (pedido da Larissa:
+// evitar repetir o mesmo orçado mês a mês manualmente quando ele não muda).
+export async function gravarOrcado(ano: number, mes: number, contaItemId: number, valor: number, replicarAteFim = false) {
+  const mesFim = replicarAteFim ? 12 : mes
   await prisma.$executeRaw`
     INSERT INTO lancamento_realizado (conta_item_id, exercicio_id, competencia, valor_orcado)
-    SELECT ${contaItemId}, e.id, ${comp}::date, ${valor}::numeric
-    FROM exercicio e WHERE e.ano = ${ano}
+    SELECT ${contaItemId}, e.id, make_date(${ano}, m::int, 1), ${valor}::numeric
+    FROM exercicio e, generate_series(${mes}, ${mesFim}) AS m
+    WHERE e.ano = ${ano}
     ON CONFLICT (conta_item_id, competencia)
     DO UPDATE SET valor_orcado = EXCLUDED.valor_orcado, updated_at = now()
   `
