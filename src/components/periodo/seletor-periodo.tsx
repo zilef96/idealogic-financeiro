@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { CalendarPlus, ChevronDown } from "lucide-react"
 import { btn, btnPrimary } from "@/components/ui/botao"
+import { API_BASE } from "@/lib/api-base"
 
 export function SeletorPeriodo({ ano, anos }: { ano: number; anos: number[] }) {
   const router = useRouter()
@@ -20,7 +21,7 @@ export function SeletorPeriodo({ ano, anos }: { ano: number; anos: number[] }) {
   async function criar() {
     setErro(null); setEnviando(true)
     try {
-      const res = await fetch("/api/periodos", {
+      const res = await fetch(`${API_BASE}/periodos`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ano: novoAno, copiarDe: doZero ? null : origem }),
       })

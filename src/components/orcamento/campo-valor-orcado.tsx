@@ -3,6 +3,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/toast"
 import { useAlteracoesNaoSalvas } from "@/components/execucao/alteracoes-nao-salvas"
+import { API_BASE } from "@/lib/api-base"
 
 type Estado = "idle" | "salvando" | "salvo" | "erro"
 
@@ -18,7 +19,7 @@ export function CampoValorOrcado({ itemId, valorInicial }: { itemId: number; val
   async function salvar(valor: number) {
     setEstado("salvando")
     try {
-      const r = await fetch(`/api/orcamento/${itemId}`, {
+      const r = await fetch(`${API_BASE}/orcamento/${itemId}`, {
         method: "PATCH", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ valor }),
       })

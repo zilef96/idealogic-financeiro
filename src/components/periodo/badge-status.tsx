@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Send, Undo2 } from "lucide-react"
 import { btn, btnPrimary } from "@/components/ui/botao"
+import { API_BASE } from "@/lib/api-base"
 
 // Rótulo de estado do exercício (pertence ao título).
 export function BadgeStatus({ status }: { status: "rascunho" | "publicado" }) {
@@ -23,7 +24,7 @@ export function BotaoPublicar({ ano, status }: { ano: number; status: "rascunho"
 
   async function alternar() {
     setSalvando(true)
-    await fetch("/api/periodos/status", {
+    await fetch(`${API_BASE}/periodos/status`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ano, acao: publicado ? "despublicar" : "publicar" }),
     })

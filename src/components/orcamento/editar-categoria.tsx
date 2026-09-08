@@ -3,6 +3,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/toast"
 import { btn, btnPrimary } from "@/components/ui/botao"
+import { API_BASE } from "@/lib/api-base"
 
 export function EditarCategoria({ grupo, aberto, onClose }: {
   grupo: { id: number; nome: string }
@@ -20,7 +21,7 @@ export function EditarCategoria({ grupo, aberto, onClose }: {
     setErro("")
     if (!nome.trim()) { setErro("Informe o nome da categoria."); return }
     setSalvando(true)
-    const r = await fetch(`/api/grupos/${grupo.id}`, {
+    const r = await fetch(`${API_BASE}/grupos/${grupo.id}`, {
       method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nome: nome.trim() }),
     })
     setSalvando(false)

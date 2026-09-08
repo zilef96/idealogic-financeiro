@@ -5,6 +5,7 @@ import { btn, btnPrimary } from "@/components/ui/botao"
 import { useToast } from "@/components/ui/toast"
 import { ModalAdicionarUsuario } from "@/components/admin/modal-adicionar-usuario"
 import { ModalLink } from "@/components/admin/modal-link"
+import { API_BASE } from "@/lib/api-base"
 
 const ROTULO_PERFIL: Record<string, string> = { admin: "Admin", socio: "Sócio" }
 
@@ -33,7 +34,7 @@ export function ListaUsuarios({ usuarios }: { usuarios: UsuarioComStatus[] }) {
 
   async function gerarLink(id: string) {
     setGerandoId(id)
-    const r = await fetch(`/api/admin/usuarios/${id}/link`, { method: "POST" })
+    const r = await fetch(`${API_BASE}/admin/usuarios/${id}/link`, { method: "POST" })
     setGerandoId(null)
     if (!r.ok) { toast({ tipo: "erro", texto: "Falha ao gerar o link." }); return }
     const body = await r.json()

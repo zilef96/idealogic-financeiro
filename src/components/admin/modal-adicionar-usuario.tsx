@@ -3,6 +3,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { btnPrimary } from "@/components/ui/botao"
 import { useToast } from "@/components/ui/toast"
+import { API_BASE } from "@/lib/api-base"
 
 const inputCls = "mt-1 w-full rounded-[10px] border border-border bg-background p-2 text-sm"
 
@@ -23,7 +24,7 @@ export function ModalAdicionarUsuario({
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault(); setEnviando(true)
-    const r = await fetch("/api/admin/convite", {
+    const r = await fetch(`${API_BASE}/admin/convite`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ nome, email, perfil }),
     })

@@ -7,6 +7,7 @@ import { valorVigente } from "@/lib/services/execucao-service"
 import { saldosBancarios } from "@/lib/services/relatorio-service"
 import { btn, btnPrimary } from "@/components/ui/botao"
 import { useToast } from "@/components/ui/toast"
+import { API_BASE } from "@/lib/api-base"
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
 const inputCls = "num w-40 rounded border border-border bg-background px-2 py-1 text-right text-sm"
@@ -89,7 +90,7 @@ export function ModalParametros({ ano, mesInicial, series }: {
     const tarefas: Promise<Response>[] = []
 
     if (saldosMudaram) {
-      tarefas.push(fetch("/api/relatorio/saldos", {
+      tarefas.push(fetch(`${API_BASE}/relatorio/saldos`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ano, mes: mesSel,
@@ -101,7 +102,7 @@ export function ModalParametros({ ano, mesInicial, series }: {
     }
 
     const putParametro = (chave: string, valor: number, mes: number) =>
-      fetch("/api/parametros", {
+      fetch(`${API_BASE}/parametros`, {
         method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ano, mes, chave, valor }),
       })

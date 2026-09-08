@@ -2,6 +2,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Logo } from "@/components/brand/logo"
+import { API_BASE } from "@/lib/api-base"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -11,7 +12,7 @@ export default function LoginPage() {
 
   async function entrar(e: React.FormEvent) {
     e.preventDefault(); setErro("")
-    const r = await fetch("/api/auth/login", {
+    const r = await fetch(`${API_BASE}/auth/login`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, senha }),
     })

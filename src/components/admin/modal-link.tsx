@@ -2,6 +2,7 @@
 import { useState } from "react"
 import { btn, btnPrimary } from "@/components/ui/botao"
 import { useToast } from "@/components/ui/toast"
+import { API_BASE } from "@/lib/api-base"
 
 // Diálogo com o link de acesso gerado: copiar e gerar novamente.
 // O link do Supabase expira (~24h), por isso a ação de regenerar.
@@ -25,7 +26,7 @@ export function ModalLink({
 
   async function gerarNovamente() {
     setGerando(true)
-    const r = await fetch(`/api/admin/usuarios/${id}/link`, { method: "POST" })
+    const r = await fetch(`${API_BASE}/admin/usuarios/${id}/link`, { method: "POST" })
     setGerando(false)
     if (!r.ok) { toast({ tipo: "erro", texto: "Falha ao gerar o link." }); return }
     const body = await r.json()

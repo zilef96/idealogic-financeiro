@@ -1,6 +1,7 @@
 "use client"
 import { useCallback, useEffect, useId, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
+import { API_BASE } from "@/lib/api-base"
 
 type Perfil = "socio" | "admin"
 
@@ -80,7 +81,7 @@ export function UserMenu({ usuario }: UserMenuProps) {
     if (saindo) return
     setSaindo(true)
     try {
-      await fetch("/api/auth/logout", { method: "POST" })
+      await fetch(`${API_BASE}/auth/logout`, { method: "POST" })
       router.push("/login")
     } catch {
       // Permite nova tentativa caso a requisição falhe.

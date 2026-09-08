@@ -1,6 +1,7 @@
 "use client"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { API_BASE } from "@/lib/api-base"
 
 export function FormDefinirSenha() {
   const [senha, setSenha] = useState("")
@@ -12,7 +13,7 @@ export function FormDefinirSenha() {
     e.preventDefault(); setMsg("")
     if (senha.length < 8) { setMsg("A senha precisa ter ao menos 8 caracteres."); return }
     if (senha !== confirmacao) { setMsg("As senhas não conferem."); return }
-    const r = await fetch("/api/auth/senha", {
+    const r = await fetch(`${API_BASE}/auth/senha`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ senha }),
     })
