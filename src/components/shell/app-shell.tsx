@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Calculator, FileText, LayoutDashboard, ListTodo, Menu, Home, Share2, BarChart3, ChevronLeft, ChevronRight, type LucideIcon } from "lucide-react"
+import { Calculator, FileText, LayoutDashboard, ListTodo, Home, Share2, BarChart3, ChevronLeft, ChevronRight, type LucideIcon } from "lucide-react"
 import { ThemeToggle } from "@/components/theme/theme-toggle"
 import { UserMenu } from "@/components/shell/user-menu"
 import { Logo } from "@/components/brand/logo"
@@ -43,7 +43,6 @@ export function AppShell({
   children: React.ReactNode
   usuario: UsuarioShell | null
 }) {
-  const [aberto, setAberto] = useState(false)
   const [recolhido, setRecolhido] = useState(false)
   const [hidratado, setHidratado] = useState(false)
   const pathname = usePathname()
@@ -96,7 +95,6 @@ export function AppShell({
         href={item.href}
         title={recolhido ? item.label : undefined}
         aria-current={ativo ? "page" : undefined}
-        onClick={() => setAberto(false)}
         className={className}
         style={style}
       >
@@ -108,10 +106,6 @@ export function AppShell({
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-20 flex items-center gap-2.5 border-b border-border bg-background px-4 py-3">
-        <button
-          type="button" className="xl:hidden rounded-[10px] border border-border p-2"
-          aria-label="Abrir menu" onClick={() => setAberto(true)}
-        ><Menu size={18} strokeWidth={2} aria-hidden /></button>
         <Logo size={28} />
         <span className="font-display text-base font-semibold tracking-tight">Idealogic</span>
         <span className="mx-0.5 h-4 w-px bg-border" />
@@ -122,13 +116,13 @@ export function AppShell({
         </div>
       </header>
 
-      <div className="relative flex-1 xl:flex xl:items-stretch">
+      <div className="relative flex flex-1 items-stretch">
         {hidratado && (
           <button
             type="button"
             onClick={alternarRecolhido}
             aria-label={recolhido ? "Expandir menu" : "Recolher menu"}
-            className="fixed top-1/2 z-30 hidden h-[22px] w-[22px] -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card text-muted xl:flex"
+            className="fixed top-1/2 z-30 flex h-[22px] w-[22px] -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card text-muted"
             style={{ left: recolhido ? 52 : 228 }}
           >
             {recolhido ? <ChevronRight size={12} strokeWidth={2.2} /> : <ChevronLeft size={12} strokeWidth={2.2} />}
@@ -136,9 +130,7 @@ export function AppShell({
         )}
 
         <aside
-          className={`fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden border-r border-border bg-background
-            transition-transform xl:static xl:translate-x-0 xl:transition-[width]
-            ${aberto ? "translate-x-0" : "-translate-x-full"}`}
+          className="flex shrink-0 flex-col overflow-hidden border-r border-border bg-background transition-[width]"
           style={{ width: recolhido ? 64 : 256 }}
         >
           <nav className="flex flex-1 flex-col gap-0.5 p-3 text-sm" aria-label="Navegação principal">
@@ -166,7 +158,6 @@ export function AppShell({
                     href={item.href}
                     title={recolhido ? item.label : undefined}
                     aria-current={ativo ? "page" : undefined}
-                    onClick={() => setAberto(false)}
                     className="flex h-8 items-center gap-2 rounded-[10px] px-2.5 text-[12.5px] font-medium transition-colors"
                     style={{
                       justifyContent: recolhido ? "center" : "flex-start",
@@ -197,9 +188,6 @@ export function AppShell({
             </a>
           </nav>
         </aside>
-        {aberto && (
-          <div className="fixed inset-0 z-30 bg-black/40 xl:hidden" onClick={() => setAberto(false)} />
-        )}
         <main className="min-w-0 flex-1 p-4">{children}</main>
       </div>
     </div>
