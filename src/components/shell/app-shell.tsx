@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Calculator, FileText, LayoutDashboard, ListTodo, Home, Share2, BarChart3, ChevronLeft, ChevronRight, type LucideIcon } from "lucide-react"
+import { Calculator, FileText, LayoutDashboard, ListTodo, Home, Share2, ChevronLeft, ChevronRight, type LucideIcon } from "lucide-react"
 import { ThemeToggle } from "@/components/theme/theme-toggle"
 import { UserMenu } from "@/components/shell/user-menu"
 import { Logo } from "@/components/brand/logo"
@@ -18,10 +18,6 @@ const ITENS_HUB: ItemMenu[] = [
   { href: "/", label: "Início", icon: Home },
   { href: "/post", label: "Redes Sociais", icon: Share2 },
 ]
-const ITENS_HUB_DEPOIS: ItemMenu[] = [
-  { href: "/relatorio-mensal", label: "Relatório Mensal", icon: BarChart3 },
-]
-
 const ITENS_ADMIN: ItemMenu[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/orcamento", label: "Orçamentação", icon: Calculator },
@@ -174,9 +170,6 @@ export function AppShell({
               })}
             </div>
 
-            {ITENS_HUB_DEPOIS.map((item) => (
-              <ItemNav key={item.href} item={item} ativo={false} comAncoraSimples />
-            ))}
             <a
               href="/claude-code"
               title={recolhido ? "Claude Code" : undefined}
