@@ -42,9 +42,9 @@ export function projecaoCaixa(d: {
 }
 
 export interface TotaisMes {
-  faturamento: number        // bloco 10000 (inclui Cotas 10100 e Tributos 10200 no nosso seed)
+  faturamento: number        // bloco 10000 (inclui Cotas 10100; Tributos 10200 é bloco-raiz à parte)
   cotas: number              // grupo 10100 "Cotas sócios"
-  tributosFat: number        // grupo 10200 "Tributos sobre Faturamento" (inclui CSLL/IRPJ)
+  tributosFat: number        // bloco-raiz 10200 "Tributos sobre Faturamento" (inclui CSLL/IRPJ)
   tributacaoLucro: number    // item 10204 "CSLL e IRPJ"
   custos: number             // bloco 20000
   despesas: number           // bloco 30000
@@ -53,11 +53,11 @@ export interface TotaisMes {
   despAdmFinComl: number     // 31000+32000+33000+34000
 }
 
-// Faturamento de serviços = 10000 sem Cotas (10100) e Tributos (10200), que no
-// nosso seed são filhos de 10000. Espelha a planilha (RN-EX-04):
+// Faturamento de serviços = 10000 sem Cotas (10100); Tributos (10200) já é
+// bloco-raiz independente, não entra no rollup de 10000. Espelha a planilha (RN-EX-04):
 // FatServiços + Cotas − Tributos − Custos − Despesas − Distribuição.
 export function faturamentoServicos(t: TotaisMes): number {
-  return t.faturamento - t.cotas - t.tributosFat
+  return t.faturamento - t.cotas
 }
 export function superavitMensal(t: TotaisMes): number {
   return faturamentoServicos(t) + t.cotas - t.tributosFat - t.custos - t.despesas - t.dividendos

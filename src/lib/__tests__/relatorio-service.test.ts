@@ -34,9 +34,10 @@ function linhas(mes: number, vals: Record<string, { o: number; r: number | null;
 
 describe("receitaLiquida", () => {
   it("Total de Receitas − (PIS+COFINS+ISSQN), sem subtrair 10204", () => {
-    // faturamento(10000)=120 inclui cotas(10)+tributosFat(20); fatServiços=90.
+    // faturamento(10000)=100 inclui cotas(10) — Tributos(10200) é bloco-raiz à parte, não
+    // entra no rollup de 10000; fatServiços = 100-10 = 90.
     // Total Receitas = 90 + 10 = 100. Tributos 3 itens = tributosFat(20) − 10204(5) = 15.
-    const t = totais({ faturamento: 120, cotas: 10, tributosFat: 20, tributacaoLucro: 5 })
+    const t = totais({ faturamento: 100, cotas: 10, tributosFat: 20, tributacaoLucro: 5 })
     expect(receitaLiquida(t)).toBe(100 - 15)
   })
 })
@@ -121,7 +122,7 @@ describe("serieFluxoMensal", () => {
   // Mês 1 com realizado; mês 2 sem realizado (todos null).
   const ls = [
     ...linhas(1, {
-      "10000": { o: 0, r: 120 }, "10100": { o: 0, r: 10 }, "10200": { o: 0, r: 20 },
+      "10000": { o: 0, r: 100 }, "10100": { o: 0, r: 10 }, "10200": { o: 0, r: 20 },
       "20000": { o: 0, r: 40 }, "30000": { o: 0, r: 30 }, "40000": { o: 0, r: 5 },
       "CSLL e IRPJ": { o: 0, r: 5, grupo: false, pai: "10200" },
     }),
@@ -134,7 +135,7 @@ describe("serieFluxoMensal", () => {
   })
   it("calcula as colunas do mês 1", () => {
     const m1 = f.meses[0]
-    // fatServiços = 120 − 10 − 20 = 90; tributos 3 itens = 20 − 5 = 15;
+    // fatServiços = 100 − 10 = 90 (Tributos 10200 já é bloco-raiz à parte); tributos 3 itens = 20 − 5 = 15;
     // resultado = superavitMensal = 90 + 10 − 20 − 40 − 30 − 5 = 5
     expect(m1.receitas).toBe(90)
     expect(m1.cotas).toBe(10)
@@ -161,7 +162,7 @@ describe("serieFluxoMensal", () => {
 
 describe("montarRelatorio", () => {
   const ls = linhas(5, {
-    "10000": { o: 0, r: 120 }, "10100": { o: 0, r: 10 }, "10200": { o: 0, r: 20 },
+    "10000": { o: 0, r: 100 }, "10100": { o: 0, r: 10 }, "10200": { o: 0, r: 20 },
     "20000": { o: 0, r: 40 }, "30000": { o: 0, r: 30 }, "40000": { o: 0, r: 5 },
     "PIS": { o: 0, r: 3, grupo: false, pai: "10200" },
     "COFINS": { o: 0, r: 7, grupo: false, pai: "10200" },

@@ -68,15 +68,16 @@ describe("valorVigente", () => {
   })
 })
 
-// faturamento 120000 inclui cotas 10000 e tributos 10000 → fat. serviços = 100000
+// faturamento 110000 inclui cotas 10000 (Tributos é bloco-raiz à parte, não entra
+// mais no rollup de faturamento) → fat. serviços = 110000-10000 = 100000
 const baseTotais: TotaisMes = {
-  faturamento: 120000, cotas: 10000, tributosFat: 10000, tributacaoLucro: 3000,
+  faturamento: 110000, cotas: 10000, tributosFat: 10000, tributacaoLucro: 3000,
   custos: 30000, despesas: 20000, dividendos: 5000, custosOperacionais: 8000, despAdmFinComl: 16000,
 }
 
 describe("superavitMensal", () => {
   it("fatServiços + cotas − tributos − custos − despesas − distribuição", () => {
-    // (120000-10000-10000) + 10000 - 10000 - 30000 - 20000 - 5000 = 45000
+    // (110000-10000) + 10000 - 10000 - 30000 - 20000 - 5000 = 45000
     expect(superavitMensal(baseTotais)).toBe(45000)
   })
 })

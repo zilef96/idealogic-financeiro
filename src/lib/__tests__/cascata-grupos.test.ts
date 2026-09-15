@@ -1,28 +1,25 @@
 import { describe, it, expect } from "vitest"
-import { blocosDisponiveis, raizDoBloco, filhosDe, ehFolha, classificacoesDoTipo } from "@/lib/services/cascata-grupos"
+import { blocosRaiz, filhosDe, ehFolha, classificacoesDoTipo } from "@/lib/services/cascata-grupos"
 import type { GrupoOrcamento } from "@/lib/types"
 
-// Árvore-fixture: bloco D(4) → grupo 41 → subgrupos 411 (folha) e 412 (folha); bloco R(1) raiz solta.
+// Árvore-fixture: bloco D(4) → grupo 41 → subgrupos 411 (folha) e 412 (folha); bloco R(1) raiz
+// solta; bloco R(2) segunda raiz também tipo R (caso "Faturamento" + "Tributos sobre Faturamento").
 const grupos: GrupoOrcamento[] = [
   { id: 1, codigo: "1", codigoPai: null, tipo: "R", nome: "Receitas" },
+  { id: 2, codigo: "2", codigoPai: null, tipo: "R", nome: "Tributos sobre Faturamento" },
   { id: 4, codigo: "4", codigoPai: null, tipo: "D", nome: "Despesas" },
   { id: 41, codigo: "41", codigoPai: "4", tipo: "D", nome: "Pessoal" },
   { id: 412, codigo: "412", codigoPai: "41", tipo: "D", nome: "Encargos" },
   { id: 411, codigo: "411", codigoPai: "41", tipo: "D", nome: "Salários" },
 ]
 
-describe("blocosDisponiveis", () => {
-  it("retorna tipos distintos na ordem R,C,D,E", () => {
-    expect(blocosDisponiveis(grupos)).toEqual(["R", "D"])
+describe("blocosRaiz", () => {
+  it("retorna os nós raiz (codigoPai null), ordenados por código", () => {
+    expect(blocosRaiz(grupos).map((g) => g.codigo)).toEqual(["1", "2", "4"])
   })
-})
-
-describe("raizDoBloco", () => {
-  it("acha o nó raiz (codigoPai null) do tipo", () => {
-    expect(raizDoBloco(grupos, "D")?.codigo).toBe("4")
-  })
-  it("retorna undefined quando o tipo não tem raiz", () => {
-    expect(raizDoBloco(grupos, "C")).toBeUndefined()
+  it("mantém dois blocos-raiz distintos mesmo com o mesmo tipo", () => {
+    const raizesR = blocosRaiz(grupos).filter((g) => g.tipo === "R")
+    expect(raizesR.map((g) => g.nome)).toEqual(["Receitas", "Tributos sobre Faturamento"])
   })
 })
 

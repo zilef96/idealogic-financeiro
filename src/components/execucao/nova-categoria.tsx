@@ -1,14 +1,13 @@
 "use client"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import type { GrupoOrcamento, TipoConta } from "@/lib/types"
+import type { GrupoOrcamento } from "@/lib/types"
 import { useToast } from "@/components/ui/toast"
 import { btn, btnPrimary } from "@/components/ui/botao"
-import { blocosDisponiveis, raizDoBloco, filhosDe } from "@/lib/services/cascata-grupos"
+import { blocosRaiz, filhosDe } from "@/lib/services/cascata-grupos"
 import { API_BASE } from "@/lib/api-base"
 
 const inputCls = "mt-1 w-full rounded-[10px] border border-border bg-background p-2 text-sm"
-const ROTULO_BLOCO: Record<TipoConta, string> = { R: "Receita", C: "Custo", D: "Despesa", E: "Dividendos" }
 
 export function NovaCategoria({ grupos, aberto, onClose, endpoint = `${API_BASE}/execucao/grupo` }: {
   grupos: GrupoOrcamento[]
@@ -20,12 +19,12 @@ export function NovaCategoria({ grupos, aberto, onClose, endpoint = `${API_BASE}
   const { toast } = useToast()
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState("")
-  const [tipoSel, setTipoSel] = useState<TipoConta | "">("")
+  const [raizCodigo, setRaizCodigo] = useState<string>("")
   const [caminho, setCaminho] = useState<string[]>([])
   const [nome, setNome] = useState("")
 
-  const blocos = blocosDisponiveis(grupos)
-  const raiz = tipoSel ? raizDoBloco(grupos, tipoSel) : undefined
+  const raizes = blocosRaiz(grupos)
+  const raiz = raizCodigo ? raizes.find((r) => r.codigo === raizCodigo) : undefined
 
   // Cascata: cada nível mostra os filhos do nó escolhido acima. Aceita parar em qualquer nó.
   const niveis: GrupoOrcamento[][] = []
@@ -41,7 +40,7 @@ export function NovaCategoria({ grupos, aberto, onClose, endpoint = `${API_BASE}
   const paiCodigoEscolhido = caminho.length ? caminho[caminho.length - 1] : raiz?.codigo
   const grupoPai = grupos.find((g) => g.codigo === paiCodigoEscolhido)
 
-  function reset() { setTipoSel(""); setCaminho([]); setNome(""); setErro("") }
+  function reset() { setRaizCodigo(""); setCaminho([]); setNome(""); setErro("") }
   function fechar() { reset(); onClose() }
   function escolherNivel(d: number, codigo: string) {
     setCaminho((c) => (codigo ? [...c.slice(0, d), codigo] : c.slice(0, d)))
@@ -75,10 +74,10 @@ export function NovaCategoria({ grupos, aberto, onClose, endpoint = `${API_BASE}
         <div className="text-sm">
           <span className="block">Bloco</span>
           <div className="mt-1 flex flex-wrap gap-2">
-            {blocos.map((t) => (
-              <button key={t} type="button" onClick={() => { setTipoSel(t); setCaminho([]) }}
-                className={`rounded-full border px-3 py-1 text-[12px] ${tipoSel === t ? "border-foreground font-medium" : "border-border hover:bg-faint"}`}>
-                {t} — {ROTULO_BLOCO[t]}
+            {raizes.map((r) => (
+              <button key={r.codigo} type="button" onClick={() => { setRaizCodigo(r.codigo); setCaminho([]) }}
+                className={`rounded-full border px-3 py-1 text-[12px] ${raizCodigo === r.codigo ? "border-foreground font-medium" : "border-border hover:bg-faint"}`}>
+                {r.nome}
               </button>
             ))}
           </div>

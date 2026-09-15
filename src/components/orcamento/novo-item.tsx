@@ -4,13 +4,12 @@ import { useState } from "react"
 import type { GrupoOrcamento, Periodicidade, Classificacao, TipoConta } from "@/lib/types"
 import { useToast } from "@/components/ui/toast"
 import { btn, btnPrimary } from "@/components/ui/botao"
-import { blocosDisponiveis, raizDoBloco, filhosDe, classificacoesDoTipo } from "@/lib/services/cascata-grupos"
+import { blocosRaiz, filhosDe, classificacoesDoTipo } from "@/lib/services/cascata-grupos"
 import { vigenciaInvalidaPorFechamento } from "@/lib/services/orcamento-service"
 import { API_BASE } from "@/lib/api-base"
 
 const inputCls = "mt-1 w-full rounded-[10px] border border-border bg-background p-2 text-sm"
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
-const ROTULO_BLOCO: Record<TipoConta, string> = { R: "Receita", C: "Custo", D: "Despesa", E: "Dividendos" }
 
 type StatusPorMes = Record<number, "aberto" | "concluido">
 
@@ -51,8 +50,8 @@ export function NovoItem({
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState("")
 
-  // Cascata (só criar): tipo escolhido + caminho de códigos do 1º nível em diante.
-  const [tipoSel, setTipoSel] = useState<TipoConta | "">("")
+  // Cascata (só criar): bloco-raiz escolhido (por código) + caminho do 1º nível em diante.
+  const [raizCodigo, setRaizCodigo] = useState<string>("")
   const [caminho, setCaminho] = useState<string[]>([])
 
   const [nome, setNome] = useState(itemEditar?.nome ?? "")
@@ -65,16 +64,16 @@ export function NovoItem({
   const [mesFim, setMesFim] = useState<string>(itemEditar?.mesFim != null ? String(itemEditar.mesFim) : "12")
   const [comentarios, setComentarios] = useState(itemEditar?.comentarios ?? "")
 
-  const blocos = blocosDisponiveis(grupos)
+  const raizes = blocosRaiz(grupos)
+  const raizSelecionada = raizCodigo ? raizes.find((r) => r.codigo === raizCodigo) : undefined
   const mesesAbertos = Array.from({ length: 12 }, (_, i) => i + 1).filter(
     (m) => !statusPorMes || statusPorMes[m] !== "concluido",
   )
 
   // Níveis visíveis da cascata (só no modo criar).
   const niveis: GrupoOrcamento[][] = []
-  if (!editando && tipoSel) {
-    const raiz = raizDoBloco(grupos, tipoSel)
-    let paiCodigo = raiz?.codigo
+  if (!editando && raizSelecionada) {
+    let paiCodigo: string | undefined = raizSelecionada.codigo
     for (let d = 0; paiCodigo; d++) {
       const opcoes = filhosDe(grupos, paiCodigo)
       if (opcoes.length === 0) break
@@ -83,18 +82,17 @@ export function NovoItem({
     }
   }
 
-  // Grupo opcional: alvo = nó mais profundo escolhido; se nenhum, a raiz do bloco.
-  const raizTipo = tipoSel ? raizDoBloco(grupos, tipoSel) : undefined
+  // Grupo opcional: alvo = nó mais profundo escolhido; se nenhum, o bloco-raiz.
   const grupoAlvo = caminho.length
     ? grupos.find((g) => g.codigo === caminho[caminho.length - 1])
-    : raizTipo
+    : raizSelecionada
 
   const classifs = editando
     ? classificacoesDoTipo(itemEditar!.tipo)
-    : (tipoSel ? classificacoesDoTipo(tipoSel) : [])
+    : (raizSelecionada ? classificacoesDoTipo(raizSelecionada.tipo) : [])
 
   function reset() {
-    setTipoSel(""); setCaminho([]); setNome(""); setPeriodicidade("M"); setValor("")
+    setRaizCodigo(""); setCaminho([]); setNome(""); setPeriodicidade("M"); setValor("")
     setClassificacao(""); setMesInicio(mesPadrao ? String(mesPadrao) : ""); setMesFim("12"); setComentarios(""); setErro("")
   }
   function fechar() {
@@ -102,7 +100,7 @@ export function NovoItem({
     setErro("")
     if (controlado) onClose?.(); else setAbertoInterno(false)
   }
-  function escolherTipo(t: TipoConta) { setTipoSel(t); setCaminho([]); setClassificacao("") }
+  function escolherRaiz(codigo: string) { setRaizCodigo(codigo); setCaminho([]); setClassificacao("") }
   function escolherNivel(d: number, codigo: string) {
     setCaminho((c) => (codigo ? [...c.slice(0, d), codigo] : c.slice(0, d)))
   }
@@ -166,10 +164,10 @@ export function NovoItem({
                 <div className="text-sm">
                   <span className="block">Bloco</span>
                   <div className="mt-1 flex flex-wrap gap-2">
-                    {blocos.map((t) => (
-                      <button key={t} type="button" onClick={() => escolherTipo(t)}
-                        className={`rounded-full border px-3 py-1 text-[12px] ${tipoSel === t ? "border-foreground font-medium" : "border-border hover:bg-faint"}`}>
-                        {t} — {ROTULO_BLOCO[t]}
+                    {raizes.map((r) => (
+                      <button key={r.codigo} type="button" onClick={() => escolherRaiz(r.codigo)}
+                        className={`rounded-full border px-3 py-1 text-[12px] ${raizCodigo === r.codigo ? "border-foreground font-medium" : "border-border hover:bg-faint"}`}>
+                        {r.nome}
                       </button>
                     ))}
                   </div>
