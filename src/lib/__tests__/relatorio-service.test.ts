@@ -95,6 +95,7 @@ describe("saldosBancarios", () => {
     saldo_sicredi_cc: [{ mes: 5, valor: 1000 }],
     saldo_sicredi_aplicacao: [{ mes: 5, valor: 2000 }],
     saldo_banrisul_cc: [{ mes: 5, valor: 500 }, { mes: 4, valor: 999 }],
+    rendimento_sicredi_aplicacao: [{ mes: 5, valor: 42 }],
   }
   it("soma os 3 saldos do mês (saldo geral)", () => {
     const s = saldosBancarios(series, 5)
@@ -103,10 +104,16 @@ describe("saldosBancarios", () => {
     expect(s.banrisulCc).toBe(500)
     expect(s.saldoGeral).toBe(3500)
   })
+  it("lê o rendimento mensal da aplicação (não entra na soma do saldo geral)", () => {
+    const s = saldosBancarios(series, 5)
+    expect(s.rendimentoSicrediAplicacao).toBe(42)
+    expect(s.saldoGeral).toBe(3500)
+  })
   it("chave ausente no mês conta como 0", () => {
     const s = saldosBancarios(series, 6)
     expect(s.saldoGeral).toBe(0)
     expect(s.sicrediCc).toBe(0)
+    expect(s.rendimentoSicrediAplicacao).toBe(0)
   })
 })
 

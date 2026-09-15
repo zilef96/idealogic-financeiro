@@ -22,12 +22,13 @@ type Form = {
   saldo_sicredi_cc: number
   saldo_sicredi_aplicacao: number
   saldo_banrisul_cc: number
+  rendimento_sicredi_aplicacao: number
   horas_faturaveis: number
   fator_reajuste: number
   saldo_inicial_caixa: number
 }
 
-const SALDO_KEYS = ["saldo_sicredi_cc", "saldo_sicredi_aplicacao", "saldo_banrisul_cc"] as const
+const SALDO_KEYS = ["saldo_sicredi_cc", "saldo_sicredi_aplicacao", "saldo_banrisul_cc", "rendimento_sicredi_aplicacao"] as const
 const TODAS_KEYS: (keyof Form)[] = [...SALDO_KEYS, "horas_faturaveis", "fator_reajuste", "saldo_inicial_caixa"]
 
 export function ModalParametros({ ano, mesInicial, series }: {
@@ -46,6 +47,7 @@ export function ModalParametros({ ano, mesInicial, series }: {
       saldo_sicredi_cc: s.sicrediCc,
       saldo_sicredi_aplicacao: s.sicrediAplicacao,
       saldo_banrisul_cc: s.banrisulCc,
+      rendimento_sicredi_aplicacao: s.rendimentoSicrediAplicacao,
       horas_faturaveis: valorVigente(series["horas_faturaveis"] ?? [], mes, 3200),
       fator_reajuste: valorVigente(series["fator_reajuste"] ?? [], mes, 1),
       saldo_inicial_caixa: valorVigente(series["saldo_inicial_caixa"] ?? [], 1, 126697.96),
@@ -97,6 +99,7 @@ export function ModalParametros({ ano, mesInicial, series }: {
           saldoSicrediCc: form.saldo_sicredi_cc,
           saldoSicrediAplicacao: form.saldo_sicredi_aplicacao,
           saldoBanrisulCc: form.saldo_banrisul_cc,
+          rendimentoSicrediAplicacao: form.rendimento_sicredi_aplicacao,
         }),
       }))
     }
@@ -179,6 +182,11 @@ export function ModalParametros({ ano, mesInicial, series }: {
                   <span>Saldo geral</span>
                   <span className="num">{geral.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
                 </div>
+                <label className="flex items-center justify-between gap-2 border-t border-border pt-2 text-sm">
+                  <span>Rendimento da aplicação no mês</span>
+                  <input type="number" min={0} step="0.01" className={inputCls}
+                    value={form.rendimento_sicredi_aplicacao} onChange={set("rendimento_sicredi_aplicacao")} />
+                </label>
               </div>
 
               {/* Parâmetros por vigência */}

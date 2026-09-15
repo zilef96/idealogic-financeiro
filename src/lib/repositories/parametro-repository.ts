@@ -30,16 +30,19 @@ export async function gravarParametroMensal(ano: number, mes: number, chave: Cha
 
 // Saldos bancários por competência (mensal) — usados pelo Relatório de Informação.
 // Chaves fixas no MVP; contas Sicredi (CC + aplicação) e Banrisul (CC).
+// rendimentoSicrediAplicacao: quanto a aplicação rendeu naquele mês (R$); mesma
+// competência/chave-valor da família de saldos, só que não é saldo, é o rendimento.
 export async function gravarSaldosBancarios(
   ano: number,
   mes: number,
-  saldos: { sicrediCc: number; sicrediAplicacao: number; banrisulCc: number },
+  saldos: { sicrediCc: number; sicrediAplicacao: number; banrisulCc: number; rendimentoSicrediAplicacao: number },
 ): Promise<void> {
   const comp = `${ano}-${String(mes).padStart(2, "0")}-01`
   const pares: [string, number][] = [
     ["saldo_sicredi_cc", saldos.sicrediCc],
     ["saldo_sicredi_aplicacao", saldos.sicrediAplicacao],
     ["saldo_banrisul_cc", saldos.banrisulCc],
+    ["rendimento_sicredi_aplicacao", saldos.rendimentoSicrediAplicacao],
   ]
   for (const [chave, valor] of pares) {
     await prisma.$executeRaw`

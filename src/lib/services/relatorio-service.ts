@@ -76,6 +76,7 @@ export interface SaldosBancarios {
   sicrediAplicacao: number
   banrisulCc: number
   saldoGeral: number
+  rendimentoSicrediAplicacao: number
 }
 
 export function saldosBancarios(series: SeriesParametros, mes: number): SaldosBancarios {
@@ -83,7 +84,11 @@ export function saldosBancarios(series: SeriesParametros, mes: number): SaldosBa
   const sicrediCc = ler("saldo_sicredi_cc")
   const sicrediAplicacao = ler("saldo_sicredi_aplicacao")
   const banrisulCc = ler("saldo_banrisul_cc")
-  return { sicrediCc, sicrediAplicacao, banrisulCc, saldoGeral: sicrediCc + sicrediAplicacao + banrisulCc }
+  const rendimentoSicrediAplicacao = ler("rendimento_sicredi_aplicacao")
+  return {
+    sicrediCc, sicrediAplicacao, banrisulCc, rendimentoSicrediAplicacao,
+    saldoGeral: sicrediCc + sicrediAplicacao + banrisulCc,
+  }
 }
 
 export interface LinhaFluxo {

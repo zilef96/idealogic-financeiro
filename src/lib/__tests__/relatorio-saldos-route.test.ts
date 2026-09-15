@@ -22,21 +22,27 @@ beforeEach(() => vi.clearAllMocks())
 describe("POST /api/relatorio/saldos", () => {
   it("403 quando não é admin", async () => {
     vi.mocked(requirePerfil).mockResolvedValue(denyAuth)
-    const res = await POST(req({ ano: 2026, mes: 5, saldoSicrediCc: 1, saldoSicrediAplicacao: 2, saldoBanrisulCc: 3 }))
+    const res = await POST(req({ ano: 2026, mes: 5, saldoSicrediCc: 1, saldoSicrediAplicacao: 2, saldoBanrisulCc: 3, rendimentoSicrediAplicacao: 4 }))
     expect(res.status).toBe(403)
     expect(gravarSaldosBancarios).not.toHaveBeenCalled()
   })
   it("422 quando o schema é inválido (saldo negativo)", async () => {
     vi.mocked(requirePerfil).mockResolvedValue(okAuth)
-    const res = await POST(req({ ano: 2026, mes: 5, saldoSicrediCc: -1, saldoSicrediAplicacao: 2, saldoBanrisulCc: 3 }))
+    const res = await POST(req({ ano: 2026, mes: 5, saldoSicrediCc: -1, saldoSicrediAplicacao: 2, saldoBanrisulCc: 3, rendimentoSicrediAplicacao: 4 }))
     expect(res.status).toBe(422)
     expect(gravarSaldosBancarios).not.toHaveBeenCalled()
   })
-  it("200 no caminho feliz e grava os 3 saldos", async () => {
+  it("422 quando falta o rendimento da aplicação", async () => {
+    vi.mocked(requirePerfil).mockResolvedValue(okAuth)
+    const res = await POST(req({ ano: 2026, mes: 5, saldoSicrediCc: 1, saldoSicrediAplicacao: 2, saldoBanrisulCc: 3 }))
+    expect(res.status).toBe(422)
+    expect(gravarSaldosBancarios).not.toHaveBeenCalled()
+  })
+  it("200 no caminho feliz e grava os 3 saldos + rendimento", async () => {
     vi.mocked(requirePerfil).mockResolvedValue(okAuth)
     vi.mocked(gravarSaldosBancarios).mockResolvedValue(undefined)
-    const res = await POST(req({ ano: 2026, mes: 5, saldoSicrediCc: 10, saldoSicrediAplicacao: 20, saldoBanrisulCc: 30 }))
+    const res = await POST(req({ ano: 2026, mes: 5, saldoSicrediCc: 10, saldoSicrediAplicacao: 20, saldoBanrisulCc: 30, rendimentoSicrediAplicacao: 4 }))
     expect(res.status).toBe(200)
-    expect(gravarSaldosBancarios).toHaveBeenCalledWith(2026, 5, { sicrediCc: 10, sicrediAplicacao: 20, banrisulCc: 30 })
+    expect(gravarSaldosBancarios).toHaveBeenCalledWith(2026, 5, { sicrediCc: 10, sicrediAplicacao: 20, banrisulCc: 30, rendimentoSicrediAplicacao: 4 })
   })
 })
