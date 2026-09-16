@@ -11,14 +11,15 @@ import { ConfirmarExclusao } from "./confirmar-exclusao"
 import { MenuAdicionarOrcamento } from "./menu-adicionar-orcamento"
 import { NovoItem, type ItemEditar } from "./novo-item"
 import { API_BASE } from "@/lib/api-base"
+import { CODIGO_TRIBUTOS_FATURAMENTO } from "@/lib/plano-contas"
 
 const brl = (n: number) => (n === 0 ? "—" : n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
 const brlK = (n: number) => "R$ " + Math.round(n).toLocaleString("pt-BR")
 
 const ACC: Record<string, string> = { R: "--pos", C: "--rose", D: "--info", E: "--amber" }
 const TINT: Record<string, string> = { R: "--pos-soft", C: "--rose-soft", D: "--info-soft", E: "--amber-soft" }
-const accRgb = (t: string) => `rgb(var(${ACC[t] ?? "--muted"}))`
-const tintRgb = (t: string) => `rgb(var(${TINT[t] ?? "--faint"}))`
+const accRgb = (t: string, codigo?: string) => `rgb(var(${codigo === CODIGO_TRIBUTOS_FATURAMENTO ? "--tax" : ACC[t] ?? "--muted"}))`
+const tintRgb = (t: string, codigo?: string) => `rgb(var(${codigo === CODIGO_TRIBUTOS_FATURAMENTO ? "--tax-soft" : TINT[t] ?? "--faint"}))`
 const TIPO_LABEL: Record<string, string> = { R: "Receita", C: "Custo", D: "Despesa", E: "Dividendos" }
 // Rótulos do desdobramento por bloco: Receita = Contratado/Projetado; demais = Essencial/Condicionado.
 const rotuloEssCond = (tipo: string): [string, string] =>
@@ -171,7 +172,7 @@ function TabelaOrcamentoInterno({ linhas, grupos, rascunho }: { linhas: LinhaOrc
     return "Não foi possível excluir."
   }
 
-  function renderGrupo(g: GrupoOrcamento, nivel: number): ReactNode {
+  function renderGrupo(g: GrupoOrcamento, nivel: number, somenteItens = false): ReactNode {
     const r = rollupGrupo(g.codigo, grupos, linhas)
     const filhos = filhosDe(g.codigo)
     const itens = itensDe(g.codigo)
@@ -180,7 +181,7 @@ function TabelaOrcamentoInterno({ linhas, grupos, rascunho }: { linhas: LinhaOrc
     return (
       <div key={g.codigo} className="border-t" style={{ borderColor: "rgb(var(--border))" }}>
         {/* grupo — grade (desktop) */}
-        <div className="group orc-row w-full bg-faint text-left transition-colors">
+        {!somenteItens && <><div className="group orc-row w-full bg-faint text-left transition-colors">
           <button type="button" onClick={() => expansivel && toggle(g.codigo)}
             className="flex items-center gap-2 py-2.5 pr-3 text-[13px] font-semibold" style={{ paddingLeft: pad }}>
             {expansivel
@@ -190,7 +191,7 @@ function TabelaOrcamentoInterno({ linhas, grupos, rascunho }: { linhas: LinhaOrc
             <span className="truncate">{g.nome}</span>
           </button>
           <div className="orc-tot" />
-          <div className="orc-tot num text-[13px] font-semibold" style={{ color: accRgb(g.tipo) }}>{brl(r.mensal)}</div>
+          <div className="orc-tot num text-[13px] font-semibold" style={{ color: accRgb(g.tipo, g.codigo) }}>{brl(r.mensal)}</div>
           <Cel v={r.essMensal} cor="rgb(var(--pos))" cls="orc-col-ess" />
           <Cel v={r.condMensal} cor="rgb(var(--amber))" cls="orc-col-cond" />
           <div className="orc-col-com" />
@@ -209,7 +210,7 @@ function TabelaOrcamentoInterno({ linhas, grupos, rascunho }: { linhas: LinhaOrc
               <span className="num shrink-0 text-[11px]" style={{ color: "rgb(var(--muted) / 0.8)" }}>{g.codigo}</span>
               <span className="line-clamp-2">{g.nome}</span>
             </button>
-            <span className="num shrink-0 text-[13px] font-semibold" style={{ color: accRgb(g.tipo) }}>{brl(r.mensal)}</span>
+            <span className="num shrink-0 text-[13px] font-semibold" style={{ color: accRgb(g.tipo, g.codigo) }}>{brl(r.mensal)}</span>
             {rascunho && <AcoesLinha onEditar={() => setGrupoEdit({ id: g.id, nome: g.nome })} onExcluir={() => setExcluir({ tipo: "grupo", id: g.id, nome: g.nome })} />}
           </div>
           {(r.essMensal > 0 || r.condMensal > 0) && (() => {
@@ -221,10 +222,10 @@ function TabelaOrcamentoInterno({ linhas, grupos, rascunho }: { linhas: LinhaOrc
               </div>
             )
           })()}
-        </div>
+        </div></>}
         {aberto(g.codigo) && (
           <div>
-            {filhos.map((f) => renderGrupo(f, nivel + 1))}
+            {!somenteItens && filhos.map((f) => renderGrupo(f, nivel + 1))}
             {itens.map((it) => {
               const ess = ehEssencial(it.classificacao)
               return (
@@ -251,7 +252,7 @@ function TabelaOrcamentoInterno({ linhas, grupos, rascunho }: { linhas: LinhaOrc
                   </div>
                   {/* item — lista (mobile) */}
                   <div className="group orc-mobile-row flex-col gap-1.5 border-t py-2.5 pl-3 pr-2"
-                    style={{ borderColor: "rgb(var(--border) / 0.5)", borderLeft: `3px solid ${accRgb(g.tipo)}` }}>
+                    style={{ borderColor: "rgb(var(--border) / 0.5)", borderLeft: `3px solid ${accRgb(g.tipo, g.codigo)}` }}>
                     <div className="flex items-start gap-2">
                       <span className="line-clamp-2 flex-1 text-[13px]">{it.nome}</span>
                       {rascunho && <AcoesLinha onEditar={() => abrirEdicaoItem(it)} onExcluir={() => setExcluir({ tipo: "item", id: it.id, nome: it.nome })} />}
@@ -337,32 +338,32 @@ function TabelaOrcamentoInterno({ linhas, grupos, rascunho }: { linhas: LinhaOrc
           const filhos = filhosDe(b.codigo)
           return (
             <div key={b.codigo} className="overflow-hidden rounded-xl border border-border bg-card sm:rounded-2xl">
-              <button type="button" onClick={() => toggle(b.codigo)} className="orc-row w-full text-left" style={{ background: tintRgb(b.tipo) }}>
+              <button type="button" onClick={() => toggle(b.codigo)} className="orc-row w-full text-left" style={{ background: tintRgb(b.tipo, b.codigo) }}>
                 <span className="flex items-center gap-3 px-5 py-4">
-                  <Chevron aberto={aberto(b.codigo)} cor={accRgb(b.tipo)} />
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl font-display text-sm font-bold bg-card" style={{ color: accRgb(b.tipo) }}>{b.nome[0]}</span>
+                  <Chevron aberto={aberto(b.codigo)} cor={accRgb(b.tipo, b.codigo)} />
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl font-display text-sm font-bold bg-card" style={{ color: accRgb(b.tipo, b.codigo) }}>{b.nome[0]}</span>
                   <span className="min-w-0">
                     <span className="font-display block truncate text-[15px] font-semibold">{b.nome}</span>
                     <span className="num block text-[11px]" style={{ color: "rgb(var(--muted))" }}>{b.codigo} · {TIPO_LABEL[b.tipo]} · {filhos.length} grupos</span>
                   </span>
                 </span>
                 <div className="orc-tot" />
-                <div className="orc-tot num font-display text-[15px] font-semibold sm:text-[17px]" style={{ color: accRgb(b.tipo) }}>{brl(r.mensal)}</div>
+                <div className="orc-tot num font-display text-[15px] font-semibold sm:text-[17px]" style={{ color: accRgb(b.tipo, b.codigo) }}>{brl(r.mensal)}</div>
                 <div className="orc-tot orc-col-ess num text-[13px] font-semibold" style={{ color: "rgb(var(--pos))" }}>{brl(r.essMensal)}</div>
                 <div className="orc-tot orc-col-cond num text-[13px] font-semibold" style={{ color: "rgb(var(--amber))" }}>{brl(r.condMensal)}</div>
                 <div className="orc-col-com" />
                 <div className="orc-col-acoes" />
               </button>
               {/* bloco — lista (mobile) */}
-              <div className="orc-mobile-row flex-col" style={{ background: tintRgb(b.tipo) }}>
+              <div className="orc-mobile-row flex-col" style={{ background: tintRgb(b.tipo, b.codigo) }}>
                 <button type="button" onClick={() => toggle(b.codigo)} className="flex w-full items-center gap-3 px-4 py-3 text-left">
-                  <Chevron aberto={aberto(b.codigo)} cor={accRgb(b.tipo)} />
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl font-display text-sm font-bold bg-card" style={{ color: accRgb(b.tipo) }}>{b.nome[0]}</span>
+                  <Chevron aberto={aberto(b.codigo)} cor={accRgb(b.tipo, b.codigo)} />
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl font-display text-sm font-bold bg-card" style={{ color: accRgb(b.tipo, b.codigo) }}>{b.nome[0]}</span>
                   <span className="min-w-0 flex-1">
                     <span className="font-display block truncate text-[15px] font-semibold">{b.nome}</span>
                     <span className="num block text-[11px]" style={{ color: "rgb(var(--muted))" }}>{b.codigo} · {TIPO_LABEL[b.tipo]} · {filhos.length} grupos</span>
                   </span>
-                  <span className="num font-display shrink-0 text-[15px] font-semibold" style={{ color: accRgb(b.tipo) }}>{brl(r.mensal)}</span>
+                  <span className="num font-display shrink-0 text-[15px] font-semibold" style={{ color: accRgb(b.tipo, b.codigo) }}>{brl(r.mensal)}</span>
                 </button>
                 {(r.essMensal > 0 || r.condMensal > 0) && (() => {
                   const [rotEss, rotCond] = rotuloEssCond(b.tipo)
@@ -374,7 +375,7 @@ function TabelaOrcamentoInterno({ linhas, grupos, rascunho }: { linhas: LinhaOrc
                   )
                 })()}
               </div>
-              {aberto(b.codigo) && <div>{filhos.map((f) => renderGrupo(f, 0))}</div>}
+              {aberto(b.codigo) && <div>{filhos.map((f) => renderGrupo(f, 0))}{itensDe(b.codigo).length > 0 && renderGrupo(b, -1, true)}</div>}
             </div>
           )
         })}

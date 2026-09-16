@@ -162,12 +162,13 @@ describe("serieFluxoMensal", () => {
 
 describe("montarRelatorio", () => {
   const ls = linhas(5, {
-    "10000": { o: 0, r: 100 }, "10100": { o: 0, r: 10 }, "10200": { o: 0, r: 20 },
+    "10000": { o: 0, r: 100 }, "10100": { o: 0, r: 10 }, "10200": { o: 0, r: 22 },
     "20000": { o: 0, r: 40 }, "30000": { o: 0, r: 30 }, "40000": { o: 0, r: 5 },
     "PIS": { o: 0, r: 3, grupo: false, pai: "10200" },
     "COFINS": { o: 0, r: 7, grupo: false, pai: "10200" },
     "ISSQN": { o: 0, r: 5, grupo: false, pai: "10200" },
     "CSLL e IRPJ": { o: 0, r: 5, grupo: false, pai: "10200" },
+    "Retenção NF": { o: 0, r: 2, grupo: false, pai: "10200" },
   })
   const p = montarRelatorio({ ano: 2026, mes: 5, linhas: ls, series: {}, status: "aberto" })
 
@@ -181,12 +182,15 @@ describe("montarRelatorio", () => {
     expect(p.pis).toBe(3)
     expect(p.cofins).toBe(7)
     expect(p.issqn).toBe(5)
-    expect(p.receitaLiquida).toBe(100 - 15)  // − (tributosFat 20 − 10204 5)
+    expect(p.csllIrpj).toBe(5)
+    expect(p.retencaoNf).toBe(2)
+    expect(p.totalTributosFaturamento).toBe(22)
+    expect(p.receitaLiquida).toBe(100 - 17)  // inclui Retenção NF; exclui CSLL/IRPJ da receita líquida
   })
   it("calcula indicadores", () => {
-    expect(p.resultadoOperacional).toBe(5)  // superavitMensal
-    expect(p.margemLiquida).toBeCloseTo((5 / 85) * 100)
-    expect(p.margemBruta).toBeCloseTo(((85 - 40) / 85) * 100)
+    expect(p.resultadoOperacional).toBe(3)  // bloco 10200 inteiro, sem dupla contabilização
+    expect(p.margemLiquida).toBeCloseTo((3 / 83) * 100)
+    expect(p.margemBruta).toBeCloseTo(((83 - 40) / 83) * 100)
   })
   it("inclui fluxo e saldos", () => {
     expect(p.fluxo.meses).toHaveLength(12)

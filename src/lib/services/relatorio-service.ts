@@ -3,8 +3,10 @@ import {
   construirTotais, faturamentoServicos, superavitMensal, margemContribuicao,
   competenciaRef, serieTributos, MESES,
 } from "@/lib/services/dashboard-service"
+import { CODIGO_TRIBUTOS_FATURAMENTO, ITENS_TRIBUTOS_FATURAMENTO } from "@/lib/plano-contas"
 
-// Total de Receitas = fat. de serviços + cotas. Tributos (3 itens) = grupo 10200 − CSLL/IRPJ (10204).
+// Receita Líquida desconta todo o bloco de tributos sobre faturamento, exceto
+// CSLL/IRPJ. Esse item continua no resultado via superavitMensal, uma única vez.
 export function receitaLiquida(totais: TotaisMes): number {
   const totalReceitas = faturamentoServicos(totais) + totais.cotas
   const tributos3 = totais.tributosFat - totais.tributacaoLucro
@@ -27,6 +29,11 @@ export interface DemonstrativoCustos {
 // Realizado de um grupo (por código) no mês; 0 quando ausente ou nulo.
 function valorGrupoMes(linhas: LinhaDash[], codigo: string, mes: number): number {
   const l = linhas.find((x) => x.isGrupo && x.codigo === codigo && x.mes === mes)
+  return l?.realizado ?? 0
+}
+
+function valorItemMes(linhas: LinhaDash[], codigoPai: string, nome: string, mes: number): number {
+  const l = linhas.find((x) => !x.isGrupo && x.codigoPai === codigoPai && x.nome === nome && x.mes === mes)
   return l?.realizado ?? 0
 }
 
@@ -158,6 +165,9 @@ export interface RelatorioPayload {
   pis: number
   cofins: number
   issqn: number
+  csllIrpj: number
+  retencaoNf: number
+  totalTributosFaturamento: number
   receitaLiquida: number
   custos: DemonstrativoCustos
   despesas: DemonstrativoDespesas
@@ -187,6 +197,9 @@ export function montarRelatorio(input: RelatorioInput): RelatorioPayload {
     pis: trib?.pis ?? 0,
     cofins: trib?.cofins ?? 0,
     issqn: trib?.issqn ?? 0,
+    csllIrpj: valorItemMes(linhas, CODIGO_TRIBUTOS_FATURAMENTO, ITENS_TRIBUTOS_FATURAMENTO.tributacaoLucro, mes),
+    retencaoNf: valorItemMes(linhas, CODIGO_TRIBUTOS_FATURAMENTO, ITENS_TRIBUTOS_FATURAMENTO.retencaoNf, mes),
+    totalTributosFaturamento: t.tributosFat,
     receitaLiquida: rl,
     custos,
     despesas: demonstrativoDespesas(linhas, mes),

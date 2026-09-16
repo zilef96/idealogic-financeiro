@@ -4,6 +4,7 @@ import { getSeriesParametros } from "@/lib/repositories/parametro-repository"
 import { getGrupos } from "@/lib/repositories/orcamento-repository"
 import { listarTesouraria, getStatusTodos, getFechamentoDetalhe } from "@/lib/repositories/fechamento-repository"
 import { calcularIndicadoresMes, superavitMensal, valorVigente, projecaoCaixa, type TotaisMes } from "@/lib/services/execucao-service"
+import { construirTotais } from "@/lib/services/dashboard-service"
 import { AbasExecucao } from "@/components/execucao/abas-execucao"
 
 export default async function ExecucaoPage({ searchParams }: { searchParams: Promise<{ ano?: string }> }) {
@@ -19,19 +20,9 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
   ])
   const mesAtual = new Date().getMonth() + 1
 
-  const grupo = (cod: string, mes: number) => linhas.find((l) => l.codigo === cod && l.mes === mes && l.isGrupo)
-  const item = (cod: string, mes: number) => linhas.find((l) => l.codigo === cod && l.mes === mes && !l.isGrupo)
   // monta os totais do mês a partir do campo "orcado" ou "realizado"
-  const totaisDe = (campo: "orcado" | "realizado") => (mes: number): TotaisMes => {
-    const vg = (cod: string) => (campo === "orcado" ? grupo(cod, mes)?.orcado : grupo(cod, mes)?.realizado) ?? 0
-    const vi = (cod: string) => (campo === "orcado" ? item(cod, mes)?.orcado : item(cod, mes)?.realizado) ?? 0
-    return {
-      faturamento: vg("10000"), cotas: vg("10100"), tributosFat: vg("10200"), tributacaoLucro: vi("10204"),
-      custos: vg("20000"), despesas: vg("30000"), dividendos: vg("40000"),
-      custosOperacionais: vg("33000"),
-      despAdmFinComl: vg("31000") + vg("32000") + vg("33000") + vg("34000"),
-    }
-  }
+  const totaisDe = (campo: "orcado" | "realizado") => (mes: number): TotaisMes =>
+    construirTotais(linhas, campo, mes)
   const totaisReal = totaisDe("realizado")
   const totaisOrc = totaisDe("orcado")
 

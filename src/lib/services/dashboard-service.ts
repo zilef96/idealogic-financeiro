@@ -3,6 +3,7 @@ import {
   custoHora, calcDesvio, projecaoCaixa, valorVigente, type FormatoIndicador,
 } from "@/lib/services/execucao-service"
 import type { ReceitaCliente } from "@/lib/repositories/dashboard-repository"
+import { CODIGO_TRIBUTOS_FATURAMENTO, ITENS_TRIBUTOS_FATURAMENTO } from "@/lib/plano-contas"
 
 // Subconjunto de LinhaExecucao que o dashboard consome (type-only; sem I/O).
 export interface LinhaDash {
@@ -32,7 +33,8 @@ export function construirTotais(linhas: LinhaDash[], campo: Campo, mes: number):
     return (campo === "orcado" ? l.orcado : l.realizado) ?? 0
   }
   return {
-    faturamento: vg("10000"), cotas: vg("10100"), tributosFat: vg("10200"), tributacaoLucro: viNome("10200", "CSLL e IRPJ"),
+    faturamento: vg("10000"), cotas: vg("10100"), tributosFat: vg(CODIGO_TRIBUTOS_FATURAMENTO),
+    tributacaoLucro: viNome(CODIGO_TRIBUTOS_FATURAMENTO, ITENS_TRIBUTOS_FATURAMENTO.tributacaoLucro),
     custos: vg("20000"), despesas: vg("30000"), dividendos: vg("40000"),
     custosOperacionais: vg("33000"),
     despAdmFinComl: vg("31000") + vg("32000") + vg("33000") + vg("34000"),
@@ -127,11 +129,13 @@ export interface PontoTributo {
 export function serieTributos(linhas: LinhaDash[]): PontoTributo[] {
   // Tributos identificados pelo grupo pai (10200) + nome (item não tem mais código).
   const itemReal = (nome: string, mes: number) =>
-    linhas.find((l) => !l.isGrupo && l.codigoPai === "10200" && l.nome === nome && l.mes === mes)?.realizado ?? 0
+    linhas.find((l) => !l.isGrupo && l.codigoPai === CODIGO_TRIBUTOS_FATURAMENTO && l.nome === nome && l.mes === mes)?.realizado ?? 0
   return MESES.map((mes) => {
     const pend = !temRealizadoNoMes(linhas, mes)
     if (pend) return { mes, pis: null, cofins: null, issqn: null, cargaPercentual: null, pendente: true }
-    const pis = itemReal("PIS", mes), cofins = itemReal("COFINS", mes), issqn = itemReal("ISSQN", mes)
+    const pis = itemReal(ITENS_TRIBUTOS_FATURAMENTO.pis, mes)
+    const cofins = itemReal(ITENS_TRIBUTOS_FATURAMENTO.cofins, mes)
+    const issqn = itemReal(ITENS_TRIBUTOS_FATURAMENTO.issqn, mes)
     const fat = faturamentoServicos(construirTotais(linhas, "realizado", mes))
     const carga = fat === 0 ? null : ((pis + cofins + issqn) / fat) * 100
     return { mes, pis, cofins, issqn, cargaPercentual: carga, pendente: false }
