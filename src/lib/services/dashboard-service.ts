@@ -131,8 +131,10 @@ export function serieCaixa(
   const projetadoPorMes = MESES.map((m) => !temRealizadoNoMes(linhas, m))
   const superavitPorMes = MESES.map((m) =>
     superavitMensal(construirTotais(linhas, projetadoPorMes[m - 1] ? "orcado" : "realizado", m)))
-  // Reancoragem só faz sentido pra meses já realizados (saldo bancário é um fato, não projeção).
-  const saldosBancariosPorMes = MESES.map((m) => (projetadoPorMes[m - 1] ? null : saldoBancarioGeralInformado(series, m)))
+  // Saldo bancário informado é um fato independente de ter lançamento de execução
+  // naquele mês (ex.: Larissa informa o saldo de um mês sem ter lançado receitas/
+  // despesas dele) — não filtra por projetadoPorMes.
+  const saldosBancariosPorMes = MESES.map((m) => saldoBancarioGeralInformado(series, m))
   const saldos = projecaoCaixa({ saldoInicial, superavitPorMes, saldosBancariosPorMes })
   return { pontos: MESES.map((m) => ({ mes: m, saldo: saldos[m - 1], projetado: projetadoPorMes[m - 1] })), caixaMinimo }
 }

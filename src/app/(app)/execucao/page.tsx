@@ -4,7 +4,7 @@ import { getSeriesParametros } from "@/lib/repositories/parametro-repository"
 import { getGrupos } from "@/lib/repositories/orcamento-repository"
 import { listarTesouraria, getStatusTodos, getFechamentoDetalhe } from "@/lib/repositories/fechamento-repository"
 import { calcularIndicadoresMes, superavitMensal, valorVigente, projecaoCaixa, type TotaisMes } from "@/lib/services/execucao-service"
-import { construirTotais, temRealizadoNoMes, saldoBancarioGeralInformado } from "@/lib/services/dashboard-service"
+import { construirTotais, saldoBancarioGeralInformado } from "@/lib/services/dashboard-service"
 import { AbasExecucao } from "@/components/execucao/abas-execucao"
 
 export default async function ExecucaoPage({ searchParams }: { searchParams: Promise<{ ano?: string }> }) {
@@ -35,11 +35,13 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
     superavitPorMes: meses.map((m) => superavitMensal(totaisFn(m))),
   })
   // Reancora ao saldo bancário real informado no mês (só faz sentido pro realizado —
-  // orçado é projeção pura, saldo bancário é fato). Meses ainda sem realizado ficam de fora.
+  // orçado é projeção pura, saldo bancário é fato). O saldo bancário é independente de
+  // ter ou não lançamento de execução naquele mês (ex.: Larissa informa o saldo de um
+  // mês sem ter lançado receitas/despesas dele) — não filtra por temRealizadoNoMes.
   const projecaoReal = projecaoCaixa({
     saldoInicial,
     superavitPorMes: meses.map((m) => superavitMensal(totaisReal(m))),
-    saldosBancariosPorMes: meses.map((m) => (temRealizadoNoMes(linhas, m) ? saldoBancarioGeralInformado(series, m) : null)),
+    saldosBancariosPorMes: meses.map((m) => saldoBancarioGeralInformado(series, m)),
   })
   const projecaoOrc = projDe(totaisOrc)
 

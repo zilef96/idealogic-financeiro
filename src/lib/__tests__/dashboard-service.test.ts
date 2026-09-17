@@ -147,6 +147,12 @@ describe("serieCaixa", () => {
     expect(pontos[0].saldo).toBe(5000)       // ignora o caixa inicial, usa o saldo informado
     expect(pontos[1].saldo).toBe(5020)       // acumula o superávit do mês 2 a partir daí
   })
+  it("reancora mesmo num mês sem nenhum lançamento de execução (bug: saldo bancário é fato independente)", () => {
+    // mês 2 não tem NENHUM realizado lançado (fixture `ls`), mas o saldo bancário foi informado assim mesmo.
+    const series = { saldo_sicredi_cc: [{ mes: 2, valor: 7000 }] }
+    const { pontos } = serieCaixa(ls, tesouraria, 1000, 500, series)
+    expect(pontos[1].saldo).toBe(7000)
+  })
 })
 
 describe("saldoBancarioGeralInformado", () => {
