@@ -2,13 +2,18 @@ import type { FormatoIndicador } from "@/lib/services/dashboard-service"
 
 export const NOMES_MES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
 
-export function fmtValor(valor: number | null, formato: FormatoIndicador): string {
+// centavos=true força 2 casas decimais na moeda (Relatório, que precisa de precisão
+// exata); por padrão (Dashboard) o KPI arredonda pro real cheio, sem centavos.
+export function fmtValor(valor: number | null, formato: FormatoIndicador, opts?: { centavos?: boolean }): string {
   if (valor == null) return "—"
   switch (formato) {
     case "percent": return `${valor.toFixed(1)}%`
     case "numero": return valor.toLocaleString("pt-BR")
     case "fator": return valor.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    default: return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })
+    default: {
+      const casas = opts?.centavos ? 2 : 0
+      return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: casas, maximumFractionDigits: casas })
+    }
   }
 }
 
@@ -23,8 +28,9 @@ export function fmtDelta(valor: number | null, formato: "percent" | "pontos" | "
 }
 
 // Formatadores para tooltips do Recharts (o valor chega como ValueType | undefined).
-export function fmtMoedaTip(v: unknown): string {
-  return (Number(v) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })
+export function fmtMoedaTip(v: unknown, opts?: { centavos?: boolean }): string {
+  const casas = opts?.centavos ? 2 : 0
+  return (Number(v) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: casas, maximumFractionDigits: casas })
 }
 export function fmtPctTip(v: unknown): string {
   const n = Number(v)

@@ -28,13 +28,22 @@ export function valorVigente(
 
 // Caixa: 1º mês = caixa inicial (saldo do exercício). Demais meses acumulam o
 // superávit do mês. Aplicações/resgates NÃO entram aqui (são informativos).
-// (Regra definida em 17/06/2026; refinar fórmula dos demais meses depois.)
+// (Regra definida em 17/06/2026; refinada em 17/09/2026 — ver saldosBancariosPorMes.)
+//
+// saldosBancariosPorMes (opcional, 12 posições, null = não informado nesse mês):
+// quando o saldo bancário real é informado manualmente num mês (Relatório/Parâmetros),
+// ele vira a "verdade" daquele mês — reancora a projeção ali em vez de deixar o
+// acumulado de superávit (que pode ir divergindo do saldo real) seguir sozinho.
+// Meses seguintes voltam a acumular superávit a partir desse novo ponto.
 export function projecaoCaixa(d: {
   saldoInicial: number
   superavitPorMes: number[]   // 12
+  saldosBancariosPorMes?: (number | null)[]  // 12
 }): number[] {
   const saldo: number[] = []
   for (let m = 0; m < 12; m++) {
+    const informado = d.saldosBancariosPorMes?.[m]
+    if (informado != null) { saldo.push(informado); continue }
     if (m === 0) saldo.push(d.saldoInicial)
     else saldo.push(saldo[m - 1] + (d.superavitPorMes[m] ?? 0))
   }

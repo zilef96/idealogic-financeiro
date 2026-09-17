@@ -13,7 +13,7 @@ const COLUNAS: { chave: "receitas" | "cotas" | "tributos" | "custos" | "despesas
 
 function celulaResultado(valor: number) {
   const negativo = valor < 0
-  return <span className="num" style={{ color: negativo ? "#c23b32" : undefined, fontWeight: negativo ? 600 : undefined }}>{fmtValor(valor, "moeda")}</span>
+  return <span className="num" style={{ color: negativo ? "#c23b32" : undefined, fontWeight: negativo ? 600 : undefined }}>{fmtValor(valor, "moeda", { centavos: true })}</span>
 }
 
 export function FluxoTabela({ fluxo }: { fluxo: FluxoMensal }) {
@@ -32,7 +32,7 @@ export function FluxoTabela({ fluxo }: { fluxo: FluxoMensal }) {
               <td className="px-3 py-1.5">{NOMES_MES[m.mes - 1]}</td>
               {COLUNAS.map((c) => (
                 <td key={c.chave} className="px-3 py-1.5 text-right">
-                  {c.chave === "resultado" ? celulaResultado(m.resultado) : <span className="num">{fmtValor(m[c.chave], "moeda")}</span>}
+                  {c.chave === "resultado" ? celulaResultado(m.resultado) : <span className="num">{fmtValor(m[c.chave], "moeda", { centavos: true })}</span>}
                 </td>
               ))}
             </tr>
@@ -41,7 +41,7 @@ export function FluxoTabela({ fluxo }: { fluxo: FluxoMensal }) {
             <td className="px-3 py-2">TOTAL</td>
             {COLUNAS.map((c) => (
               <td key={c.chave} className="px-3 py-2 text-right">
-                {c.chave === "resultado" ? celulaResultado(fluxo.total.resultado) : <span className="num">{fmtValor(fluxo.total[c.chave], "moeda")}</span>}
+                {c.chave === "resultado" ? celulaResultado(fluxo.total.resultado) : <span className="num">{fmtValor(fluxo.total[c.chave], "moeda", { centavos: true })}</span>}
               </td>
             ))}
           </tr>

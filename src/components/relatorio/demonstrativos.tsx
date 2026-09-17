@@ -5,7 +5,7 @@ function Linha({ rotulo, valor, forte = false, recuo = false }: { rotulo: string
   return (
     <div className={`flex items-center justify-between py-1 text-sm ${forte ? "font-semibold" : ""}`}>
       <span className={recuo ? "pl-4" : ""} style={recuo ? { color: "rgb(var(--muted))" } : undefined}>{rotulo}</span>
-      <span className="num">{fmtValor(valor, "moeda")}</span>
+      <span className="num">{fmtValor(valor, "moeda", { centavos: true })}</span>
     </div>
   )
 }

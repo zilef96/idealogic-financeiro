@@ -51,6 +51,18 @@ describe("projecaoCaixa", () => {
     expect(r[1]).toBe(1200)   // 1000 + 200
     expect(r[2]).toBe(1200)   // sem mudança
   })
+  it("reancora no mês com saldo bancário informado, ignorando o acumulado até ali", () => {
+    // índices 0..11 = Jan..Dez. Saldo bancário real informado em Ago (índice 7);
+    // Set (índice 8) deve somar o superávit de Set em cima desse saldo, não do acumulado de Jan.
+    const r = projecaoCaixa({
+      saldoInicial: 1000,
+      superavitPorMes: [0, 0, 0, 0, 0, 0, 0, 0, 200, 0, 0, 0],
+      saldosBancariosPorMes: [null, null, null, null, null, null, null, 900, null, null, null, null],
+    })
+    expect(r[6]).toBe(1000)  // Jul: só acumulado (superávits até ali são 0)
+    expect(r[7]).toBe(900)   // Ago: ignora o acumulado (1000), usa o saldo bancário informado
+    expect(r[8]).toBe(1100)  // Set: 900 (Ago) + 200 (superávit de Set)
+  })
 })
 
 describe("valorVigente", () => {

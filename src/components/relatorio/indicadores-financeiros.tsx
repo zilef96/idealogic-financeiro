@@ -7,7 +7,7 @@ const MESES_LONGOS = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho"
 function Termo({ valor, rotulo }: { valor: number; rotulo: string }) {
   return (
     <div className="flex flex-col">
-      <span className="num text-base font-medium">{fmtValor(valor, "moeda")}</span>
+      <span className="num text-base font-medium">{fmtValor(valor, "moeda", { centavos: true })}</span>
       <span className="text-[11px]" style={{ color: "rgb(var(--muted))" }}>{rotulo}</span>
     </div>
   )
@@ -29,7 +29,7 @@ function ContaBanco({ cor, nome, linhas }: { cor: string; nome: string; linhas: 
         {linhas.map(([rot, val]) => (
           <div key={rot} className="flex items-center justify-between text-sm">
             <span style={{ color: "rgb(var(--muted))" }}>{rot}</span>
-            <span className="num">{fmtValor(val, "moeda")}</span>
+            <span className="num">{fmtValor(val, "moeda", { centavos: true })}</span>
           </div>
         ))}
       </div>
@@ -71,7 +71,7 @@ export function IndicadoresFinanceiros({ dados }: { dados: RelatorioPayload }) {
             <Termo valor={dividendos} rotulo="Dividendos" />
             <Op>=</Op>
             <div className="flex flex-col">
-              <span className="num text-xl font-bold" style={{ color: corRes }}>{fmtValor(resultado, "moeda")}</span>
+              <span className="num text-xl font-bold" style={{ color: corRes }}>{fmtValor(resultado, "moeda", { centavos: true })}</span>
               <span className="text-[11px]" style={{ color: "rgb(var(--muted))" }}>Resultado</span>
             </div>
           </div>
@@ -103,7 +103,7 @@ export function IndicadoresFinanceiros({ dados }: { dados: RelatorioPayload }) {
       {/* Saldo geral + Contas (somente leitura) */}
       <div className="rounded-xl border border-border bg-card p-5">
         <p className="text-xs" style={{ color: "rgb(var(--muted))" }}>Saldo geral ({dataRef})</p>
-        <p className="num mt-0.5 text-2xl font-bold">{fmtValor(s.saldoGeral, "moeda")}</p>
+        <p className="num mt-0.5 text-2xl font-bold">{fmtValor(s.saldoGeral, "moeda", { centavos: true })}</p>
         <div className="mt-4 border-t border-border pt-4">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: "rgb(var(--muted))" }}>Contas da Idealogic</p>
           <ContaBanco cor="#22c55e" nome="Sicredi" linhas={[["Conta corrente", s.sicrediCc], ["Aplicação bancária", s.sicrediAplicacao]]} />

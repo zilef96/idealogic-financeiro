@@ -28,7 +28,7 @@ export function FluxoLinhas({ fluxo }: { fluxo: RelatorioPayload["fluxo"] }) {
           <CartesianGrid strokeDasharray="3 3" stroke={ct.grid} vertical={false} />
           <XAxis dataKey="mes" tick={{ fontSize: 12, fill: ct.axis }} />
           <YAxis tick={{ fontSize: 12, fill: ct.axis }} />
-          <Tooltip formatter={(v) => fmtMoedaTip(v)} />
+          <Tooltip formatter={(v) => fmtMoedaTip(v, { centavos: true })} />
           <Legend verticalAlign="top" height={30} wrapperStyle={{ fontSize: 12 }} />
           {SERIES.map((s) => (
             <Line

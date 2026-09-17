@@ -111,13 +111,29 @@ export function serieCustoHora(linhas: LinhaDash[], series: SeriesParametros, ho
 export interface EventoTesourariaDash { mes: number; tipo: "aplicacao" | "resgate"; valor: number }
 export interface PontoCaixa { mes: number; saldo: number; projetado: boolean }
 
+const CHAVES_SALDO_BANCARIO = ["saldo_sicredi_cc", "saldo_sicredi_aplicacao", "saldo_banrisul_cc"] as const
+
+// Saldo bancário geral informado manualmente NUM mês específico (não "vigente" —
+// só quando há mesmo um lançamento gravado naquele mês); null se não foi informado.
+// Usado pra reancorar a projeção de caixa a um valor real, em vez de só acumular
+// superávit indefinidamente a partir do saldo inicial de janeiro.
+export function saldoBancarioGeralInformado(series: SeriesParametros, mes: number): number | null {
+  const informado = CHAVES_SALDO_BANCARIO.some((c) => series[c]?.some((s) => s.mes === mes))
+  if (!informado) return null
+  const ler = (c: string) => series[c]?.find((s) => s.mes === mes)?.valor ?? 0
+  return CHAVES_SALDO_BANCARIO.reduce((soma, c) => soma + ler(c), 0)
+}
+
 export function serieCaixa(
   linhas: LinhaDash[], tesouraria: EventoTesourariaDash[], saldoInicial: number, caixaMinimo: number,
+  series: SeriesParametros,
 ): { pontos: PontoCaixa[]; caixaMinimo: number } {
   const projetadoPorMes = MESES.map((m) => !temRealizadoNoMes(linhas, m))
   const superavitPorMes = MESES.map((m) =>
     superavitMensal(construirTotais(linhas, projetadoPorMes[m - 1] ? "orcado" : "realizado", m)))
-  const saldos = projecaoCaixa({ saldoInicial, superavitPorMes })
+  // Reancoragem só faz sentido pra meses já realizados (saldo bancário é um fato, não projeção).
+  const saldosBancariosPorMes = MESES.map((m) => (projetadoPorMes[m - 1] ? null : saldoBancarioGeralInformado(series, m)))
+  const saldos = projecaoCaixa({ saldoInicial, superavitPorMes, saldosBancariosPorMes })
   return { pontos: MESES.map((m) => ({ mes: m, saldo: saldos[m - 1], projetado: projetadoPorMes[m - 1] })), caixaMinimo }
 }
 
@@ -421,7 +437,7 @@ export function montarDashboard(input: {
 }): DashboardPayload {
   const { ano, linhas, series, tesouraria, receitaClientes, saldoInicial, caixaMinimo, horasPadrao } = input
   const mesSelecionado = input.mesSelecionado ?? null
-  const caixa = serieCaixa(linhas, tesouraria, saldoInicial, caixaMinimo)
+  const caixa = serieCaixa(linhas, tesouraria, saldoInicial, caixaMinimo, series)
   const margem = serieMargem(linhas)
   const desvioCategorias = desvioPorCategoria(linhas)
   const ref = competenciaRef(linhas)

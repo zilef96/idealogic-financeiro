@@ -3,6 +3,7 @@ import {
   construirTotais, competenciaRef, serieOrcadoRealizado, serieSuperavit, serieMargem,
   serieCustoHora, serieCaixa, serieTributos, arvoreCategorias, topDespesas, paretoClientes,
   montarKpis, montarAlertas, montarDashboard, totaisAcumulados, desvioPorCategoria,
+  saldoBancarioGeralInformado,
   type LinhaDash,
 } from "@/lib/services/dashboard-service"
 
@@ -135,10 +136,27 @@ describe("serieCaixa", () => {
   ]
   const tesouraria: { mes: number; tipo: "aplicacao" | "resgate"; valor: number }[] = []
   it("1º mês = caixa inicial; demais acumulam superávit e marcam projeção", () => {
-    const { pontos, caixaMinimo } = serieCaixa(ls, tesouraria, 1000, 500)
+    const { pontos, caixaMinimo } = serieCaixa(ls, tesouraria, 1000, 500, {})
     expect(pontos[0]).toMatchObject({ mes: 1, saldo: 1000, projetado: false }) // 1º mês = caixa inicial
     expect(pontos[1]).toMatchObject({ mes: 2, saldo: 1020, projetado: true })  // 1000 + orçado 20
     expect(caixaMinimo).toBe(500)
+  })
+  it("reancora ao saldo bancário informado no mês (fato real, não só acumulado)", () => {
+    const series = { saldo_sicredi_cc: [{ mes: 1, valor: 5000 }] }
+    const { pontos } = serieCaixa(ls, tesouraria, 1000, 500, series)
+    expect(pontos[0].saldo).toBe(5000)       // ignora o caixa inicial, usa o saldo informado
+    expect(pontos[1].saldo).toBe(5020)       // acumula o superávit do mês 2 a partir daí
+  })
+})
+
+describe("saldoBancarioGeralInformado", () => {
+  it("soma as 3 contas quando ao menos uma foi informada no mês", () => {
+    const series = { saldo_sicredi_cc: [{ mes: 8, valor: 100 }], saldo_banrisul_cc: [{ mes: 8, valor: 20 }] }
+    expect(saldoBancarioGeralInformado(series, 8)).toBe(120)
+  })
+  it("null quando nenhuma conta foi informada naquele mês (mesmo que outro mês tenha)", () => {
+    const series = { saldo_sicredi_cc: [{ mes: 8, valor: 100 }] }
+    expect(saldoBancarioGeralInformado(series, 9)).toBeNull()
   })
 })
 
