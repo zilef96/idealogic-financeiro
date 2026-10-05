@@ -33,12 +33,12 @@ function linhas(mes: number, vals: Record<string, { o: number; r: number | null;
 }
 
 describe("receitaLiquida", () => {
-  it("Total de Receitas − (PIS+COFINS+ISSQN), sem subtrair 10204", () => {
+  it("Total de Receitas − Total de Tributos (bloco 10200 inteiro)", () => {
     // faturamento(10000)=100 inclui cotas(10) — Tributos(10200) é bloco-raiz à parte, não
     // entra no rollup de 10000; fatServiços = 100-10 = 90.
-    // Total Receitas = 90 + 10 = 100. Tributos 3 itens = tributosFat(20) − 10204(5) = 15.
+    // Total Receitas = 90 + 10 = 100. Total de Tributos = tributosFat(20).
     const t = totais({ faturamento: 100, cotas: 10, tributosFat: 20, tributacaoLucro: 5 })
-    expect(receitaLiquida(t)).toBe(100 - 15)
+    expect(receitaLiquida(t)).toBe(100 - 20)
   })
 })
 
@@ -135,11 +135,11 @@ describe("serieFluxoMensal", () => {
   })
   it("calcula as colunas do mês 1", () => {
     const m1 = f.meses[0]
-    // fatServiços = 100 − 10 = 90 (Tributos 10200 já é bloco-raiz à parte); tributos 3 itens = 20 − 5 = 15;
+    // fatServiços = 100 − 10 = 90 (Tributos 10200 já é bloco-raiz à parte); tributos = bloco 10200 inteiro = 20;
     // resultado = superavitMensal = 90 + 10 − 20 − 40 − 30 − 5 = 5
     expect(m1.receitas).toBe(90)
     expect(m1.cotas).toBe(10)
-    expect(m1.tributos).toBe(15)
+    expect(m1.tributos).toBe(20)
     expect(m1.custos).toBe(40)
     expect(m1.despesas).toBe(30)
     expect(m1.dividendos).toBe(5)
@@ -185,12 +185,12 @@ describe("montarRelatorio", () => {
     expect(p.csllIrpj).toBe(5)
     expect(p.retencaoNf).toBe(2)
     expect(p.totalTributosFaturamento).toBe(22)
-    expect(p.receitaLiquida).toBe(100 - 17)  // inclui Retenção NF; exclui CSLL/IRPJ da receita líquida
+    expect(p.receitaLiquida).toBe(100 - 22)  // Total de Receitas − Total de Tributos
   })
   it("calcula indicadores", () => {
     expect(p.resultadoOperacional).toBe(3)  // bloco 10200 inteiro, sem dupla contabilização
-    expect(p.margemLiquida).toBeCloseTo((3 / 83) * 100)
-    expect(p.margemBruta).toBeCloseTo(((83 - 40) / 83) * 100)
+    expect(p.margemLiquida).toBeCloseTo((3 / 78) * 100)
+    expect(p.margemBruta).toBeCloseTo(((78 - 40) / 78) * 100)
   })
   it("inclui fluxo e saldos", () => {
     expect(p.fluxo.meses).toHaveLength(12)

@@ -40,7 +40,7 @@ export function Demonstrativos({ dados }: { dados: RelatorioPayload }) {
           <Linha rotulo="Total de Tributos" valor={dados.totalTributosFaturamento} forte />
           <Linha rotulo="Receita Líquida" valor={dados.receitaLiquida} forte />
           <p className="mt-1 text-xs" style={{ color: "rgb(var(--muted))" }}>
-            Receita Líquida desconta PIS, COFINS, ISSQN e Retenção NF. CSLL/IRPJ entra no resultado, mas não reduz a Receita Líquida.
+            Receita Líquida = Total de Receitas − Total de Tributos.
           </p>
         </Bloco>
         <Bloco titulo="(−) Custos Totais">

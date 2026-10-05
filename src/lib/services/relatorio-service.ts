@@ -5,12 +5,11 @@ import {
 } from "@/lib/services/dashboard-service"
 import { CODIGO_TRIBUTOS_FATURAMENTO, ITENS_TRIBUTOS_FATURAMENTO } from "@/lib/plano-contas"
 
-// Receita Líquida desconta todo o bloco de tributos sobre faturamento, exceto
-// CSLL/IRPJ. Esse item continua no resultado via superavitMensal, uma única vez.
+// Receita Líquida = Total de Receitas − Total de Tributos (bloco 10200 inteiro,
+// incluindo CSLL/IRPJ e Retenção NF).
 export function receitaLiquida(totais: TotaisMes): number {
   const totalReceitas = faturamentoServicos(totais) + totais.cotas
-  const tributos3 = totais.tributosFat - totais.tributacaoLucro
-  return totalReceitas - tributos3
+  return totalReceitas - totais.tributosFat
 }
 
 // Margem Bruta (%) = (Receita Líquida − Custos) / Receita Líquida × 100.
@@ -121,7 +120,7 @@ export function serieFluxoMensal(linhas: LinhaDash[]): FluxoMensal {
       mes,
       receitas: faturamentoServicos(t),
       cotas: t.cotas,
-      tributos: t.tributosFat - t.tributacaoLucro,
+      tributos: t.tributosFat,
       custos: t.custos,
       despesas: t.despesas,
       dividendos: t.dividendos,
