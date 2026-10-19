@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Calculator, FileText, LayoutDashboard, ListTodo, Home, Share2, ChevronLeft, ChevronRight, type LucideIcon } from "lucide-react"
+import { Calculator, FileText, LayoutDashboard, ListTodo, Home, Share2, ChevronLeft, ChevronRight, TrendingUp, type LucideIcon } from "lucide-react"
 import { ThemeToggle } from "@/components/theme/theme-toggle"
 import { UserMenu } from "@/components/shell/user-menu"
 import { Logo } from "@/components/brand/logo"
@@ -23,11 +23,13 @@ const ITENS_ADMIN: ItemMenu[] = [
   { href: "/orcamento", label: "Orçamentação", icon: Calculator },
   { href: "/execucao", label: "Execução", icon: ListTodo },
   { href: "/relatorio", label: "Relatório", icon: FileText },
+  { href: "/progressao", label: "Progressão Salarial", icon: TrendingUp },
 ]
 
 const ITENS_SOCIO: ItemMenu[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/relatorio", label: "Relatório", icon: FileText },
+  { href: "/progressao", label: "Progressão Salarial", icon: TrendingUp },
 ]
 
 const COLLAPSE_KEY = "idealogic-sidebar-collapsed"
