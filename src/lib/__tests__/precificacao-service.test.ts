@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { custoHora, precoPara, tetoHoras, resultado, opexMedio, type Premissas } from "@/lib/services/precificacao-service"
+import { custoHora, precoPara, tetoHoras, resultado, opexMedio, opexPorMes, type Premissas, type LinhaRealizado } from "@/lib/services/precificacao-service"
 
 const p: Premissas = { horasPessoaMes: 160, opexHora: 23.92, impostosFaturamento: 0.1175, comissoes: 0, margemAlvo: 0.15, irCsll: 0.34 }
 
@@ -42,5 +42,20 @@ describe("precificação", () => {
     ]
     expect(opexMedio(serie, 3)).toEqual({ media: 300, mesesUsados: [2, 3, 4] })
     expect(opexMedio([{ mes: 1, valor: null }], 3)).toBeNull()
+  })
+
+  it("OPEX do mês: Despesas − financiamentos − Laura + pró-labore e lucros de Feliciano e Larissa", () => {
+    const g = (codigo: string, realizado: number | null, mes = 9): LinhaRealizado => ({ codigo, codigoPai: "", nome: codigo, isGrupo: true, mes, realizado })
+    const i = (pai: string, nome: string, realizado: number, mes = 9): LinhaRealizado => ({ codigo: "", codigoPai: pai, nome, isGrupo: false, mes, realizado })
+    const linhas = [
+      g("30000", 16000), g("34100", 500),
+      i("31200", "Laura Pillon", 4000), i("31200", "Suélen Ferreira", 5000),
+      i("20200", "Feliciano de Vargas", 1400), i("20200", "Larissa Bittencourt", 1400), i("20200", "Guilherme Rohr", 1400),
+      i("41000", "Feliciano de Vargas", 3300), i("41000", "Larissa Bittencourt", 4900), i("41000", "Guilherme Rohr", 15000),
+      g("30000", null, 10),
+    ]
+    const serie = opexPorMes(linhas)
+    expect(serie.find((s) => s.mes === 9)?.valor).toBe(16000 - 500 - 4000 + 1400 + 1400 + 3300 + 4900)
+    expect(serie.find((s) => s.mes === 10)?.valor).toBeNull()
   })
 })

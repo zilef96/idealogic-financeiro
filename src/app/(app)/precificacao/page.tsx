@@ -1,8 +1,8 @@
 import { exigirPerfilPagina } from "@/lib/auth-server"
 import { getAnosProgressao, getProgressao } from "@/lib/repositories/progressao-repository"
-import { getDespesasRealizadasPorMes } from "@/lib/repositories/precificacao-repository"
+import { getRealizadoContasOpex } from "@/lib/repositories/precificacao-repository"
 import { getSeriesParametros } from "@/lib/repositories/parametro-repository"
-import { opexMedio } from "@/lib/services/precificacao-service"
+import { opexMedio, opexPorMes } from "@/lib/services/precificacao-service"
 import { PrecificacaoView } from "@/components/precificacao/precificacao-view"
 
 const MESES_OPEX = 3
@@ -10,9 +10,9 @@ const MESES_OPEX = 3
 export default async function PrecificacaoPage() {
   await exigirPerfilPagina(["admin", "socio"])
   const ano = new Date().getFullYear()
-  const [anosProgressao, despesas, series] = await Promise.all([
+  const [anosProgressao, contasOpex, series] = await Promise.all([
     getAnosProgressao(),
-    getDespesasRealizadasPorMes(ano),
+    getRealizadoContasOpex(ano),
     getSeriesParametros(ano),
   ])
   const anoTabela = anosProgressao[0] ?? ano
@@ -26,7 +26,7 @@ export default async function PrecificacaoPage() {
     <PrecificacaoView
       anoTabela={anoTabela}
       perfis={perfis}
-      opex={opexMedio(despesas, MESES_OPEX)}
+      opex={opexMedio(opexPorMes(contasOpex), MESES_OPEX)}
       horasFaturaveis={horasInformadas}
     />
   )

@@ -3,7 +3,7 @@ import { useMemo, useState } from "react"
 import { fmtValor } from "@/components/dashboard/formatos"
 import { TRILHAS, type LinhaProgressao, type Trilha } from "@/lib/services/progressao-service"
 import {
-  PREMISSAS_PADRAO, custoHora, precoPara, resultado, tetoHoras, type Premissas, type Resultado,
+  PREMISSAS_PADRAO, REGRA_OPEX, custoHora, precoPara, resultado, tetoHoras, type Premissas, type Resultado,
 } from "@/lib/services/precificacao-service"
 
 const NOMES_MES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
@@ -197,7 +197,7 @@ export function PrecificacaoView({ anoTabela, perfis, opex, horasFaturaveis }: {
       <Secao titulo="Premissas">
         <div className="grid grid-cols-2 gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-4">
           <Campo rotulo="OPEX do mês" valor={opexMensal} onMudar={setOpexMensal} sufixo="R$"
-            ajuda={opex ? `Média realizada de ${opex.mesesUsados.map((m) => NOMES_MES[m - 1]).join(", ")} (Despesas, sem distribuição de lucros)` : "Sem realizado no ano; informe o valor"} />
+            ajuda={opex ? `Média realizada de ${opex.mesesUsados.map((m) => NOMES_MES[m - 1]).join(", ")} · veja abaixo o que entra` : "Sem realizado no ano; informe o valor"} />
           <Campo rotulo="Horas faturáveis da empresa no mês" valor={horasEmpresa} onMudar={setHorasEmpresa} sufixo="h"
             ajuda={horasFaturaveis ? "Dos parâmetros do Financeiro" : "Não informado no Financeiro; valor da planilha antiga"} />
           <div className="rounded-[10px] p-2" style={{ background: "rgb(var(--faint))" }}>
@@ -210,6 +210,15 @@ export function PrecificacaoView({ anoTabela, perfis, opex, horasFaturaveis }: {
           <Campo rotulo="Margem alvo (antes do IR)" valor={margem} onMudar={setMargem} sufixo="%" ajuda="Sobre o preço" />
           <Campo rotulo="IRPJ + CSLL sobre o lucro" valor={ir} onMudar={setIr} sufixo="%" />
         </div>
+        <details className="rounded-xl border border-border bg-card px-4 py-3 text-sm">
+          <summary className="cursor-pointer font-medium">O que entra no OPEX</summary>
+          <ul className="mt-2 space-y-1" style={{ color: "rgb(var(--muted))" }}>
+            <li><span className="font-medium" style={{ color: "rgb(var(--foreground))" }}>Parte de:</span> {REGRA_OPEX.base.rotulo}</li>
+            {REGRA_OPEX.tirar.map((c) => <li key={c.rotulo}>(−) {c.rotulo}</li>)}
+            {REGRA_OPEX.somar.map((c) => <li key={c.rotulo}>(+) {c.rotulo}</li>)}
+            <li className="pt-1">Quem executa (CLT, PJ, encargos e benefícios em Custos, Guilherme Rohr e Laura) não entra aqui: o custo dessas pessoas já vem da tabela de Progressão.</li>
+          </ul>
+        </details>
         {premissasInvalidas && (
           <p className="text-sm" style={{ color: "rgb(var(--neg))" }}>Impostos + comissões + margem passam de 100%: não existe preço possível.</p>
         )}
