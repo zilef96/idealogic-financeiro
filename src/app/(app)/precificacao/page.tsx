@@ -9,7 +9,10 @@ const MESES_OPEX = 3
 
 export default async function PrecificacaoPage() {
   await exigirPerfilPagina(["admin", "socio"])
-  const ano = new Date().getFullYear()
+  const hoje = new Date()
+  const ano = hoje.getFullYear()
+  // Mês corrente ainda está sendo lançado: entra só mês encerrado na média do OPEX.
+  const mesAtual = hoje.getMonth() + 1
   const [anosProgressao, contasOpex, series] = await Promise.all([
     getAnosProgressao(),
     getRealizadoContasOpex(ano),
@@ -26,7 +29,7 @@ export default async function PrecificacaoPage() {
     <PrecificacaoView
       anoTabela={anoTabela}
       perfis={perfis}
-      opex={opexMedio(opexPorMes(contasOpex), MESES_OPEX)}
+      opex={opexMedio(opexPorMes(contasOpex).filter((m) => m.mes < mesAtual), MESES_OPEX)}
       horasFaturaveis={horasInformadas}
     />
   )
